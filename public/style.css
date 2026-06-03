@@ -295,3 +295,16 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .gallery-grid img:hover{
   transform:translateY(-8px);
 }
+.sidebar-logo{
+  width:120px;
+  height:auto;
+  display:block;
+  margin:0 auto 18px;
+}
+
+.login-logo{
+  width:220px;
+  max-width:100%;
+  display:block;
+  margin:0 auto 20px;
+}
