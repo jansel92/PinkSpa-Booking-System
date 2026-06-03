@@ -8,6 +8,8 @@ async function api(url, options = {}) {
   return data;
 }
 
+let editingServiceId = null;
+
 async function checkLogin() {
   const data = await api("/api/me");
   if (data.owner) showDashboard();
@@ -116,17 +118,83 @@ async function loadServices() {
         <strong>${service.name}</strong><br>
         <small>${service.category} • ${service.price} • ${service.duration} min</small>
       </div>
-      <button onclick="deleteService(${service.id})">Remove</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button onclick='editService(${JSON.stringify(service)})'>Edit</button>
+        <button onclick="deleteService(${service.id})">Remove</button>
+      </div>
     `;
     list.appendChild(row);
   });
 }
 
+function editService(service) {
+  const form = document.getElementById("serviceForm");
+
+  editingServiceId = service.id;
+
+  form.elements.name.value = service.name || "";
+  form.elements.category.value = service.category || "";
+  form.elements.price.value = service.price || "";
+  form.elements.duration.value = service.duration || 60;
+  form.elements.image.value = service.image || "";
+
+  const button = form.querySelector("button[type='submit']");
+  button.textContent = "Save Service Changes";
+
+  let cancelButton = document.getElementById("cancelEditService");
+  if (!cancelButton) {
+    cancelButton = document.createElement("button");
+    cancelButton.id = "cancelEditService";
+    cancelButton.type = "button";
+    cancelButton.className = "btn full";
+    cancelButton.style.marginTop = "10px";
+    cancelButton.style.background = "#21171c";
+    cancelButton.style.color = "white";
+    cancelButton.textContent = "Cancel Edit";
+    cancelButton.onclick = cancelEditService;
+    form.appendChild(cancelButton);
+  }
+
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cancelEditService() {
+  editingServiceId = null;
+
+  const form = document.getElementById("serviceForm");
+  form.reset();
+
+  const button = form.querySelector("button[type='submit']");
+  button.textContent = "Add Service";
+
+  const cancelButton = document.getElementById("cancelEditService");
+  if (cancelButton) cancelButton.remove();
+}
+
 document.getElementById("serviceForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const payload = Object.fromEntries(new FormData(e.target).entries());
-  await api("/api/services", { method: "POST", body: JSON.stringify(payload) });
-  e.target.reset();
+
+  const form = e.target;
+  const payload = Object.fromEntries(new FormData(form).entries());
+
+  if (editingServiceId) {
+    payload.active = true;
+
+    await api(`/api/services/${editingServiceId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    });
+
+    cancelEditService();
+  } else {
+    await api("/api/services", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    form.reset();
+  }
+
   loadServices();
 });
 
