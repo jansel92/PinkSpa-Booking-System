@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PinkSpa | Book Appointment</title>
+  <title>PinkSpa | Luxury Nails, Lashes & Brows</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="nav">
-    <a class="brand" href="/"><span>✦</span><b>Pink</b><em>Spa</em></a>
+    <a class="brand" href="/">
+      <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="nav-logo" />
+    </a>
     <nav>
       <a href="#services">Services</a>
+      <a href="#gallery">Gallery</a>
       <a href="#book">Book</a>
       <a href="/owner">Owner Login</a>
     </nav>
@@ -18,29 +21,41 @@
 
   <section class="hero">
     <div class="hero-content">
+      <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="hero-logo" />
       <p class="eyebrow">Homestead, FL • Beauty Studio</p>
-      <h1>Beauty appointments, made simple.</h1>
-      <p>Nails, pedicure, lashes, and eyebrows by appointment. Book your PinkSpa visit online.</p>
+      <h1>Luxury Nails, Lashes & Brows in Homestead.</h1>
+      <p>Professional beauty services designed to help you look beautiful, confident, and cared for.</p>
       <div class="actions">
-        <a class="btn primary" href="#book">Book Now</a>
+        <a class="btn primary" href="#book">Book Appointment</a>
         <a class="btn ghost" id="phoneLink" href="tel:7863036126">Call 786-303-6126</a>
       </div>
-    </div>
-    <div class="floating-card">
-      <div class="logo"><b>Pink</b><em>Spa</em></div>
-      <h3>Open Hours</h3>
-      <p id="hoursText">9:30 AM - 2:30 PM</p>
-      <span>By appointment only</span>
     </div>
   </section>
 
   <section id="services" class="section">
     <div class="heading">
-      <p class="eyebrow dark">Services</p>
+      <p class="eyebrow dark">PinkSpa Services</p>
       <h2>Choose your beauty service.</h2>
-      <p>Prices and services are managed directly by PinkSpa.</p>
+      <p>Nails, pedicure, lashes, eyebrows, waxing, nail art, and more.</p>
     </div>
     <div id="serviceGrid" class="service-grid"></div>
+  </section>
+
+  <section id="gallery" class="section">
+    <div class="heading">
+      <p class="eyebrow dark">Our Work</p>
+      <h2>PinkSpa Gallery</h2>
+      <p>A preview of nails, lashes, brows, and pedicure services.</p>
+    </div>
+
+    <div class="gallery-grid">
+      <img src="/images/nails/nail1.jpeg" alt="PinkSpa Nails">
+      <img src="/images/nails/nail2.jpeg" alt="PinkSpa Nail Art">
+      <img src="/images/lashes/lash1.jpeg" alt="PinkSpa Lashes">
+      <img src="/images/brows/brow1.jpeg" alt="PinkSpa Brows">
+      <img src="/images/pedicure/pedi1.jpeg" alt="PinkSpa Pedicure">
+      <img src="/images/nails/nail3.jpeg" alt="PinkSpa Acrylic Nails">
+    </div>
   </section>
 
   <section id="book" class="booking-section">
@@ -57,7 +72,7 @@
 
     <form id="bookingForm" class="form-card">
       <div class="form-title">
-        <div class="logo"><b>Pink</b><em>Spa</em></div>
+        <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="form-logo" />
         <strong>Appointment Request</strong>
       </div>
 
@@ -111,8 +126,8 @@
   <section class="cta">
     <div>
       <p class="eyebrow">PinkSpa</p>
-      <h2>Your beauty is our passion.</h2>
-      <p>Instagram, address, and email can be added when ready.</p>
+      <h2>Beauty, Confidence & Self-Care.</h2>
+      <p>Professional nails, pedi, lashes, and eyebrows in Homestead, Florida.</p>
     </div>
     <a class="btn ghost" id="ctaPhone" href="tel:7863036126">Call PinkSpa</a>
   </section>
