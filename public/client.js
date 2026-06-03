@@ -1,48 +1,78 @@
 const imageFallbacks = {
-  nails: "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=85",
-  pedi: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=900&q=85",
-  lashes: "https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=900&q=85",
-  brows: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=900&q=85"
+  nails: "/images/nails/nails1.jpeg",
+  pedi: "/images/pedicure/pedi1.png",
+  lashes: "/images/lashes/lashes1.jpeg",
+  brows: "/images/brows/brows1.jpeg"
 };
 
 function categoryImage(service) {
   if (service.image) return service.image;
-  const c = service.category.toLowerCase();
-  if (c.includes("pedi")) return imageFallbacks.pedi;
-  if (c.includes("lash")) return imageFallbacks.lashes;
-  if (c.includes("brow") || c.includes("eye")) return imageFallbacks.brows;
+
+  const category = (service.category || "").toLowerCase();
+  const name = (service.name || "").toLowerCase();
+  const text = category + " " + name;
+
+  if (text.includes("pedi") || text.includes("toe") || text.includes("foot")) {
+    return imageFallbacks.pedi;
+  }
+
+  if (text.includes("lash") || text.includes("eyelash")) {
+    return imageFallbacks.lashes;
+  }
+
+  if (text.includes("brow") || text.includes("eyebrow") || text.includes("wax") || text.includes("henna") || text.includes("lamination")) {
+    return imageFallbacks.brows;
+  }
+
   return imageFallbacks.nails;
 }
 
 async function loadSettings() {
   const settings = await fetch("/api/settings").then(r => r.json());
-  document.getElementById("hoursText").textContent = settings.hours;
-  document.getElementById("cityText").textContent = "📍 " + settings.city;
-  document.getElementById("businessPhoneText").textContent = "☎ " + settings.phone;
-  document.getElementById("businessHoursText").textContent = "🕘 " + settings.hours;
-  document.getElementById("phoneLink").href = "tel:" + settings.phone;
-  document.getElementById("phoneLink").textContent = "Call " + settings.phone;
-  document.getElementById("ctaPhone").href = "tel:" + settings.phone;
+
+  const cityText = document.getElementById("cityText");
+  const businessPhoneText = document.getElementById("businessPhoneText");
+  const businessHoursText = document.getElementById("businessHoursText");
+  const phoneLink = document.getElementById("phoneLink");
+  const ctaPhone = document.getElementById("ctaPhone");
+
+  if (cityText) cityText.textContent = "📍 " + settings.city;
+  if (businessPhoneText) businessPhoneText.textContent = "☎ " + settings.phone;
+  if (businessHoursText) businessHoursText.textContent = "🕘 " + settings.hours;
+
+  if (phoneLink) {
+    phoneLink.href = "tel:" + settings.phone;
+    phoneLink.textContent = "Call " + settings.phone;
+  }
+
+  if (ctaPhone) {
+    ctaPhone.href = "tel:" + settings.phone;
+  }
 }
 
 async function loadServices() {
   const services = await fetch("/api/services").then(r => r.json());
   const grid = document.getElementById("serviceGrid");
   const select = document.getElementById("serviceSelect");
+
   grid.innerHTML = "";
   select.innerHTML = "";
 
   services.forEach(service => {
     const card = document.createElement("article");
     card.className = "service-card";
+
     card.innerHTML = `
       <div class="service-card-img" style="background-image:url('${categoryImage(service)}')"></div>
       <div class="service-card-body">
+        <span class="service-category">${service.category}</span>
         <h3>${service.name}</h3>
         <strong>${service.price}</strong>
-        <p>${service.category} • ${service.duration} minutes</p>
+        <p>${service.duration} minutes</p>
+        <a class="service-book-btn" href="#book">Book This Service</a>
       </div>
     `;
+
     grid.appendChild(card);
 
     const option = document.createElement("option");
@@ -54,6 +84,7 @@ async function loadServices() {
 
 document.getElementById("bookingForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const form = new FormData(e.target);
   const payload = Object.fromEntries(form.entries());
   const message = document.getElementById("bookingMessage");
@@ -65,6 +96,7 @@ document.getElementById("bookingForm").addEventListener("submit", async (e) => {
   });
 
   const data = await response.json();
+
   if (!response.ok) {
     message.textContent = data.error || "Something went wrong.";
     return;
