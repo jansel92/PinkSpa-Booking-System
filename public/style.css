@@ -394,3 +394,66 @@ footer{text-align:center;color:var(--muted);padding:28px}
     padding-bottom:90px;
   }
 }
+/* Mobile app navigation fix */
+@media(max-width:950px){
+  .nav{
+    top:10px;
+    width:calc(100% - 20px);
+    padding:10px;
+    border-radius:24px;
+    align-items:center;
+    gap:10px;
+  }
+
+  .nav-logo{
+    height:42px;
+  }
+
+  .nav nav{
+    display:flex !important;
+    gap:12px;
+    overflow-x:auto;
+    white-space:nowrap;
+    padding-bottom:4px;
+  }
+
+  .nav nav a{
+    font-size:12px;
+    flex:0 0 auto;
+  }
+
+  .hero{
+    padding-top:115px;
+  }
+
+  .hero-logo{
+    width:220px;
+  }
+
+  .hero h1{
+    font-size:54px;
+    line-height:.95;
+    letter-spacing:-2px;
+  }
+
+  .actions{
+    display:none;
+  }
+}
+
+@media(max-width:500px){
+  .nav{
+    left:10px;
+    right:10px;
+    transform:none;
+    width:auto;
+  }
+
+  .hero-logo{
+    width:190px;
+  }
+
+  .hero h1{
+    font-size:46px;
+  }
+}
