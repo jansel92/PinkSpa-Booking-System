@@ -1,0 +1,19 @@
+{
+  "name": "pinkspa-full-booking-system",
+  "version": "1.0.0",
+  "description": "Full booking system for PinkSpa with client booking, owner login, services, pricing, and appointments.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.7.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0"
+  }
+}
