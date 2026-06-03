@@ -457,3 +457,31 @@ footer{text-align:center;color:var(--muted);padding:28px}
     font-size:46px;
   }
 }
+@media(max-width:950px){
+  .nav{
+    top:10px !important;
+    width:calc(100% - 20px) !important;
+    padding:10px !important;
+    border-radius:24px !important;
+    gap:10px !important;
+    overflow:hidden !important;
+  }
+
+  .nav-logo{
+    height:42px !important;
+  }
+
+  .nav nav{
+    display:flex !important;
+    gap:12px !important;
+    overflow-x:auto !important;
+    white-space:nowrap !important;
+    width:100% !important;
+  }
+
+  .nav nav a{
+    display:inline-flex !important;
+    font-size:12px !important;
+    flex:0 0 auto !important;
+  }
+}
