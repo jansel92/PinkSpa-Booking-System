@@ -6,6 +6,8 @@ const helmet = require("helmet");
 const bcrypt = require("bcryptjs");
 const Database = require("better-sqlite3");
 const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 const nodemailer = require("nodemailer");
 
 const app = express();
@@ -22,6 +24,41 @@ const EMAIL_HOST = process.env.EMAIL_HOST;
 const EMAIL_PORT = Number(process.env.EMAIL_PORT || 587);
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
+
+const uploadsDir = path.join(__dirname, "public", "uploads");
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    const safeName = file.originalname
+      .toLowerCase()
+      .replace(/[^a-z0-9.]/g, "-")
+      .replace(/-+/g, "-");
+
+    const uniqueName = Date.now() + "-" + safeName;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
+  fileFilter: function (req, file, cb) {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed."));
+    }
+
+    cb(null, true);
+  }
+});
 
 let mailTransporter = null;
 
@@ -195,6 +232,15 @@ app.get("/api/services", (req, res) => {
   res.json(services);
 });
 
+app.post("/api/upload-service-image", requireOwner, upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No image uploaded." });
+  }
+
+  const imagePath = "/uploads/" + req.file.filename;
+  res.json({ success: true, image: imagePath });
+});
+
 app.post("/api/services", requireOwner, (req, res) => {
   const { name, category, price, duration, image } = req.body;
   if (!name || !category || !price) return res.status(400).json({ error: "Name, category, and price are required." });
@@ -227,6 +273,7 @@ app.get("/api/appointments", requireOwner, (req, res) => {
   const appts = db.prepare("SELECT * FROM appointments ORDER BY appointment_date DESC, appointment_time DESC, id DESC").all();
   res.json(appts);
 });
+
 app.get("/api/appointment-status", (req, res) => {
   const phone = String(req.query.phone || "").trim();
 
@@ -246,6 +293,7 @@ app.get("/api/appointment-status", (req, res) => {
 
   res.json({ appointments });
 });
+
 app.post("/api/appointments", async (req, res) => {
   const { client_name, client_phone, client_email, service_id, appointment_date, appointment_time, notes } = req.body;
 
@@ -295,12 +343,12 @@ app.post("/api/appointments", async (req, res) => {
     notes: notes || ""
   };
 
- sendAppointmentEmail(appointment).catch(error => {
-  console.error("================================");
-  console.error("EMAIL ERROR:");
-  console.error(error);
-  console.error("================================");
-});
+  sendAppointmentEmail(appointment).catch(error => {
+    console.error("================================");
+    console.error("EMAIL ERROR:");
+    console.error(error);
+    console.error("================================");
+  });
 
   res.json({ success: true, id: result.lastInsertRowid });
 });
