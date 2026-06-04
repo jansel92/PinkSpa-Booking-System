@@ -279,9 +279,12 @@ app.post("/api/appointments", async (req, res) => {
     notes: notes || ""
   };
 
-  sendAppointmentEmail(appointment).catch(error => {
-    console.error("Email notification failed:", error.message);
-  });
+ sendAppointmentEmail(appointment).catch(error => {
+  console.error("================================");
+  console.error("EMAIL ERROR:");
+  console.error(error);
+  console.error("================================");
+});
 
   res.json({ success: true, id: result.lastInsertRowid });
 });
