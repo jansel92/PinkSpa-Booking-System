@@ -207,7 +207,37 @@ document.getElementById("serviceForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const form = e.target;
-  const payload = Object.fromEntries(new FormData(form).entries());
+
+  let imagePath = form.elements.image.value || "";
+
+  const imageFile = form.elements.image_file?.files?.[0];
+
+  if (imageFile) {
+    const uploadData = new FormData();
+    uploadData.append("image", imageFile);
+
+    const uploadResponse = await fetch("/api/upload-service-image", {
+      method: "POST",
+      body: uploadData
+    });
+
+    const uploadResult = await uploadResponse.json();
+
+    if (!uploadResponse.ok) {
+      alert(uploadResult.error || "Image upload failed.");
+      return;
+    }
+
+    imagePath = uploadResult.image;
+  }
+
+  const payload = {
+    name: form.elements.name.value,
+    category: form.elements.category.value,
+    price: form.elements.price.value,
+    duration: form.elements.duration.value,
+    image: imagePath
+  };
 
   if (editingServiceId) {
     payload.active = true;
