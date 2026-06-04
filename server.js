@@ -25,11 +25,9 @@ const EMAIL_PASS = process.env.EMAIL_PASS;
 
 let mailTransporter = null;
 
-if (EMAIL_HOST && EMAIL_USER && EMAIL_PASS) {
+if (EMAIL_USER && EMAIL_PASS) {
   mailTransporter = nodemailer.createTransport({
-    host: EMAIL_HOST,
-    port: EMAIL_PORT,
-    secure: EMAIL_PORT === 465,
+    service: "gmail",
     auth: {
       user: EMAIL_USER,
       pass: EMAIL_PASS
