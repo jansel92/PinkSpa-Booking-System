@@ -8,17 +8,38 @@
 </head>
 <body class="owner-body">
   <section id="loginScreen" class="login-screen">
-    <form id="loginForm" class="login-card">
+    <form id="loginForm" class="login-card" autocomplete="off">
       <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="login-logo" />
       <h1>Owner Login</h1>
       <p>Manage appointments, services, and prices.</p>
+
       <label>Email
-        <input name="email" type="email" value="admin@pinkspa.com" required />
+        <input
+          name="email"
+          type="email"
+          placeholder="Enter owner email"
+          autocomplete="off"
+          required
+        />
       </label>
+
       <label>Password
-        <input name="password" type="password" value="PinkSpa123!" required />
+        <input
+          name="password"
+          type="password"
+          placeholder="Enter owner password"
+          autocomplete="new-password"
+          required
+        />
       </label>
+
       <button class="btn primary full" type="submit">Login</button>
+
+      <p class="message" style="margin-top:14px;">
+        Forgot password? Use the recovery email:
+        <strong>pinkspaadmin@gmail.com</strong>
+      </p>
+
       <p id="loginMessage" class="message"></p>
     </form>
   </section>
@@ -81,6 +102,7 @@
               <button class="btn primary full" type="submit">Add Service</button>
             </form>
           </div>
+
           <div class="panel">
             <h2>Current Services</h2>
             <div id="servicesList"></div>
