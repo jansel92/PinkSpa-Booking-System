@@ -573,3 +573,61 @@ footer{text-align:center;color:var(--muted);padding:28px}
     border:2px solid #ffc2d8;
   }
 }
+/* FINAL MOBILE FLOATING BUTTON FIX */
+
+@media (max-width:700px){
+
+  a.mobile-book-now{
+    position:static !important;
+    left:auto !important;
+    right:auto !important;
+    bottom:auto !important;
+    width:auto !important;
+    max-width:none !important;
+    transform:none !important;
+  }
+
+  .mobile-floating-actions{
+    position:fixed !important;
+    left:12px !important;
+    right:12px !important;
+    bottom:16px !important;
+    z-index:99999 !important;
+
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+  }
+
+  .mobile-floating-actions a{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+
+    padding:14px 8px !important;
+    border-radius:999px !important;
+    font-size:15px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    text-align:center !important;
+    text-decoration:none !important;
+    white-space:nowrap !important;
+    box-sizing:border-box !important;
+  }
+
+  .mobile-floating-actions .mobile-book-now{
+    background:linear-gradient(135deg,#ff5f93,#c91863) !important;
+    color:#fff !important;
+    border:2px solid transparent !important;
+  }
+
+  .mobile-floating-actions .mobile-status-now{
+    background:#fff !important;
+    color:#c91863 !important;
+    border:2px solid #ffc2d8 !important;
+  }
+}
