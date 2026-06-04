@@ -15,9 +15,9 @@
   <meta name="apple-mobile-web-app-title" content="PinkSpa" />
 
   <link rel="apple-touch-icon" href="/images/PinkSpa.png" />
-
   <link rel="stylesheet" href="/style.css" />
 </head>
+
 <body>
   <header class="nav">
     <a class="brand" href="/">
@@ -27,6 +27,7 @@
       <a href="#services">Services</a>
       <a href="#gallery">Gallery</a>
       <a href="#reviews">Reviews</a>
+      <a href="#status">Status</a>
       <a href="#book">Book</a>
       <a href="https://instagram.com/rachelpinkspa" target="_blank">Instagram</a>
       <a href="/owner">Owner Login</a>
@@ -110,6 +111,26 @@
     <strong>- PinkSpa Client</strong>
   </div>
 </div>
+```
+
+  </section>
+
+  <section id="status" class="section">
+    <div class="heading">
+      <p class="eyebrow dark">Appointment Status</p>
+      <h2>Check your appointment status.</h2>
+      <p>Enter the phone number used when booking to see if your appointment is pending, confirmed, or cancelled.</p>
+    </div>
+
+```
+<form id="statusForm" class="form-card" style="max-width:700px;margin:0 auto;">
+  <label>Phone Number
+    <input name="phone" required placeholder="Enter your phone number" />
+  </label>
+
+  <button class="btn primary full" type="submit">Check Status</button>
+  <div id="statusResult" class="message" style="margin-top:18px;"></div>
+</form>
 ```
 
   </section>
@@ -203,11 +224,11 @@
   <script src="/client.js"></script>
 
   <script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js");
-    });
-  }
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js");
+      });
+    }
   </script>
 
 </body>
