@@ -227,7 +227,25 @@ app.get("/api/appointments", requireOwner, (req, res) => {
   const appts = db.prepare("SELECT * FROM appointments ORDER BY appointment_date DESC, appointment_time DESC, id DESC").all();
   res.json(appts);
 });
+app.get("/api/appointment-status", (req, res) => {
+  const phone = String(req.query.phone || "").trim();
 
+  if (!phone) {
+    return res.status(400).json({ error: "Phone number is required." });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, "");
+
+  const appointments = db.prepare(`
+    SELECT id, client_name, client_phone, service_name, appointment_date, appointment_time, status
+    FROM appointments
+    WHERE REPLACE(REPLACE(REPLACE(REPLACE(client_phone, '-', ''), '(', ''), ')', ''), ' ', '') LIKE ?
+    ORDER BY appointment_date DESC, appointment_time DESC, id DESC
+    LIMIT 5
+  `).all(`%${cleanPhone}%`);
+
+  res.json({ appointments });
+});
 app.post("/api/appointments", async (req, res) => {
   const { client_name, client_phone, client_email, service_id, appointment_date, appointment_time, notes } = req.body;
 
