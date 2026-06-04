@@ -51,6 +51,18 @@ async function loadAll() {
   await Promise.all([loadAppointments(), loadServices(), loadSettings()]);
 }
 
+function statusLabel(status) {
+  const labels = {
+    pending: "🟡 Pending Review",
+    confirmed: "🟢 Confirmed",
+    cancelled: "🔴 Cancelled",
+    completed: "🔵 Completed",
+    "no-show": "⚫ No-show"
+  };
+
+  return labels[status] || status;
+}
+
 async function loadAppointments() {
   const appointments = await api("/api/appointments");
   const list = document.getElementById("appointmentsList");
@@ -71,21 +83,26 @@ async function loadAppointments() {
   appointments.forEach(appt => {
     const card = document.createElement("div");
     card.className = "appointment-card";
+
     card.innerHTML = `
       <strong>${appt.service_name}</strong>
-      <span>${appt.client_name} • ${appt.client_phone}</span>
-      <span>${appt.appointment_date} at ${appt.appointment_time}</span>
-      <span>Status: <b>${appt.status}</b></span>
-      <p>${appt.notes || "No notes added."}</p>
+      <span><b>Client:</b> ${appt.client_name}</span>
+      <span><b>Phone:</b> ${appt.client_phone}</span>
+      <span><b>Date:</b> ${appt.appointment_date}</span>
+      <span><b>Time:</b> ${appt.appointment_time}</span>
+      <span><b>Status:</b> ${statusLabel(appt.status)}</span>
+      <p><b>Notes:</b> ${appt.notes || "No notes added."}</p>
+
       <div class="status-row">
-        <button class="status-pending" onclick="setStatus(${appt.id}, 'pending')">Pending</button>
-        <button class="status-confirmed" onclick="setStatus(${appt.id}, 'confirmed')">Confirm</button>
-        <button class="status-cancelled" onclick="setStatus(${appt.id}, 'cancelled')">Cancel</button>
-        <button class="status-completed" onclick="setStatus(${appt.id}, 'completed')">Completed</button>
+        <button class="status-confirmed" onclick="confirmAppointment(${appt.id})">Confirm Appointment</button>
+        <button class="status-cancelled" onclick="cancelAppointment(${appt.id})">Cancel Appointment</button>
+        <button class="status-completed" onclick="completeAppointment(${appt.id})">Mark Completed</button>
+        <button class="status-pending" onclick="setStatus(${appt.id}, 'pending')">Back to Pending</button>
         <button class="status-no-show" onclick="setStatus(${appt.id}, 'no-show')">No-show</button>
         <button onclick="deleteAppointment(${appt.id})">Delete</button>
       </div>
     `;
+
     list.appendChild(card);
   });
 }
@@ -98,8 +115,23 @@ async function setStatus(id, status) {
   loadAppointments();
 }
 
+async function confirmAppointment(id) {
+  if (!confirm("Confirm this appointment?")) return;
+  await setStatus(id, "confirmed");
+}
+
+async function cancelAppointment(id) {
+  if (!confirm("Cancel this appointment?")) return;
+  await setStatus(id, "cancelled");
+}
+
+async function completeAppointment(id) {
+  if (!confirm("Mark this appointment as completed?")) return;
+  await setStatus(id, "completed");
+}
+
 async function deleteAppointment(id) {
-  if (!confirm("Delete this appointment request?")) return;
+  if (!confirm("Delete this appointment request permanently?")) return;
   await api(`/api/appointments/${id}`, { method: "DELETE" });
   loadAppointments();
 }
