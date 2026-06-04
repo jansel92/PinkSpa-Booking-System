@@ -6,6 +6,7 @@ const helmet = require("helmet");
 const bcrypt = require("bcryptjs");
 const Database = require("better-sqlite3");
 const path = require("path");
+const nodemailer = require("nodemailer");
 
 const app = express();
 const db = new Database(path.join(__dirname, "data", "pinkspa.sqlite"));
@@ -14,6 +15,27 @@ const PORT = process.env.PORT || 3000;
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "admin@pinkspa.com";
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "PinkSpa123!";
 const SESSION_SECRET = process.env.SESSION_SECRET || "pinkspa-dev-secret-change-me";
+
+const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "pinkspaadmin@gmail.com";
+
+const EMAIL_HOST = process.env.EMAIL_HOST;
+const EMAIL_PORT = Number(process.env.EMAIL_PORT || 587);
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
+let mailTransporter = null;
+
+if (EMAIL_HOST && EMAIL_USER && EMAIL_PASS) {
+  mailTransporter = nodemailer.createTransport({
+    host: EMAIL_HOST,
+    port: EMAIL_PORT,
+    secure: EMAIL_PORT === 465,
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASS
+    }
+  });
+}
 
 app.use(helmet({
   contentSecurityPolicy: false
@@ -122,6 +144,39 @@ function normalizeTime(t) {
   return String(t || "").trim();
 }
 
+async function sendAppointmentEmail(appointment) {
+  if (!mailTransporter) {
+    console.log("Email not configured yet. Appointment saved without email notification.");
+    return;
+  }
+
+  const emailBody = `
+New PinkSpa Appointment Request
+
+Client Name: ${appointment.client_name}
+Phone: ${appointment.client_phone}
+Email: ${appointment.client_email || "Not provided"}
+
+Service: ${appointment.service_name}
+Date: ${appointment.appointment_date}
+Time: ${appointment.appointment_time}
+
+Notes:
+${appointment.notes || "No notes provided."}
+
+Status: Pending
+
+Please log in to the PinkSpa owner dashboard to review this appointment.
+`;
+
+  await mailTransporter.sendMail({
+    from: `"PinkSpa Booking" <${EMAIL_USER}>`,
+    to: NOTIFY_EMAIL,
+    subject: "New PinkSpa Appointment Request",
+    text: emailBody
+  });
+}
+
 app.get("/api/settings", (req, res) => {
   const settings = db.prepare("SELECT * FROM business_settings WHERE id = 1").get();
   res.json(settings);
@@ -145,10 +200,12 @@ app.get("/api/services", (req, res) => {
 app.post("/api/services", requireOwner, (req, res) => {
   const { name, category, price, duration, image } = req.body;
   if (!name || !category || !price) return res.status(400).json({ error: "Name, category, and price are required." });
+
   const result = db.prepare(`
     INSERT INTO services (name, category, price, duration, image)
     VALUES (?, ?, ?, ?, ?)
   `).run(name, category, price, Number(duration || 60), image || "");
+
   res.json({ success: true, id: result.lastInsertRowid });
 });
 
@@ -159,6 +216,7 @@ app.put("/api/services/:id", requireOwner, (req, res) => {
     SET name=?, category=?, price=?, duration=?, image=?, active=?
     WHERE id=?
   `).run(name, category, price, Number(duration || 60), image || "", active ? 1 : 0, req.params.id);
+
   res.json({ success: true });
 });
 
@@ -172,8 +230,9 @@ app.get("/api/appointments", requireOwner, (req, res) => {
   res.json(appts);
 });
 
-app.post("/api/appointments", (req, res) => {
+app.post("/api/appointments", async (req, res) => {
   const { client_name, client_phone, client_email, service_id, appointment_date, appointment_time, notes } = req.body;
+
   if (!client_name || !client_phone || !service_id || !appointment_date || !appointment_time) {
     return res.status(400).json({ error: "Name, phone, service, date, and time are required." });
   }
@@ -192,11 +251,37 @@ app.post("/api/appointments", (req, res) => {
     return res.status(409).json({ error: "That time already has an appointment request. Please choose another time." });
   }
 
+  const cleanAppointmentTime = normalizeTime(appointment_time);
+
   const result = db.prepare(`
     INSERT INTO appointments
     (client_name, client_phone, client_email, service_id, service_name, appointment_date, appointment_time, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(client_name, client_phone, client_email || "", service_id, service.name, appointment_date, normalizeTime(appointment_time), notes || "");
+  `).run(
+    client_name,
+    client_phone,
+    client_email || "",
+    service_id,
+    service.name,
+    appointment_date,
+    cleanAppointmentTime,
+    notes || ""
+  );
+
+  const appointment = {
+    id: result.lastInsertRowid,
+    client_name,
+    client_phone,
+    client_email: client_email || "",
+    service_name: service.name,
+    appointment_date,
+    appointment_time: cleanAppointmentTime,
+    notes: notes || ""
+  };
+
+  sendAppointmentEmail(appointment).catch(error => {
+    console.error("Email notification failed:", error.message);
+  });
 
   res.json({ success: true, id: result.lastInsertRowid });
 });
@@ -204,7 +289,9 @@ app.post("/api/appointments", (req, res) => {
 app.put("/api/appointments/:id/status", requireOwner, (req, res) => {
   const { status } = req.body;
   const allowed = ["pending", "confirmed", "cancelled", "completed", "no-show"];
+
   if (!allowed.includes(status)) return res.status(400).json({ error: "Invalid status." });
+
   db.prepare("UPDATE appointments SET status = ? WHERE id = ?").run(status, req.params.id);
   res.json({ success: true });
 });
@@ -216,10 +303,12 @@ app.delete("/api/appointments/:id", requireOwner, (req, res) => {
 
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
+
   const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(email);
   if (!owner || !bcrypt.compareSync(password, owner.password_hash)) {
     return res.status(401).json({ error: "Invalid login." });
   }
+
   req.session.owner = { id: owner.id, email: owner.email };
   res.json({ success: true });
 });
@@ -237,6 +326,6 @@ app.get("/owner", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`PinkSpa booking system running at http://localhost:${PORT}`);
-  console.log(`Owner login: ${OWNER_EMAIL} / ${OWNER_PASSWORD}`);
+  console.log(`PinkSpa booking system running on port ${PORT}`);
+  console.log(`Owner login email: ${OWNER_EMAIL}`);
 });
