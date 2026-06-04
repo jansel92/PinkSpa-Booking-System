@@ -485,3 +485,41 @@ footer{text-align:center;color:var(--muted);padding:28px}
     flex:0 0 auto !important;
   }
 }
+.mobile-floating-actions{
+  display:none;
+}
+
+@media(max-width:700px){
+  .mobile-floating-actions{
+    position:fixed;
+    left:16px;
+    right:16px;
+    bottom:18px;
+    z-index:9999;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .mobile-floating-actions a{
+    text-align:center;
+    padding:16px 10px;
+    border-radius:999px;
+    font-weight:900;
+    text-decoration:none;
+    box-shadow:0 14px 35px rgba(199, 23, 99, .25);
+  }
+
+  .mobile-book-now{
+    position:static !important;
+    display:block !important;
+    background:linear-gradient(135deg,#ff5f93,#c91863);
+    color:white;
+  }
+
+  .mobile-status-now{
+    background:white;
+    color:#c91863;
+    border:2px solid #ffc2d8;
+  }
+}
