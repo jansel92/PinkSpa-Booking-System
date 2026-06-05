@@ -631,3 +631,91 @@ footer{text-align:center;color:var(--muted);padding:28px}
     border:2px solid #ffc2d8 !important;
   }
 }
+/* PREMIUM SERVICE CARD IMAGE PREVIEW */
+
+.service-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:34px !important;
+  background:#ffffff;
+  border:1px solid #ffe0eb;
+  box-shadow:0 24px 70px rgba(151,22,77,.14);
+  transition:transform .28s ease, box-shadow .28s ease;
+}
+
+.service-card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 30px 90px rgba(151,22,77,.22);
+}
+
+.service-card-img{
+  height:260px !important;
+  background-size:cover !important;
+  background-position:center !important;
+  transition:transform .45s ease;
+}
+
+.service-card:hover .service-card-img{
+  transform:scale(1.06);
+}
+
+.service-card-body{
+  padding:26px !important;
+}
+
+.service-category{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:12px;
+  padding:7px 13px;
+  border-radius:999px;
+  background:#fff1f7;
+  color:#b71956;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.service-card-body h3{
+  font-size:24px !important;
+  line-height:1.15;
+  margin-bottom:12px !important;
+}
+
+.service-card-body strong{
+  display:block;
+  font-size:28px !important;
+  margin-bottom:8px;
+  color:#b71956 !important;
+}
+
+.service-card-body p{
+  margin:0 0 18px;
+  font-weight:700;
+}
+
+.service-book-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  padding:14px 16px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:900;
+  color:white;
+  background:linear-gradient(135deg,#ff5f93,#b71956);
+  box-shadow:0 14px 35px rgba(183,25,86,.22);
+}
+
+@media(max-width:700px){
+  .service-card-img{
+    height:235px !important;
+  }
+
+  .service-card-body{
+    padding:22px !important;
+  }
+}
