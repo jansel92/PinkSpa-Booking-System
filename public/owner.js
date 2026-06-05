@@ -38,6 +38,72 @@ function serviceImage(service) {
   return "/images/nails/nails1.jpeg";
 }
 
+function ensureImagePreviewBox() {
+  const form = document.getElementById("serviceForm");
+
+  let previewBox = document.getElementById("serviceImagePreviewBox");
+
+  if (!previewBox) {
+    previewBox = document.createElement("div");
+    previewBox.id = "serviceImagePreviewBox";
+    previewBox.style.margin = "12px 0 16px";
+    previewBox.style.display = "none";
+
+    previewBox.innerHTML = `
+      <strong style="display:block;margin-bottom:8px;">Current Image Preview</strong>
+      <img
+        id="serviceImagePreview"
+        src=""
+        alt="Service Image Preview"
+        style="width:120px;height:120px;object-fit:cover;border-radius:18px;border:1px solid #ffd3e4;box-shadow:0 12px 30px rgba(199,23,99,.14);"
+      />
+    `;
+
+    const imageFileLabel = form.elements.image_file?.closest("label");
+    if (imageFileLabel) {
+      imageFileLabel.insertAdjacentElement("afterend", previewBox);
+    } else {
+      form.appendChild(previewBox);
+    }
+  }
+
+  return previewBox;
+}
+
+function showImagePreview(src) {
+  const previewBox = ensureImagePreviewBox();
+  const previewImg = document.getElementById("serviceImagePreview");
+
+  if (!src) {
+    previewBox.style.display = "none";
+    previewImg.src = "";
+    return;
+  }
+
+  previewImg.src = src;
+  previewBox.style.display = "block";
+}
+
+function setupImageFilePreview() {
+  const form = document.getElementById("serviceForm");
+  const imageInput = form.elements.image_file;
+
+  if (!imageInput) return;
+
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files?.[0];
+
+    if (!file) {
+      const currentUrl = form.elements.image.value || "";
+      showImagePreview(currentUrl);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    showImagePreview(previewUrl);
+  });
+}
+
 async function checkLogin() {
   const data = await api("/api/me");
   if (data.owner) showDashboard();
@@ -46,6 +112,7 @@ async function checkLogin() {
 function showDashboard() {
   document.getElementById("loginScreen").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
+  setupImageFilePreview();
   loadAll();
 }
 
@@ -210,6 +277,8 @@ function editService(service) {
     form.elements.image_file.value = "";
   }
 
+  showImagePreview(serviceImage(service));
+
   const button = form.querySelector("button[type='submit']");
   button.textContent = "Save Service Changes";
 
@@ -235,6 +304,8 @@ function cancelEditService() {
 
   const form = document.getElementById("serviceForm");
   form.reset();
+
+  showImagePreview("");
 
   const button = form.querySelector("button[type='submit']");
   button.textContent = "Add Service";
@@ -295,6 +366,7 @@ document.getElementById("serviceForm").addEventListener("submit", async (e) => {
     });
 
     form.reset();
+    showImagePreview("");
   }
 
   loadServices();
