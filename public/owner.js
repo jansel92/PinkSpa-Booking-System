@@ -10,6 +10,34 @@ async function api(url, options = {}) {
 
 let editingServiceId = null;
 
+function serviceImage(service) {
+  if (service.image) return service.image;
+
+  const category = (service.category || "").toLowerCase();
+  const name = (service.name || "").toLowerCase();
+  const text = category + " " + name;
+
+  if (text.includes("pedi") || text.includes("toe") || text.includes("foot")) {
+    return "/images/pedicure/pedi1.png";
+  }
+
+  if (text.includes("lash") || text.includes("eyelash")) {
+    return "/images/lashes/lashes1.jpeg";
+  }
+
+  if (
+    text.includes("brow") ||
+    text.includes("eyebrow") ||
+    text.includes("wax") ||
+    text.includes("henna") ||
+    text.includes("lamination")
+  ) {
+    return "/images/brows/brows1.jpeg";
+  }
+
+  return "/images/nails/nails1.jpeg";
+}
+
 async function checkLogin() {
   const data = await api("/api/me");
   if (data.owner) showDashboard();
@@ -146,10 +174,18 @@ async function loadServices() {
     const row = document.createElement("div");
     row.className = "service-row";
     row.innerHTML = `
-      <div>
-        <strong>${service.name}</strong><br>
-        <small>${service.category} • ${service.price} • ${service.duration} min</small>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <img
+          src="${serviceImage(service)}"
+          alt="${service.name}"
+          style="width:70px;height:70px;object-fit:cover;border-radius:16px;border:1px solid #ffd3e4;"
+        />
+        <div>
+          <strong>${service.name}</strong><br>
+          <small>${service.category} • ${service.price} • ${service.duration} min</small>
+        </div>
       </div>
+
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button onclick='editService(${JSON.stringify(service)})'>Edit</button>
         <button onclick="deleteService(${service.id})">Remove</button>
@@ -169,6 +205,10 @@ function editService(service) {
   form.elements.price.value = service.price || "";
   form.elements.duration.value = service.duration || 60;
   form.elements.image.value = service.image || "";
+
+  if (form.elements.image_file) {
+    form.elements.image_file.value = "";
+  }
 
   const button = form.querySelector("button[type='submit']");
   button.textContent = "Save Service Changes";
