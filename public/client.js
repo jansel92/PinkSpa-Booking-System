@@ -5,6 +5,20 @@ const imageFallbacks = {
   brows: "/images/brows/brows1.jpeg"
 };
 
+const allTimes = [
+  "9:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "12:00 PM",
+  "12:30 PM",
+  "1:00 PM",
+  "1:30 PM",
+  "2:00 PM",
+  "2:30 PM"
+];
+
 function categoryImage(service) {
   if (service.image) return service.image;
 
@@ -43,6 +57,92 @@ function statusText(status) {
   };
 
   return statuses[status] || status;
+}
+
+function renderTimeOptions(availableTimes) {
+  const timeSelect = document.querySelector('select[name="appointment_time"]');
+  if (!timeSelect) return;
+
+  timeSelect.innerHTML = "";
+
+  if (!availableTimes.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No times available";
+    timeSelect.appendChild(option);
+    timeSelect.disabled = true;
+    return;
+  }
+
+  timeSelect.disabled = false;
+
+  availableTimes.forEach(time => {
+    const option = document.createElement("option");
+    option.value = time;
+    option.textContent = time;
+    timeSelect.appendChild(option);
+  });
+}
+
+function isWeekend(dateValue) {
+  const date = new Date(dateValue + "T00:00:00");
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
+async function updateAvailableTimes() {
+  const dateInput = document.querySelector('input[name="appointment_date"]');
+  const message = document.getElementById("bookingMessage");
+
+  if (!dateInput || !dateInput.value) {
+    renderTimeOptions(allTimes);
+    return;
+  }
+
+  if (isWeekend(dateInput.value)) {
+    renderTimeOptions([]);
+    if (message) {
+      message.textContent = "PinkSpa is closed on Saturdays and Sundays. Please choose Monday through Friday.";
+    }
+    return;
+  }
+
+  if (message) message.textContent = "";
+
+  try {
+    const response = await fetch(`/api/booked-times?date=${encodeURIComponent(dateInput.value)}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      renderTimeOptions(allTimes);
+      return;
+    }
+
+    const bookedTimes = data.bookedTimes || [];
+    const availableTimes = allTimes.filter(time => !bookedTimes.includes(time));
+
+    renderTimeOptions(availableTimes);
+
+    if (!availableTimes.length && message) {
+      message.textContent = "No times are available for this date. Please choose another date.";
+    }
+  } catch (error) {
+    renderTimeOptions(allTimes);
+  }
+}
+
+function setupBookingDateRules() {
+  const dateInput = document.querySelector('input[name="appointment_date"]');
+  if (!dateInput) return;
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  dateInput.min = `${yyyy}-${mm}-${dd}`;
+
+  dateInput.addEventListener("change", updateAvailableTimes);
+  renderTimeOptions(allTimes);
 }
 
 async function loadSettings() {
@@ -112,6 +212,16 @@ if (bookingForm) {
     const payload = Object.fromEntries(form.entries());
     const message = document.getElementById("bookingMessage");
 
+    if (isWeekend(payload.appointment_date)) {
+      message.textContent = "PinkSpa is closed on Saturdays and Sundays. Please choose Monday through Friday.";
+      return;
+    }
+
+    if (!payload.appointment_time) {
+      message.textContent = "Please choose an available time.";
+      return;
+    }
+
     const response = await fetch("/api/appointments", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -122,10 +232,12 @@ if (bookingForm) {
 
     if (!response.ok) {
       message.textContent = data.error || "Something went wrong.";
+      await updateAvailableTimes();
       return;
     }
 
     e.target.reset();
+    renderTimeOptions(allTimes);
     message.textContent = "Your appointment request was sent to PinkSpa. You can check your appointment status using your phone number.";
   });
 }
@@ -168,3 +280,4 @@ if (statusForm) {
 
 loadSettings();
 loadServices();
+setupBookingDateRules();
