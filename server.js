@@ -273,7 +273,26 @@ app.get("/api/appointments", requireOwner, (req, res) => {
   const appts = db.prepare("SELECT * FROM appointments ORDER BY appointment_date DESC, appointment_time DESC, id DESC").all();
   res.json(appts);
 });
+app.get("/api/booked-times", (req, res) => {
+  const date = String(req.query.date || "").trim();
 
+  if (!date) {
+    return res.status(400).json({
+      error: "Date is required."
+    });
+  }
+
+  const booked = db.prepare(`
+    SELECT appointment_time
+    FROM appointments
+    WHERE appointment_date = ?
+      AND status IN ('pending', 'confirmed')
+  `).all(date);
+
+  res.json({
+    bookedTimes: booked.map(row => row.appointment_time)
+  });
+});
 app.get("/api/appointment-status", (req, res) => {
   const phone = String(req.query.phone || "").trim();
 
