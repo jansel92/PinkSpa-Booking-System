@@ -316,7 +316,14 @@ app.get("/api/appointment-status", (req, res) => {
 app.post("/api/appointments", async (req, res) => {
   const { client_name, client_phone, client_email, service_id, appointment_date, appointment_time, notes } = req.body; const bookingDate = new Date(appointment_date + "T00:00:00");
 const day = bookingDate.getDay();
+const bookingDate = new Date(appointment_date + "T00:00:00");
+const day = bookingDate.getDay();
 
+if (day === 0 || day === 6) {
+  return res.status(400).json({
+    error: "PinkSpa is closed on Saturdays and Sundays."
+  });
+}
 if (day === 0 || day === 6) {
   return res.status(400).json({
     error: "PinkSpa is closed on Saturdays and Sundays."
