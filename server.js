@@ -20,8 +20,6 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "pinkspa-dev-secret-change-
 
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "pinkspaadmin@gmail.com";
 
-const EMAIL_HOST = process.env.EMAIL_HOST;
-const EMAIL_PORT = Number(process.env.EMAIL_PORT || 587);
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 
@@ -243,7 +241,9 @@ app.post("/api/upload-service-image", requireOwner, upload.single("image"), (req
 
 app.post("/api/services", requireOwner, (req, res) => {
   const { name, category, price, duration, image } = req.body;
-  if (!name || !category || !price) return res.status(400).json({ error: "Name, category, and price are required." });
+  if (!name || !category || !price) {
+    return res.status(400).json({ error: "Name, category, and price are required." });
+  }
 
   const result = db.prepare(`
     INSERT INTO services (name, category, price, duration, image)
@@ -273,13 +273,12 @@ app.get("/api/appointments", requireOwner, (req, res) => {
   const appts = db.prepare("SELECT * FROM appointments ORDER BY appointment_date DESC, appointment_time DESC, id DESC").all();
   res.json(appts);
 });
+
 app.get("/api/booked-times", (req, res) => {
   const date = String(req.query.date || "").trim();
 
   if (!date) {
-    return res.status(400).json({
-      error: "Date is required."
-    });
+    return res.status(400).json({ error: "Date is required." });
   }
 
   const booked = db.prepare(`
@@ -293,6 +292,7 @@ app.get("/api/booked-times", (req, res) => {
     bookedTimes: booked.map(row => row.appointment_time)
   });
 });
+
 app.get("/api/appointment-status", (req, res) => {
   const phone = String(req.query.phone || "").trim();
 
@@ -314,35 +314,47 @@ app.get("/api/appointment-status", (req, res) => {
 });
 
 app.post("/api/appointments", async (req, res) => {
-  const { client_name, client_phone, client_email, service_id, appointment_date, appointment_time, notes } = req.body; const bookingDate = new Date(appointment_date + "T00:00:00");
-const day = bookingDate.getDay();
-const bookingDate = new Date(appointment_date + "T00:00:00");
-const day = bookingDate.getDay();
+  const {
+    client_name,
+    client_phone,
+    client_email,
+    service_id,
+    appointment_date,
+    appointment_time,
+    notes
+  } = req.body;
 
-if (day === 0 || day === 6) {
-  return res.status(400).json({
-    error: "PinkSpa is closed on Saturdays and Sundays."
-  });
-}
   if (!client_name || !client_phone || !service_id || !appointment_date || !appointment_time) {
     return res.status(400).json({ error: "Name, phone, service, date, and time are required." });
+  }
+
+  const bookingDate = new Date(appointment_date + "T00:00:00");
+  const day = bookingDate.getDay();
+
+  if (day === 0 || day === 6) {
+    return res.status(400).json({
+      error: "PinkSpa is closed on Saturdays and Sundays."
+    });
   }
 
   const service = db.prepare("SELECT * FROM services WHERE id = ? AND active = 1").get(service_id);
   if (!service) return res.status(400).json({ error: "Service not found." });
 
+  const cleanAppointmentTime = normalizeTime(appointment_time);
+
   const existing = db.prepare(`
-    SELECT * FROM appointments
+    SELECT *
+    FROM appointments
     WHERE appointment_date = ?
       AND appointment_time = ?
       AND status IN ('pending', 'confirmed')
-  `).get(appointment_date, normalizeTime(appointment_time));
+  `).get(appointment_date, cleanAppointmentTime);
 
   if (existing) {
-    return res.status(409).json({ error: "That time already has an appointment request. Please choose another time." });
+    return res.status(409).json({
+      error: "That time already has an appointment request. Please choose another time."
+    });
   }
-
-  const cleanAppointmentTime = normalizeTime(appointment_time);
 
   const result = db.prepare(`
     INSERT INTO appointments
