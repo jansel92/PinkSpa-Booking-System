@@ -324,12 +324,6 @@ if (day === 0 || day === 6) {
     error: "PinkSpa is closed on Saturdays and Sundays."
   });
 }
-if (day === 0 || day === 6) {
-  return res.status(400).json({
-    error: "PinkSpa is closed on Saturdays and Sundays."
-  });
-}
-
   if (!client_name || !client_phone || !service_id || !appointment_date || !appointment_time) {
     return res.status(400).json({ error: "Name, phone, service, date, and time are required." });
   }
