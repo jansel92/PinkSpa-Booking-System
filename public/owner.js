@@ -143,7 +143,12 @@ document.querySelectorAll(".tab").forEach(btn => {
 });
 
 async function loadAll() {
-  await Promise.all([loadAppointments(), loadServices(), loadSettings()]);
+  await Promise.all([
+    loadAppointments(),
+    loadServices(),
+    loadSettings(),
+    loadBlockedDays()
+  ]);
 }
 
 function statusLabel(status) {
@@ -394,3 +399,70 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
 });
 
 checkLogin();
+async function loadBlockedDays() {
+  const list = document.getElementById("blockedDaysList");
+
+  if (!list) return;
+
+  const days = await api("/api/blocked-days");
+
+  list.innerHTML = "";
+
+  if (!days.length) {
+    list.innerHTML = "<p>No blocked dates.</p>";
+    return;
+  }
+
+  days.forEach(day => {
+    const row = document.createElement("div");
+
+    row.className = "service-row";
+
+    row.innerHTML = `
+      <div>
+        <strong>${day.block_date}</strong><br>
+        <small>${day.reason || "Unavailable"}</small>
+      </div>
+
+      <button onclick="deleteBlockedDay(${day.id})">
+        Remove
+      </button>
+    `;
+
+    list.appendChild(row);
+  });
+}
+
+async function deleteBlockedDay(id) {
+  if (!confirm("Remove this blocked date?")) return;
+
+  await api(`/api/blocked-days/${id}`, {
+    method: "DELETE"
+  });
+
+  loadBlockedDays();
+}
+
+const blockedDayForm = document.getElementById("blockedDayForm");
+
+if (blockedDayForm) {
+  blockedDayForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = Object.fromEntries(
+      new FormData(e.target).entries()
+    );
+
+    await api("/api/blocked-days", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    e.target.reset();
+
+    document.getElementById("blockedDayMessage").textContent =
+      "Date blocked successfully.";
+
+    loadBlockedDays();
+  });
+}
