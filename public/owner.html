@@ -11,26 +11,14 @@
     <form id="loginForm" class="login-card" autocomplete="off">
       <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="login-logo" />
       <h1>Owner Login</h1>
-      <p>Manage appointments, services, and prices.</p>
+      <p>Manage appointments, services, prices, and blocked dates.</p>
 
       <label>Email
-        <input
-          name="email"
-          type="email"
-          placeholder="Enter owner email"
-          autocomplete="off"
-          required
-        />
+        <input name="email" type="email" placeholder="Enter owner email" autocomplete="off" required />
       </label>
 
       <label>Password
-        <input
-          name="password"
-          type="password"
-          placeholder="Enter owner password"
-          autocomplete="new-password"
-          required
-        />
+        <input name="password" type="password" placeholder="Enter owner password" autocomplete="new-password" required />
       </label>
 
       <button class="btn primary full" type="submit">Login</button>
@@ -51,6 +39,7 @@
 
       <button data-tab="appointments" class="tab active">Appointments</button>
       <button data-tab="services" class="tab">Services & Prices</button>
+      <button data-tab="blocked" class="tab">Blocked Dates</button>
       <button data-tab="settings" class="tab">Business Settings</button>
       <button id="logoutBtn" class="logout">Logout</button>
     </aside>
@@ -119,6 +108,33 @@
           <div class="panel">
             <h2>Current Services</h2>
             <div id="servicesList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="blockedTab" class="tab-content hidden">
+        <div class="grid-two">
+          <div class="panel">
+            <h2>Add Day Off</h2>
+
+            <form id="blockedDayForm">
+              <label>Date
+                <input type="date" name="block_date" required />
+              </label>
+
+              <label>Reason
+                <input type="text" name="reason" placeholder="Vacation, Holiday, Personal Day..." />
+              </label>
+
+              <button class="btn primary full" type="submit">Block Date</button>
+            </form>
+
+            <p id="blockedDayMessage" class="message"></p>
+          </div>
+
+          <div class="panel">
+            <h2>Blocked Dates</h2>
+            <div id="blockedDaysList"></div>
           </div>
         </div>
       </section>
