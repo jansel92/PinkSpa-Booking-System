@@ -73,15 +73,18 @@ if (EMAIL_USER && EMAIL_PASS) {
 app.use(helmet({
   contentSecurityPolicy: false
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: "lax" }
 }));
+
 app.use(express.static(path.join(__dirname, "public")));
 
 function setupDatabase() {
@@ -139,12 +142,14 @@ function setupDatabase() {
   `);
 
   const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(OWNER_EMAIL);
+
   if (!owner) {
     const hash = bcrypt.hashSync(OWNER_PASSWORD, 10);
     db.prepare("INSERT INTO owner (email, password_hash) VALUES (?, ?)").run(OWNER_EMAIL, hash);
   }
 
   const settings = db.prepare("SELECT * FROM business_settings WHERE id = 1").get();
+
   if (!settings) {
     db.prepare(`
       INSERT INTO business_settings (id, business_name, city, phone, hours)
@@ -153,8 +158,10 @@ function setupDatabase() {
   }
 
   const count = db.prepare("SELECT COUNT(*) AS total FROM services").get().total;
+
   if (count === 0) {
     const insert = db.prepare("INSERT INTO services (name, category, price, duration, image) VALUES (?, ?, ?, ?, ?)");
+
     const starter = [
       ["Gel Manicure", "Nails", "Set price", 60, "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=85"],
       ["Acrylic Full Set", "Nails", "Set price", 90, "https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=900&q=85"],
@@ -163,9 +170,11 @@ function setupDatabase() {
       ["Hybrid Lash Set", "Lashes", "Set price", 120, "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&w=900&q=85"],
       ["Eyebrow Wax", "Eyebrows", "Set price", 30, "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=900&q=85"]
     ];
+
     starter.forEach(s => insert.run(...s));
   }
 }
+
 setupDatabase();
 
 function requireOwner(req, res, next) {
@@ -217,11 +226,13 @@ app.get("/api/settings", (req, res) => {
 
 app.put("/api/settings", requireOwner, (req, res) => {
   const { business_name, city, phone, email, instagram, address, hours } = req.body;
+
   db.prepare(`
     UPDATE business_settings
     SET business_name=?, city=?, phone=?, email=?, instagram=?, address=?, hours=?
     WHERE id=1
   `).run(business_name, city, phone, email, instagram, address, hours);
+
   res.json({ success: true });
 });
 
@@ -241,6 +252,7 @@ app.post("/api/upload-service-image", requireOwner, upload.single("image"), (req
 
 app.post("/api/services", requireOwner, (req, res) => {
   const { name, category, price, duration, image } = req.body;
+
   if (!name || !category || !price) {
     return res.status(400).json({ error: "Name, category, and price are required." });
   }
@@ -255,6 +267,7 @@ app.post("/api/services", requireOwner, (req, res) => {
 
 app.put("/api/services/:id", requireOwner, (req, res) => {
   const { name, category, price, duration, image, active } = req.body;
+
   db.prepare(`
     UPDATE services
     SET name=?, category=?, price=?, duration=?, image=?, active=?
@@ -281,6 +294,20 @@ app.get("/api/booked-times", (req, res) => {
     return res.status(400).json({ error: "Date is required." });
   }
 
+  const blockedDay = db.prepare(`
+    SELECT *
+    FROM blocked_times
+    WHERE block_date = ?
+  `).get(date);
+
+  if (blockedDay) {
+    return res.json({
+      blocked: true,
+      reason: blockedDay.reason || "Unavailable",
+      bookedTimes: []
+    });
+  }
+
   const booked = db.prepare(`
     SELECT appointment_time
     FROM appointments
@@ -289,6 +316,7 @@ app.get("/api/booked-times", (req, res) => {
   `).all(date);
 
   res.json({
+    blocked: false,
     bookedTimes: booked.map(row => row.appointment_time)
   });
 });
@@ -337,8 +365,23 @@ app.post("/api/appointments", async (req, res) => {
     });
   }
 
+  const blockedDay = db.prepare(`
+    SELECT *
+    FROM blocked_times
+    WHERE block_date = ?
+  `).get(appointment_date);
+
+  if (blockedDay) {
+    return res.status(400).json({
+      error: "This date is unavailable. Please choose another day."
+    });
+  }
+
   const service = db.prepare("SELECT * FROM services WHERE id = ? AND active = 1").get(service_id);
-  if (!service) return res.status(400).json({ error: "Service not found." });
+
+  if (!service) {
+    return res.status(400).json({ error: "Service not found." });
+  }
 
   const cleanAppointmentTime = normalizeTime(appointment_time);
 
@@ -396,7 +439,9 @@ app.put("/api/appointments/:id/status", requireOwner, (req, res) => {
   const { status } = req.body;
   const allowed = ["pending", "confirmed", "cancelled", "completed", "no-show"];
 
-  if (!allowed.includes(status)) return res.status(400).json({ error: "Invalid status." });
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ error: "Invalid status." });
+  }
 
   db.prepare("UPDATE appointments SET status = ? WHERE id = ?").run(status, req.params.id);
   res.json({ success: true });
@@ -407,10 +452,51 @@ app.delete("/api/appointments/:id", requireOwner, (req, res) => {
   res.json({ success: true });
 });
 
+app.get("/api/blocked-days", requireOwner, (req, res) => {
+  const days = db.prepare(`
+    SELECT *
+    FROM blocked_times
+    ORDER BY block_date ASC
+  `).all();
+
+  res.json(days);
+});
+
+app.post("/api/blocked-days", requireOwner, (req, res) => {
+  const { block_date, reason } = req.body;
+
+  if (!block_date) {
+    return res.status(400).json({ error: "Date is required." });
+  }
+
+  const existing = db.prepare(`
+    SELECT *
+    FROM blocked_times
+    WHERE block_date = ?
+  `).get(block_date);
+
+  if (existing) {
+    return res.status(409).json({ error: "This date is already blocked." });
+  }
+
+  db.prepare(`
+    INSERT INTO blocked_times (block_date, start_time, end_time, reason)
+    VALUES (?, '', '', ?)
+  `).run(block_date, reason || "Unavailable");
+
+  res.json({ success: true });
+});
+
+app.delete("/api/blocked-days/:id", requireOwner, (req, res) => {
+  db.prepare("DELETE FROM blocked_times WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
 
   const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(email);
+
   if (!owner || !bcrypt.compareSync(password, owner.password_hash)) {
     return res.status(401).json({ error: "Invalid login." });
   }
