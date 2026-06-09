@@ -17,74 +17,48 @@ const PORT = process.env.PORT || 3000;
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "admin@pinkspa.com";
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "PinkSpa123!";
 const SESSION_SECRET = process.env.SESSION_SECRET || "pinkspa-dev-secret-change-me";
-
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "pinkspaadmin@gmail.com";
-
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 
 const uploadsDir = path.join(__dirname, "public", "uploads");
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDir);
-  },
-  filename: function (req, file, cb) {
-    const safeName = file.originalname
-      .toLowerCase()
-      .replace(/[^a-z0-9.]/g, "-")
-      .replace(/-+/g, "-");
-
-    const uniqueName = Date.now() + "-" + safeName;
-    cb(null, uniqueName);
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const safeName = file.originalname.toLowerCase().replace(/[^a-z0-9.]/g, "-").replace(/-+/g, "-");
+    cb(null, Date.now() + "-" + safeName);
   }
 });
 
 const upload = multer({
   storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024
-  },
-  fileFilter: function (req, file, cb) {
-    if (!file.mimetype.startsWith("image/")) {
-      return cb(new Error("Only image files are allowed."));
-    }
-
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) return cb(new Error("Only image files are allowed."));
     cb(null, true);
   }
 });
 
 let mailTransporter = null;
-
 if (EMAIL_USER && EMAIL_PASS) {
   mailTransporter = nodemailer.createTransport({
     service: "gmail",
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS
-    }
+    auth: { user: EMAIL_USER, pass: EMAIL_PASS }
   });
 }
 
-app.use(helmet({
-  contentSecurityPolicy: false
-}));
-
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: "lax" }
 }));
-
 app.use(express.static(path.join(__dirname, "public")));
 
 function setupDatabase() {
@@ -115,6 +89,7 @@ function setupDatabase() {
       service_name TEXT NOT NULL,
       appointment_date TEXT NOT NULL,
       appointment_time TEXT NOT NULL,
+      duration_minutes INTEGER DEFAULT 60,
       notes TEXT DEFAULT '',
       status TEXT DEFAULT 'pending',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -141,15 +116,18 @@ function setupDatabase() {
     );
   `);
 
-  const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(OWNER_EMAIL);
+  const appointmentColumns = db.prepare("PRAGMA table_info(appointments)").all().map(col => col.name);
+  if (!appointmentColumns.includes("duration_minutes")) {
+    db.prepare("ALTER TABLE appointments ADD COLUMN duration_minutes INTEGER DEFAULT 60").run();
+  }
 
+  const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(OWNER_EMAIL);
   if (!owner) {
     const hash = bcrypt.hashSync(OWNER_PASSWORD, 10);
     db.prepare("INSERT INTO owner (email, password_hash) VALUES (?, ?)").run(OWNER_EMAIL, hash);
   }
 
   const settings = db.prepare("SELECT * FROM business_settings WHERE id = 1").get();
-
   if (!settings) {
     db.prepare(`
       INSERT INTO business_settings (id, business_name, city, phone, hours)
@@ -158,23 +136,18 @@ function setupDatabase() {
   }
 
   const count = db.prepare("SELECT COUNT(*) AS total FROM services").get().total;
-
   if (count === 0) {
     const insert = db.prepare("INSERT INTO services (name, category, price, duration, image) VALUES (?, ?, ?, ?, ?)");
-
-    const starter = [
+    [
       ["Gel Manicure", "Nails", "Set price", 60, "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=85"],
       ["Acrylic Full Set", "Nails", "Set price", 90, "https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=900&q=85"],
       ["Spa Pedicure", "Pedi", "Set price", 60, "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=900&q=85"],
       ["Classic Lash Set", "Lashes", "Set price", 120, "https://images.unsplash.com/photo-1589710751893-f9a6770ad71b?auto=format&fit=crop&w=900&q=85"],
       ["Hybrid Lash Set", "Lashes", "Set price", 120, "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?auto=format&fit=crop&w=900&q=85"],
       ["Eyebrow Wax", "Eyebrows", "Set price", 30, "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=900&q=85"]
-    ];
-
-    starter.forEach(s => insert.run(...s));
+    ].forEach(s => insert.run(...s));
   }
 }
-
 setupDatabase();
 
 function requireOwner(req, res, next) {
@@ -184,6 +157,36 @@ function requireOwner(req, res, next) {
 
 function normalizeTime(t) {
   return String(t || "").trim();
+}
+
+function timeToMinutes(time) {
+  const clean = normalizeTime(time);
+  const match = clean.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return null;
+
+  let hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const period = match[3].toUpperCase();
+
+  if (period === "PM" && hour !== 12) hour += 12;
+  if (period === "AM" && hour === 12) hour = 0;
+
+  return hour * 60 + minute;
+}
+
+function minutesToTime(total) {
+  let hour = Math.floor(total / 60);
+  const minute = total % 60;
+  const period = hour >= 12 ? "PM" : "AM";
+
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+
+  return `${hour}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
+function rangesOverlap(startA, endA, startB, endB) {
+  return startA < endB && startB < endA;
 }
 
 async function sendAppointmentEmail(appointment) {
@@ -202,6 +205,7 @@ Email: ${appointment.client_email || "Not provided"}
 Service: ${appointment.service_name}
 Date: ${appointment.appointment_date}
 Time: ${appointment.appointment_time}
+Duration: ${appointment.duration_minutes || 60} minutes
 
 Notes:
 ${appointment.notes || "No notes provided."}
@@ -226,7 +230,6 @@ app.get("/api/settings", (req, res) => {
 
 app.put("/api/settings", requireOwner, (req, res) => {
   const { business_name, city, phone, email, instagram, address, hours } = req.body;
-
   db.prepare(`
     UPDATE business_settings
     SET business_name=?, city=?, phone=?, email=?, instagram=?, address=?, hours=?
@@ -242,20 +245,13 @@ app.get("/api/services", (req, res) => {
 });
 
 app.post("/api/upload-service-image", requireOwner, upload.single("image"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No image uploaded." });
-  }
-
-  const imagePath = "/uploads/" + req.file.filename;
-  res.json({ success: true, image: imagePath });
+  if (!req.file) return res.status(400).json({ error: "No image uploaded." });
+  res.json({ success: true, image: "/uploads/" + req.file.filename });
 });
 
 app.post("/api/services", requireOwner, (req, res) => {
   const { name, category, price, duration, image } = req.body;
-
-  if (!name || !category || !price) {
-    return res.status(400).json({ error: "Name, category, and price are required." });
-  }
+  if (!name || !category || !price) return res.status(400).json({ error: "Name, category, and price are required." });
 
   const result = db.prepare(`
     INSERT INTO services (name, category, price, duration, image)
@@ -283,16 +279,19 @@ app.delete("/api/services/:id", requireOwner, (req, res) => {
 });
 
 app.get("/api/appointments", requireOwner, (req, res) => {
-  const appts = db.prepare("SELECT * FROM appointments ORDER BY appointment_date DESC, appointment_time DESC, id DESC").all();
+  const appts = db.prepare(`
+    SELECT *
+    FROM appointments
+    ORDER BY appointment_date DESC, appointment_time DESC, id DESC
+  `).all();
+
   res.json(appts);
 });
 
 app.get("/api/booked-times", (req, res) => {
   const date = String(req.query.date || "").trim();
 
-  if (!date) {
-    return res.status(400).json({ error: "Date is required." });
-  }
+  if (!date) return res.status(400).json({ error: "Date is required." });
 
   const blockedDay = db.prepare(`
     SELECT *
@@ -304,34 +303,50 @@ app.get("/api/booked-times", (req, res) => {
     return res.json({
       blocked: true,
       reason: blockedDay.reason || "Unavailable",
-      bookedTimes: []
+      bookedTimes: [],
+      bookedAppointments: []
     });
   }
 
-  const booked = db.prepare(`
-    SELECT appointment_time
-    FROM appointments
-    WHERE appointment_date = ?
-      AND status IN ('pending', 'confirmed')
+  const bookedAppointments = db.prepare(`
+    SELECT
+      a.appointment_time,
+      COALESCE(a.duration_minutes, s.duration, 60) AS duration_minutes
+    FROM appointments a
+    LEFT JOIN services s ON a.service_id = s.id
+    WHERE a.appointment_date = ?
+      AND a.status IN ('pending', 'confirmed')
   `).all(date);
+
+  const occupiedSlots = new Set();
+
+  bookedAppointments.forEach(appt => {
+    const start = timeToMinutes(appt.appointment_time);
+    const duration = Number(appt.duration_minutes || 60);
+
+    if (start === null) return;
+
+    for (let t = start; t < start + duration; t += 30) {
+      occupiedSlots.add(minutesToTime(t));
+    }
+  });
 
   res.json({
     blocked: false,
-    bookedTimes: booked.map(row => row.appointment_time)
+    bookedTimes: Array.from(occupiedSlots),
+    bookedAppointments
   });
 });
 
 app.get("/api/appointment-status", (req, res) => {
   const phone = String(req.query.phone || "").trim();
 
-  if (!phone) {
-    return res.status(400).json({ error: "Phone number is required." });
-  }
+  if (!phone) return res.status(400).json({ error: "Phone number is required." });
 
   const cleanPhone = phone.replace(/\D/g, "");
 
   const appointments = db.prepare(`
-    SELECT id, client_name, client_phone, service_name, appointment_date, appointment_time, status
+    SELECT id, client_name, client_phone, service_name, appointment_date, appointment_time, duration_minutes, status
     FROM appointments
     WHERE REPLACE(REPLACE(REPLACE(REPLACE(client_phone, '-', ''), '(', ''), ')', ''), ' ', '') LIKE ?
     ORDER BY appointment_date DESC, appointment_time DESC, id DESC
@@ -349,6 +364,7 @@ app.post("/api/appointments", async (req, res) => {
     service_id,
     appointment_date,
     appointment_time,
+    duration_minutes,
     notes
   } = req.body;
 
@@ -360,9 +376,7 @@ app.post("/api/appointments", async (req, res) => {
   const day = bookingDate.getDay();
 
   if (day === 0 || day === 6) {
-    return res.status(400).json({
-      error: "PinkSpa is closed on Saturdays and Sundays."
-    });
+    return res.status(400).json({ error: "PinkSpa is closed on Saturdays and Sundays." });
   }
 
   const blockedDay = db.prepare(`
@@ -372,37 +386,63 @@ app.post("/api/appointments", async (req, res) => {
   `).get(appointment_date);
 
   if (blockedDay) {
-    return res.status(400).json({
-      error: "This date is unavailable. Please choose another day."
-    });
+    return res.status(400).json({ error: "This date is unavailable. Please choose another day." });
   }
 
   const service = db.prepare("SELECT * FROM services WHERE id = ? AND active = 1").get(service_id);
-
-  if (!service) {
-    return res.status(400).json({ error: "Service not found." });
-  }
+  if (!service) return res.status(400).json({ error: "Service not found." });
 
   const cleanAppointmentTime = normalizeTime(appointment_time);
+  const requestedStart = timeToMinutes(cleanAppointmentTime);
 
-  const existing = db.prepare(`
-    SELECT *
-    FROM appointments
-    WHERE appointment_date = ?
-      AND appointment_time = ?
-      AND status IN ('pending', 'confirmed')
-  `).get(appointment_date, cleanAppointmentTime);
+  if (requestedStart === null) {
+    return res.status(400).json({ error: "Invalid appointment time." });
+  }
 
-  if (existing) {
+  const requestedDuration = Math.max(
+    30,
+    Number(duration_minutes || service.duration || 60)
+  );
+
+  const requestedEnd = requestedStart + requestedDuration;
+
+  const businessEnd = timeToMinutes("2:30 PM") + 30;
+
+  if (requestedEnd > businessEnd) {
     return res.status(409).json({
-      error: "That time already has an appointment request. Please choose another time."
+      error: "There is not enough time available for the selected services at this start time. Please choose an earlier time."
+    });
+  }
+
+  const existingAppointments = db.prepare(`
+    SELECT
+      a.appointment_time,
+      COALESCE(a.duration_minutes, s.duration, 60) AS duration_minutes
+    FROM appointments a
+    LEFT JOIN services s ON a.service_id = s.id
+    WHERE a.appointment_date = ?
+      AND a.status IN ('pending', 'confirmed')
+  `).all(appointment_date);
+
+  const hasOverlap = existingAppointments.some(appt => {
+    const existingStart = timeToMinutes(appt.appointment_time);
+    const existingDuration = Number(appt.duration_minutes || 60);
+    if (existingStart === null) return false;
+
+    const existingEnd = existingStart + existingDuration;
+    return rangesOverlap(requestedStart, requestedEnd, existingStart, existingEnd);
+  });
+
+  if (hasOverlap) {
+    return res.status(409).json({
+      error: "This appointment overlaps with another appointment. Please choose another time."
     });
   }
 
   const result = db.prepare(`
     INSERT INTO appointments
-    (client_name, client_phone, client_email, service_id, service_name, appointment_date, appointment_time, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    (client_name, client_phone, client_email, service_id, service_name, appointment_date, appointment_time, duration_minutes, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     client_name,
     client_phone,
@@ -411,6 +451,7 @@ app.post("/api/appointments", async (req, res) => {
     service.name,
     appointment_date,
     cleanAppointmentTime,
+    requestedDuration,
     notes || ""
   );
 
@@ -422,6 +463,7 @@ app.post("/api/appointments", async (req, res) => {
     service_name: service.name,
     appointment_date,
     appointment_time: cleanAppointmentTime,
+    duration_minutes: requestedDuration,
     notes: notes || ""
   };
 
@@ -439,9 +481,7 @@ app.put("/api/appointments/:id/status", requireOwner, (req, res) => {
   const { status } = req.body;
   const allowed = ["pending", "confirmed", "cancelled", "completed", "no-show"];
 
-  if (!allowed.includes(status)) {
-    return res.status(400).json({ error: "Invalid status." });
-  }
+  if (!allowed.includes(status)) return res.status(400).json({ error: "Invalid status." });
 
   db.prepare("UPDATE appointments SET status = ? WHERE id = ?").run(status, req.params.id);
   res.json({ success: true });
@@ -465,9 +505,7 @@ app.get("/api/blocked-days", requireOwner, (req, res) => {
 app.post("/api/blocked-days", requireOwner, (req, res) => {
   const { block_date, reason } = req.body;
 
-  if (!block_date) {
-    return res.status(400).json({ error: "Date is required." });
-  }
+  if (!block_date) return res.status(400).json({ error: "Date is required." });
 
   const existing = db.prepare(`
     SELECT *
@@ -475,9 +513,7 @@ app.post("/api/blocked-days", requireOwner, (req, res) => {
     WHERE block_date = ?
   `).get(block_date);
 
-  if (existing) {
-    return res.status(409).json({ error: "This date is already blocked." });
-  }
+  if (existing) return res.status(409).json({ error: "This date is already blocked." });
 
   db.prepare(`
     INSERT INTO blocked_times (block_date, start_time, end_time, reason)
@@ -494,7 +530,6 @@ app.delete("/api/blocked-days/:id", requireOwner, (req, res) => {
 
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
-
   const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(email);
 
   if (!owner || !bcrypt.compareSync(password, owner.password_hash)) {
