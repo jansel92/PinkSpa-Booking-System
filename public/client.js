@@ -19,6 +19,8 @@ const allTimes = [
   "2:30 PM"
 ];
 
+let allServices = [];
+
 function categoryImage(service) {
   if (service.image) return service.image;
 
@@ -57,6 +59,41 @@ function statusText(status) {
   };
 
   return statuses[status] || status;
+}
+
+function getSelectedServices() {
+  const checked = document.querySelectorAll(".service-choice:checked");
+
+  return Array.from(checked)
+    .map(input => allServices.find(service => String(service.id) === String(input.value)))
+    .filter(Boolean);
+}
+
+function updateBookingSummary() {
+  const selected = getSelectedServices();
+  const hiddenServiceInput = document.getElementById("serviceSelect");
+  const summary = document.getElementById("bookingSummary");
+
+  if (!hiddenServiceInput || !summary) return;
+
+  if (!selected.length) {
+    hiddenServiceInput.value = "";
+    summary.textContent = "Select one or more services.";
+    return;
+  }
+
+  hiddenServiceInput.value = selected[0].id;
+
+  const totalMinutes = selected.reduce((sum, service) => {
+    return sum + Number(service.duration || 0);
+  }, 0);
+
+  const serviceNames = selected.map(service => service.name).join(", ");
+
+  summary.innerHTML = `
+    <strong>Selected:</strong> ${serviceNames}<br>
+    <strong>Total estimated time:</strong> ${totalMinutes} minutes
+  `;
 }
 
 function renderTimeOptions(availableTimes) {
@@ -156,16 +193,17 @@ function setupBookingDateRules() {
 }
 
 function selectServiceForBooking(serviceId, serviceName) {
-  const select = document.getElementById("serviceSelect");
+  const checkbox = document.querySelector(`.service-choice[value="${serviceId}"]`);
   const bookSection = document.getElementById("book");
   const message = document.getElementById("bookingMessage");
 
-  if (select) {
-    select.value = String(serviceId);
+  if (checkbox) {
+    checkbox.checked = true;
+    updateBookingSummary();
   }
 
   if (message) {
-    message.textContent = `${serviceName} selected. Please choose your date and time.`;
+    message.textContent = `${serviceName} selected. You can add more services if needed.`;
   }
 
   if (bookSection) {
@@ -201,13 +239,16 @@ async function loadSettings() {
 
 async function loadServices() {
   const services = await fetch("/api/services").then(r => r.json());
-  const grid = document.getElementById("serviceGrid");
-  const select = document.getElementById("serviceSelect");
+  allServices = services;
 
-  if (!grid || !select) return;
+  const grid = document.getElementById("serviceGrid");
+  const hiddenServiceInput = document.getElementById("serviceSelect");
+  const checkboxList = document.getElementById("serviceCheckboxList");
+
+  if (!grid || !hiddenServiceInput || !checkboxList) return;
 
   grid.innerHTML = "";
-  select.innerHTML = "";
+  checkboxList.innerHTML = "";
 
   services.forEach(service => {
     const card = document.createElement("article");
@@ -241,11 +282,29 @@ async function loadServices() {
       });
     }
 
-    const option = document.createElement("option");
-    option.value = service.id;
-    option.textContent = `${service.name} - ${service.price}`;
-    select.appendChild(option);
+    const serviceOption = document.createElement("label");
+    serviceOption.className = "service-checkbox-item";
+
+    serviceOption.innerHTML = `
+      <input
+        type="checkbox"
+        class="service-choice"
+        value="${service.id}"
+      />
+      <span>
+        <strong>${service.name}</strong><br>
+        <small>${service.category} • ${service.price} • ${service.duration} min</small>
+      </span>
+    `;
+
+    const checkbox = serviceOption.querySelector("input");
+
+    checkbox.addEventListener("change", updateBookingSummary);
+
+    checkboxList.appendChild(serviceOption);
   });
+
+  updateBookingSummary();
 }
 
 const bookingForm = document.getElementById("bookingForm");
@@ -257,6 +316,31 @@ if (bookingForm) {
     const form = new FormData(e.target);
     const payload = Object.fromEntries(form.entries());
     const message = document.getElementById("bookingMessage");
+
+    const selectedServices = getSelectedServices();
+
+    if (!selectedServices.length) {
+      message.textContent = "Please select at least one service.";
+      return;
+    }
+
+    payload.service_id = selectedServices[0].id;
+
+    const selectedServiceText = selectedServices
+      .map(service => `${service.name} (${service.duration} min)`)
+      .join(", ");
+
+    const totalMinutes = selectedServices.reduce((sum, service) => {
+      return sum + Number(service.duration || 0);
+    }, 0);
+
+    payload.notes = `
+Selected Services: ${selectedServiceText}
+Total Estimated Time: ${totalMinutes} minutes
+
+Client Notes:
+${payload.notes || "No notes added."}
+`;
 
     if (isWeekend(payload.appointment_date)) {
       message.textContent = "PinkSpa is closed on Saturdays and Sundays. Please choose Monday through Friday.";
@@ -283,7 +367,14 @@ if (bookingForm) {
     }
 
     e.target.reset();
+
+    document.querySelectorAll(".service-choice").forEach(input => {
+      input.checked = false;
+    });
+
+    updateBookingSummary();
     renderTimeOptions(allTimes);
+
     message.textContent = "Your appointment request was sent to PinkSpa. You can check your appointment status using your phone number.";
   });
 }
