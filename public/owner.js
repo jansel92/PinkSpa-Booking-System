@@ -40,7 +40,6 @@ function serviceImage(service) {
 
 function ensureImagePreviewBox() {
   const form = document.getElementById("serviceForm");
-
   let previewBox = document.getElementById("serviceImagePreviewBox");
 
   if (!previewBox) {
@@ -120,8 +119,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const payload = Object.fromEntries(new FormData(e.target).entries());
   const msg = document.getElementById("loginMessage");
+
   try {
-    await api("/api/login", { method: "POST", body: JSON.stringify(payload) });
+    await api("/api/login", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
     showDashboard();
   } catch (err) {
     msg.textContent = err.message;
@@ -137,7 +140,11 @@ document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    document.querySelectorAll(".tab-content").forEach(section => section.classList.add("hidden"));
+
+    document.querySelectorAll(".tab-content").forEach(section => {
+      section.classList.add("hidden");
+    });
+
     document.getElementById(btn.dataset.tab + "Tab").classList.remove("hidden");
   });
 });
@@ -170,10 +177,46 @@ async function loadAppointments() {
 
   const pending = appointments.filter(a => a.status === "pending").length;
   const confirmed = appointments.filter(a => a.status === "confirmed").length;
+  const completed = appointments.filter(a => a.status === "completed").length;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const todayCount = appointments.filter(a => {
+    return a.appointment_date === today;
+  }).length;
+
+  const currentDate = new Date();
+
+  const weekAgo = new Date();
+  weekAgo.setDate(currentDate.getDate() - 7);
+
+  const weekCount = appointments.filter(a => {
+    const apptDate = new Date(a.appointment_date + "T00:00:00");
+    return apptDate >= weekAgo;
+  }).length;
+
+  const monthCount = appointments.filter(a => {
+    const apptDate = new Date(a.appointment_date + "T00:00:00");
+
+    return (
+      apptDate.getMonth() === currentDate.getMonth() &&
+      apptDate.getFullYear() === currentDate.getFullYear()
+    );
+  }).length;
 
   document.getElementById("statAppointments").textContent = appointments.length;
   document.getElementById("statPending").textContent = pending;
   document.getElementById("statConfirmed").textContent = confirmed;
+
+  const statToday = document.getElementById("statToday");
+  const statWeek = document.getElementById("statWeek");
+  const statMonth = document.getElementById("statMonth");
+  const statCompleted = document.getElementById("statCompleted");
+
+  if (statToday) statToday.textContent = todayCount;
+  if (statWeek) statWeek.textContent = weekCount;
+  if (statMonth) statMonth.textContent = monthCount;
+  if (statCompleted) statCompleted.textContent = completed;
 
   if (!appointments.length) {
     list.innerHTML = "<p>No appointment requests yet.</p>";
@@ -190,6 +233,7 @@ async function loadAppointments() {
       <span><b>Phone:</b> ${appt.client_phone}</span>
       <span><b>Date:</b> ${appt.appointment_date}</span>
       <span><b>Time:</b> ${appt.appointment_time}</span>
+      <span><b>Duration:</b> ${appt.duration_minutes || 60} minutes</span>
       <span><b>Status:</b> ${statusLabel(appt.status)}</span>
       <p><b>Notes:</b> ${appt.notes || "No notes added."}</p>
 
@@ -212,6 +256,7 @@ async function setStatus(id, status) {
     method: "PUT",
     body: JSON.stringify({ status })
   });
+
   loadAppointments();
 }
 
@@ -232,19 +277,26 @@ async function completeAppointment(id) {
 
 async function deleteAppointment(id) {
   if (!confirm("Delete this appointment request permanently?")) return;
-  await api(`/api/appointments/${id}`, { method: "DELETE" });
+
+  await api(`/api/appointments/${id}`, {
+    method: "DELETE"
+  });
+
   loadAppointments();
 }
 
 async function loadServices() {
   const services = await api("/api/services");
+
   document.getElementById("statServices").textContent = services.length;
+
   const list = document.getElementById("servicesList");
   list.innerHTML = "";
 
   services.forEach(service => {
     const row = document.createElement("div");
     row.className = "service-row";
+
     row.innerHTML = `
       <div style="display:flex; align-items:center; gap:14px;">
         <img
@@ -263,6 +315,7 @@ async function loadServices() {
         <button onclick="deleteService(${service.id})">Remove</button>
       </div>
     `;
+
     list.appendChild(row);
   });
 }
@@ -288,6 +341,7 @@ function editService(service) {
   button.textContent = "Save Service Changes";
 
   let cancelButton = document.getElementById("cancelEditService");
+
   if (!cancelButton) {
     cancelButton = document.createElement("button");
     cancelButton.id = "cancelEditService";
@@ -301,7 +355,10 @@ function editService(service) {
     form.appendChild(cancelButton);
   }
 
-  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  form.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 }
 
 function cancelEditService() {
@@ -323,7 +380,6 @@ document.getElementById("serviceForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const form = e.target;
-
   let imagePath = form.elements.image.value || "";
 
   const imageFile = form.elements.image_file?.files?.[0];
@@ -379,26 +435,38 @@ document.getElementById("serviceForm").addEventListener("submit", async (e) => {
 
 async function deleteService(id) {
   if (!confirm("Remove this service?")) return;
-  await api(`/api/services/${id}`, { method: "DELETE" });
+
+  await api(`/api/services/${id}`, {
+    method: "DELETE"
+  });
+
   loadServices();
 }
 
 async function loadSettings() {
   const settings = await api("/api/settings");
   const form = document.getElementById("settingsForm");
+
   Object.keys(settings).forEach(key => {
-    if (form.elements[key]) form.elements[key].value = settings[key] || "";
+    if (form.elements[key]) {
+      form.elements[key].value = settings[key] || "";
+    }
   });
 }
 
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const payload = Object.fromEntries(new FormData(e.target).entries());
-  await api("/api/settings", { method: "PUT", body: JSON.stringify(payload) });
+
+  await api("/api/settings", {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+
   document.getElementById("settingsMessage").textContent = "Settings saved.";
 });
 
-checkLogin();
 async function loadBlockedDays() {
   const list = document.getElementById("blockedDaysList");
 
@@ -415,7 +483,6 @@ async function loadBlockedDays() {
 
   days.forEach(day => {
     const row = document.createElement("div");
-
     row.className = "service-row";
 
     row.innerHTML = `
@@ -449,9 +516,7 @@ if (blockedDayForm) {
   blockedDayForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const payload = Object.fromEntries(
-      new FormData(e.target).entries()
-    );
+    const payload = Object.fromEntries(new FormData(e.target).entries());
 
     await api("/api/blocked-days", {
       method: "POST",
@@ -466,3 +531,5 @@ if (blockedDayForm) {
     loadBlockedDays();
   });
 }
+
+checkLogin();
