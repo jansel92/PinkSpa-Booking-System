@@ -158,10 +158,10 @@ async function loadSettings() {
   if (businessPhoneText) businessPhoneText.textContent = "☎ " + settings.phone;
   if (businessHoursText) businessHoursText.textContent = "🕘 " + settings.hours;
 
-  if (phoneLink) {
-    phoneLink.href = "tel:" + settings.phone;
-    phoneLink.textContent = "Call " + settings.phone;
-  }
+if (phoneLink) {
+  phoneLink.href = "tel:" + settings.phone;
+  phoneLink.textContent = "Call PinkSpa";
+}
 
   if (ctaPhone) {
     ctaPhone.href = "tel:" + settings.phone;
