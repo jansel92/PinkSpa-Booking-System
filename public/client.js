@@ -333,7 +333,8 @@ if (bookingForm) {
     const totalMinutes = selectedServices.reduce((sum, service) => {
       return sum + Number(service.duration || 0);
     }, 0);
-
+payload.duration_minutes = totalMinutes;
+    
     payload.notes = `
 Selected Services: ${selectedServiceText}
 Total Estimated Time: ${totalMinutes} minutes
