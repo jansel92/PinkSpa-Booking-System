@@ -118,6 +118,16 @@ async function updateAvailableTimes() {
       return;
     }
 
+    if (data.blocked) {
+      renderTimeOptions([]);
+      if (message) {
+        message.textContent = data.reason
+          ? `This date is unavailable: ${data.reason}. Please choose another date.`
+          : "This date is unavailable. Please choose another date.";
+      }
+      return;
+    }
+
     const bookedTimes = data.bookedTimes || [];
     const availableTimes = allTimes.filter(time => !bookedTimes.includes(time));
 
@@ -145,6 +155,27 @@ function setupBookingDateRules() {
   renderTimeOptions(allTimes);
 }
 
+function selectServiceForBooking(serviceId, serviceName) {
+  const select = document.getElementById("serviceSelect");
+  const bookSection = document.getElementById("book");
+  const message = document.getElementById("bookingMessage");
+
+  if (select) {
+    select.value = String(serviceId);
+  }
+
+  if (message) {
+    message.textContent = `${serviceName} selected. Please choose your date and time.`;
+  }
+
+  if (bookSection) {
+    bookSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+}
+
 async function loadSettings() {
   const settings = await fetch("/api/settings").then(r => r.json());
 
@@ -158,10 +189,10 @@ async function loadSettings() {
   if (businessPhoneText) businessPhoneText.textContent = "☎ " + settings.phone;
   if (businessHoursText) businessHoursText.textContent = "🕘 " + settings.hours;
 
-if (phoneLink) {
-  phoneLink.href = "tel:" + settings.phone;
-  phoneLink.textContent = "Call PinkSpa";
-}
+  if (phoneLink) {
+    phoneLink.href = "tel:" + settings.phone;
+    phoneLink.textContent = "Call PinkSpa";
+  }
 
   if (ctaPhone) {
     ctaPhone.href = "tel:" + settings.phone;
@@ -189,11 +220,26 @@ async function loadServices() {
         <h3>${service.name}</h3>
         <strong>${service.price}</strong>
         <p>${service.duration} minutes</p>
-        <a class="service-book-btn" href="#book">Book This Service</a>
+        <button
+          type="button"
+          class="service-book-btn"
+          data-service-id="${service.id}"
+          data-service-name="${service.name}"
+        >
+          Book This Service
+        </button>
       </div>
     `;
 
     grid.appendChild(card);
+
+    const bookButton = card.querySelector(".service-book-btn");
+
+    if (bookButton) {
+      bookButton.addEventListener("click", () => {
+        selectServiceForBooking(service.id, service.name);
+      });
+    }
 
     const option = document.createElement("option");
     option.value = service.id;
