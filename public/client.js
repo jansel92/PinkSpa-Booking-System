@@ -494,3 +494,22 @@ function setupGalleryLightbox() {
 }
 
 setupGalleryLightbox();
+function setupReviewSlider() {
+  const reviewGrid = document.querySelector(".reviews-grid");
+  const reviewCards = document.querySelectorAll(".review-card");
+
+  if (!reviewGrid || reviewCards.length === 0) return;
+
+  let index = 0;
+
+  setInterval(() => {
+    index = (index + 1) % reviewCards.length;
+
+    reviewGrid.scrollTo({
+      left: reviewCards[index].offsetLeft - reviewGrid.offsetLeft,
+      behavior: "smooth"
+    });
+  }, 4000);
+}
+
+setupReviewSlider();
