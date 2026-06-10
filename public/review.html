@@ -1,1 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leave a Review | PinkSpa</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" type="image/png" href="/images/favicon.png?v=300" />
+</head>
 
+<body>
+  <section class="login-screen">
+    <form id="reviewForm" class="login-card">
+      <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="login-logo" />
+
+      <h1>Leave a Review</h1>
+      <p>Thank you for visiting PinkSpa. We would love to hear about your experience.</p>
+
+      <label>Your Name
+        <input name="client_name" required placeholder="Your name" />
+      </label>
+
+      <label>Rating
+        <select name="rating" required>
+          <option value="5">★★★★★ 5 Stars</option>
+          <option value="4">★★★★ 4 Stars</option>
+          <option value="3">★★★ 3 Stars</option>
+          <option value="2">★★ 2 Stars</option>
+          <option value="1">★ 1 Star</option>
+        </select>
+      </label>
+
+      <label>Your Review
+        <textarea name="review_text" required placeholder="Write your review here..."></textarea>
+      </label>
+
+      <button class="btn primary full" type="submit">Submit Review</button>
+      <p id="reviewMessage" class="message"></p>
+    </form>
+  </section>
+
+  <script>
+    document.getElementById("reviewForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = Object.fromEntries(new FormData(e.target).entries());
+      const message = document.getElementById("reviewMessage");
+
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        message.textContent = data.error || "Something went wrong.";
+        return;
+      }
+
+      e.target.reset();
+      message.textContent = "Thank you! Your review was submitted to PinkSpa.";
+    });
+  </script>
+</body>
+</html>
