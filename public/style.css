@@ -68,6 +68,7 @@ body{
     url("/images/hero-luxury.png");
   background-size:cover;
   background-position:center;
+  background-repeat:no-repeat;
 }
 .hero-content{max-width:760px;color:white}
 .eyebrow{
