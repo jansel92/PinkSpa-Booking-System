@@ -1044,3 +1044,34 @@ footer{text-align:center;color:var(--muted);padding:28px}
     box-shadow: 0 20px 45px rgba(201, 24, 99, 0.18);
   }
 }
+.reviews-grid {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.reviews-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.review-card {
+  min-width: 320px;
+  transition: transform .4s ease, box-shadow .4s ease;
+}
+
+.review-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 50px rgba(201, 24, 99, 0.18);
+}
+
+@media (max-width: 700px) {
+  .reviews-grid {
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+  }
+
+  .review-card {
+    min-width: 85%;
+  }
+}
