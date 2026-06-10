@@ -114,6 +114,15 @@ function setupDatabase() {
       address TEXT DEFAULT '',
       hours TEXT DEFAULT '9:30 AM - 2:30 PM'
     );
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_name TEXT NOT NULL,
+      rating INTEGER NOT NULL,
+      review_text TEXT NOT NULL,
+      approved INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   const appointmentColumns = db.prepare("PRAGMA table_info(appointments)").all().map(col => col.name);
@@ -148,6 +157,7 @@ function setupDatabase() {
     ].forEach(s => insert.run(...s));
   }
 }
+
 setupDatabase();
 
 function requireOwner(req, res, next) {
@@ -405,7 +415,6 @@ app.post("/api/appointments", async (req, res) => {
   );
 
   const requestedEnd = requestedStart + requestedDuration;
-
   const businessEnd = timeToMinutes("2:30 PM") + 30;
 
   if (requestedEnd > businessEnd) {
@@ -492,6 +501,72 @@ app.delete("/api/appointments/:id", requireOwner, (req, res) => {
   res.json({ success: true });
 });
 
+app.get("/api/reviews", (req, res) => {
+  const reviews = db.prepare(`
+    SELECT id, client_name, rating, review_text, created_at
+    FROM reviews
+    WHERE approved = 1
+    ORDER BY created_at DESC
+    LIMIT 12
+  `).all();
+
+  res.json({ reviews });
+});
+
+app.post("/api/reviews", (req, res) => {
+  const { client_name, rating, review_text } = req.body;
+
+  if (!client_name || !rating || !review_text) {
+    return res.status(400).json({ error: "Name, rating, and review are required." });
+  }
+
+  const numericRating = Number(rating);
+
+  if (numericRating < 1 || numericRating > 5) {
+    return res.status(400).json({ error: "Rating must be between 1 and 5." });
+  }
+
+  const result = db.prepare(`
+    INSERT INTO reviews (client_name, rating, review_text, approved)
+    VALUES (?, ?, ?, 0)
+  `).run(
+    String(client_name).trim(),
+    numericRating,
+    String(review_text).trim()
+  );
+
+  res.json({
+    success: true,
+    id: result.lastInsertRowid,
+    message: "Thank you! Your review was submitted and will be reviewed by PinkSpa."
+  });
+});
+
+app.get("/api/admin/reviews", requireOwner, (req, res) => {
+  const reviews = db.prepare(`
+    SELECT *
+    FROM reviews
+    ORDER BY created_at DESC
+  `).all();
+
+  res.json({ reviews });
+});
+
+app.put("/api/admin/reviews/:id/approve", requireOwner, (req, res) => {
+  db.prepare("UPDATE reviews SET approved = 1 WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.put("/api/admin/reviews/:id/unapprove", requireOwner, (req, res) => {
+  db.prepare("UPDATE reviews SET approved = 0 WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/reviews/:id", requireOwner, (req, res) => {
+  db.prepare("DELETE FROM reviews WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
 app.get("/api/blocked-days", requireOwner, (req, res) => {
   const days = db.prepare(`
     SELECT *
@@ -546,6 +621,10 @@ app.post("/api/logout", (req, res) => {
 
 app.get("/api/me", (req, res) => {
   res.json({ owner: req.session.owner || null });
+});
+
+app.get("/review", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "review.html"));
 });
 
 app.get("/owner", (req, res) => {
