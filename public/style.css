@@ -818,3 +818,37 @@ footer{text-align:center;color:var(--muted);padding:28px}
     }
   }
 }
+.hero {
+  background-size: auto 100% !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate !important;
+}
+
+@keyframes pinkspaHeroZoom {
+  from {
+    background-size: auto 100%;
+  }
+
+  to {
+    background-size: auto 112%;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero {
+    background-size: auto 100% !important;
+    background-position: center center !important;
+    animation: pinkspaHeroZoomMobile 18s ease-in-out infinite alternate !important;
+  }
+
+  @keyframes pinkspaHeroZoomMobile {
+    from {
+      background-size: auto 100%;
+    }
+
+    to {
+      background-size: auto 112%;
+    }
+  }
+}
