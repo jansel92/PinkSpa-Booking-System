@@ -747,3 +747,18 @@ footer{text-align:center;color:var(--muted);padding:28px}
     background-size: 108%;
   }
 }
+.hero-content {
+  animation: pinkspaFadeUp 1.2s ease both;
+}
+
+@keyframes pinkspaFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
