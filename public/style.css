@@ -719,3 +719,17 @@ footer{text-align:center;color:var(--muted);padding:28px}
     padding:22px !important;
   }
 }
+.hero::before {
+  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+@keyframes pinkspaHeroZoom {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.08);
+  }
+}
