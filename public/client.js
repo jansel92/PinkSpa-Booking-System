@@ -430,6 +430,8 @@ function setupGalleryLightbox() {
   if (!galleryImages.length || !lightbox || !lightboxImage) return;
 
   let currentIndex = 0;
+  let touchStartX = 0;
+  let touchEndX = 0;
 
   function openLightbox(index) {
     currentIndex = index;
@@ -464,6 +466,22 @@ function setupGalleryLightbox() {
 
   lightbox.addEventListener("click", (e) => {
     if (e.target === lightbox) closeLightbox();
+  });
+
+  lightbox.addEventListener("touchstart", (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+
+  lightbox.addEventListener("touchend", (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+
+    if (touchStartX - touchEndX > 50) {
+      showNext();
+    }
+
+    if (touchEndX - touchStartX > 50) {
+      showPrev();
+    }
   });
 
   document.addEventListener("keydown", (e) => {
