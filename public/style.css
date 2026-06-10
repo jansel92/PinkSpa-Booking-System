@@ -819,36 +819,48 @@ footer{text-align:center;color:var(--muted);padding:28px}
   }
 }
 .hero {
-  background-size: auto 100% !important;
-  background-repeat: no-repeat !important;
-  background-position: center center !important;
-  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate !important;
+  position: relative;
+  overflow: hidden;
+  background: none !important;
 }
 
-@keyframes pinkspaHeroZoom {
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(25,15,20,.78),
+      rgba(25,15,20,.33),
+      rgba(25,15,20,.05)
+    ),
+    url("/images/hero-luxury.png");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes pinkspaHeroImageZoom {
   from {
-    background-size: auto 100%;
+    transform: scale(1);
   }
 
   to {
-    background-size: auto 112%;
+    transform: scale(1.08);
   }
 }
 
 @media (max-width: 700px) {
-  .hero {
-    background-size: auto 100% !important;
-    background-position: center center !important;
-    animation: pinkspaHeroZoomMobile 18s ease-in-out infinite alternate !important;
-  }
-
-  @keyframes pinkspaHeroZoomMobile {
-    from {
-      background-size: auto 100%;
-    }
-
-    to {
-      background-size: auto 112%;
-    }
+  .hero::before {
+    background-position: center center;
+    animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
   }
 }
