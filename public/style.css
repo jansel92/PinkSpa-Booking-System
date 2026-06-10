@@ -786,6 +786,6 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .hero {
     background-repeat: no-repeat !important;
     background-size: cover !important;
-    background-position: center center !important;
+    background-position: 58% center !important;
   }
 }
