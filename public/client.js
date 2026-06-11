@@ -513,3 +513,28 @@ function setupReviewSlider() {
 }
 
 setupReviewSlider();
+
+async function loadApprovedReviews() {
+  const reviewsGrid = document.querySelector(".reviews-grid");
+  if (!reviewsGrid) return;
+
+  try {
+    const response = await fetch("/api/reviews");
+    const data = await response.json();
+    const reviews = data.reviews || [];
+
+    if (!reviews.length) return;
+
+    reviewsGrid.innerHTML = reviews.map(review => `
+      <div class="review-card">
+        <div class="stars">${"★".repeat(review.rating)}</div>
+        <p>"${review.review_text}"</p>
+        <strong>- ${review.client_name}</strong>
+      </div>
+    `).join("");
+  } catch (error) {
+    console.error("Error loading reviews:", error);
+  }
+}
+
+loadApprovedReviews();
