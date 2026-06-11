@@ -151,11 +151,12 @@ document.querySelectorAll(".tab").forEach(btn => {
 
 async function loadAll() {
   await Promise.all([
-    loadAppointments(),
-    loadServices(),
-    loadSettings(),
-    loadBlockedDays()
-  ]);
+  loadAppointments(),
+  loadServices(),
+  loadSettings(),
+  loadBlockedDays(),
+  loadReviews()
+]);
 }
 
 function statusLabel(status) {
@@ -532,4 +533,47 @@ if (blockedDayForm) {
   });
 }
 
+async function loadReviews() {
+  const container = document.getElementById("ownerReviewsList");
+  if (!container) return;
+
+  const data = await api("/api/admin/reviews");
+  const reviews = data.reviews || [];
+
+  if (!reviews.length) {
+    container.innerHTML = "<p>No reviews submitted yet.</p>";
+    return;
+  }
+
+  container.innerHTML = reviews.map(review => `
+    <div class="appointment-card">
+      <h3>${review.client_name}</h3>
+      <p>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</p>
+      <p>${review.review_text}</p>
+      <p><b>Status:</b> ${review.approved ? "Approved" : "Pending Approval"}</p>
+
+      <div class="status-row">
+        <button onclick="approveReview(${review.id})">Approve</button>
+        <button onclick="unapproveReview(${review.id})">Hide</button>
+        <button onclick="deleteReview(${review.id})">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function approveReview(id) {
+  await api(`/api/admin/reviews/${id}/approve`, { method: "PUT" });
+  loadReviews();
+}
+
+async function unapproveReview(id) {
+  await api(`/api/admin/reviews/${id}/unapprove`, { method: "PUT" });
+  loadReviews();
+}
+
+async function deleteReview(id) {
+  if (!confirm("Delete this review?")) return;
+  await api(`/api/admin/reviews/${id}`, { method: "DELETE" });
+  loadReviews();
+}
 checkLogin();
