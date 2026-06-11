@@ -44,6 +44,7 @@
 
       <button data-tab="appointments" class="tab active">Appointments</button>
       <button data-tab="services" class="tab">Services & Prices</button>
+      <button data-tab="reviews" class="tab">Reviews</button>
       <button data-tab="blocked" class="tab">Blocked Dates</button>
       <button data-tab="settings" class="tab">Business Settings</button>
       <button id="logoutBtn" class="logout">Logout</button>
@@ -122,6 +123,16 @@
         </div>
       </section>
 
+       <section id="reviewsTab" class="tab-content hidden">
+  <div class="panel">
+    <h2>Client Reviews</h2>
+    <p class="message">
+      Approve reviews to show them on the PinkSpa website.
+    </p>
+    <div id="ownerReviewsList"></div>
+  </div>
+</section>
+      
       <section id="blockedTab" class="tab-content hidden">
         <div class="grid-two">
           <div class="panel">
