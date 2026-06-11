@@ -576,4 +576,9 @@ async function deleteReview(id) {
   await api(`/api/admin/reviews/${id}`, { method: "DELETE" });
   loadReviews();
 }
+
+window.approveReview = approveReview;
+window.unapproveReview = unapproveReview;
+window.deleteReview = deleteReview;
+
 checkLogin();
