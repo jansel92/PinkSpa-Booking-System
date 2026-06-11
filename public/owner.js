@@ -244,8 +244,12 @@ async function loadAppointments() {
         <button class="status-completed" onclick="completeAppointment(${appt.id})">Mark Completed</button>
         <button class="status-pending" onclick="setStatus(${appt.id}, 'pending')">Back to Pending</button>
         <button class="status-no-show" onclick="setStatus(${appt.id}, 'no-show')">No-show</button>
-        <button onclick="deleteAppointment(${appt.id})">Delete</button>
-      </div>
+        <button onclick="copyReviewRequest('${appt.client_name}')">
+           Request Review
+        </button>
+
+       <button onclick="deleteAppointment(${appt.id})">Delete</button>
+       </div>
     `;
 
     list.appendChild(card);
@@ -580,5 +584,19 @@ async function deleteReview(id) {
 window.approveReview = approveReview;
 window.unapproveReview = unapproveReview;
 window.deleteReview = deleteReview;
+
+function copyReviewRequest(clientName) {
+  const message =
+`Hi ${clientName || ""}! Thank you for visiting PinkSpa 💖
+
+We would love your feedback.
+
+Please leave us a quick review here:
+https://rachelpinkspa.com/review`;
+
+  navigator.clipboard.writeText(message);
+
+  alert("Review request copied! Paste it into text message, WhatsApp, Instagram DM, or Facebook Messenger.");
+}
 
 checkLogin();
