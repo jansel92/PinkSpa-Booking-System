@@ -7,6 +7,7 @@ const bcrypt = require("bcryptjs");
 const Database = require("better-sqlite3");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 
@@ -24,6 +25,11 @@ const EMAIL_PASS = process.env.EMAIL_PASS;
 const uploadsDir = path.join(__dirname, "public", "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
+const inspirationUploadsDir = path.join(__dirname, "data", "inspiration-uploads");
+if (!fs.existsSync(inspirationUploadsDir)) {
+  fs.mkdirSync(inspirationUploadsDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => {
@@ -40,6 +46,70 @@ const upload = multer({
     cb(null, true);
   }
 });
+
+const inspirationUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error("Inspiration photo must be a JPEG, PNG, or WebP image."));
+    }
+    cb(null, true);
+  }
+});
+
+function handleInspirationUpload(req, res, next) {
+  inspirationUpload.single("inspiration_image")(req, res, error => {
+    if (!error) return next();
+
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ error: "Inspiration photo must be 5MB or smaller." });
+    }
+
+    return res.status(400).json({
+      error: error.message || "The inspiration photo could not be uploaded."
+    });
+  });
+}
+
+function detectImageExtension(buffer) {
+  if (!buffer || buffer.length < 12) return null;
+
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return ".jpg";
+  }
+
+  const pngSignature = "89504e470d0a1a0a";
+  if (buffer.subarray(0, 8).toString("hex") === pngSignature) {
+    return ".png";
+  }
+
+  if (
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return ".webp";
+  }
+
+  return null;
+}
+
+function resolveInspirationPath(storedPath) {
+  if (!storedPath || !storedPath.startsWith("inspiration-uploads/")) return null;
+  return path.join(inspirationUploadsDir, path.basename(storedPath));
+}
+
+function deleteInspirationFile(storedPath) {
+  const imagePath = resolveInspirationPath(storedPath);
+  if (!imagePath || !fs.existsSync(imagePath)) return;
+
+  try {
+    fs.unlinkSync(imagePath);
+  } catch (error) {
+    console.error("INSPIRATION IMAGE CLEANUP ERROR:", error);
+  }
+}
 
 let mailTransporter = null;
 if (EMAIL_USER && EMAIL_PASS) {
@@ -90,6 +160,7 @@ function setupDatabase() {
       appointment_date TEXT NOT NULL,
       appointment_time TEXT NOT NULL,
       duration_minutes INTEGER DEFAULT 60,
+      inspiration_image TEXT DEFAULT '',
       notes TEXT DEFAULT '',
       status TEXT DEFAULT 'pending',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -128,6 +199,9 @@ function setupDatabase() {
   const appointmentColumns = db.prepare("PRAGMA table_info(appointments)").all().map(col => col.name);
   if (!appointmentColumns.includes("duration_minutes")) {
     db.prepare("ALTER TABLE appointments ADD COLUMN duration_minutes INTEGER DEFAULT 60").run();
+  }
+  if (!appointmentColumns.includes("inspiration_image")) {
+    db.prepare("ALTER TABLE appointments ADD COLUMN inspiration_image TEXT DEFAULT ''").run();
   }
 
   const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(OWNER_EMAIL);
@@ -312,6 +386,21 @@ app.get("/api/appointments", requireOwner, (req, res) => {
   res.json(appts);
 });
 
+app.get("/api/appointments/:id/inspiration", requireOwner, (req, res) => {
+  const appointment = db.prepare(`
+    SELECT inspiration_image
+    FROM appointments
+    WHERE id = ?
+  `).get(req.params.id);
+
+  const imagePath = resolveInspirationPath(appointment?.inspiration_image);
+  if (!imagePath || !fs.existsSync(imagePath)) {
+    return res.status(404).json({ error: "Inspiration photo not found." });
+  }
+
+  res.sendFile(imagePath);
+});
+
 app.get("/api/booked-times", (req, res) => {
   const date = String(req.query.date || "").trim();
   const requestedDuration = req.query.duration_minutes === undefined
@@ -404,7 +493,7 @@ app.get("/api/appointment-status", (req, res) => {
   res.json({ appointments });
 });
 
-app.post("/api/appointments", async (req, res) => {
+app.post("/api/appointments", handleInspirationUpload, async (req, res) => {
   const {
     client_name,
     client_phone,
@@ -418,6 +507,16 @@ app.post("/api/appointments", async (req, res) => {
 
   if (!client_name || !client_phone || !service_id || !appointment_date || !appointment_time) {
     return res.status(400).json({ error: "Name, phone, service, date, and time are required." });
+  }
+
+  const inspirationExtension = req.file
+    ? detectImageExtension(req.file.buffer)
+    : null;
+
+  if (req.file && !inspirationExtension) {
+    return res.status(400).json({
+      error: "Inspiration photo must be a valid JPEG, PNG, or WebP image."
+    });
   }
 
   const bookingDate = new Date(appointment_date + "T00:00:00");
@@ -486,21 +585,49 @@ app.post("/api/appointments", async (req, res) => {
     });
   }
 
-  const result = db.prepare(`
-    INSERT INTO appointments
-    (client_name, client_phone, client_email, service_id, service_name, appointment_date, appointment_time, duration_minutes, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    client_name,
-    client_phone,
-    client_email || "",
-    service_id,
-    service.name,
-    appointment_date,
-    cleanAppointmentTime,
-    requestedDuration,
-    notes || ""
-  );
+  let inspirationImage = "";
+
+  if (req.file) {
+    const filename = `${crypto.randomBytes(24).toString("hex")}${inspirationExtension}`;
+    inspirationImage = `inspiration-uploads/${filename}`;
+
+    try {
+      fs.writeFileSync(resolveInspirationPath(inspirationImage), req.file.buffer, { flag: "wx" });
+    } catch (error) {
+      console.error("INSPIRATION IMAGE SAVE ERROR:", error);
+      return res.status(500).json({
+        error: "The inspiration photo could not be saved. Please try again."
+      });
+    }
+  }
+
+  let result;
+
+  try {
+    result = db.prepare(`
+      INSERT INTO appointments
+      (client_name, client_phone, client_email, service_id, service_name, appointment_date, appointment_time, duration_minutes, inspiration_image, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      client_name,
+      client_phone,
+      client_email || "",
+      service_id,
+      service.name,
+      appointment_date,
+      cleanAppointmentTime,
+      requestedDuration,
+      inspirationImage,
+      notes || ""
+    );
+  } catch (error) {
+    deleteInspirationFile(inspirationImage);
+
+    console.error("APPOINTMENT SAVE ERROR:", error);
+    return res.status(500).json({
+      error: "The appointment request could not be saved. Please try again."
+    });
+  }
 
   const appointment = {
     id: result.lastInsertRowid,
@@ -511,6 +638,7 @@ app.post("/api/appointments", async (req, res) => {
     appointment_date,
     appointment_time: cleanAppointmentTime,
     duration_minutes: requestedDuration,
+    inspiration_image: inspirationImage,
     notes: notes || ""
   };
 
@@ -535,7 +663,16 @@ app.put("/api/appointments/:id/status", requireOwner, (req, res) => {
 });
 
 app.delete("/api/appointments/:id", requireOwner, (req, res) => {
+  const appointment = db.prepare(`
+    SELECT inspiration_image
+    FROM appointments
+    WHERE id = ?
+  `).get(req.params.id);
+
   db.prepare("DELETE FROM appointments WHERE id = ?").run(req.params.id);
+
+  deleteInspirationFile(appointment?.inspiration_image);
+
   res.json({ success: true });
 });
 

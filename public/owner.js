@@ -237,6 +237,23 @@ async function loadAppointments() {
       <span><b>Duration:</b> ${appt.duration_minutes || 60} minutes</span>
       <span><b>Status:</b> ${statusLabel(appt.status)}</span>
       <p><b>Notes:</b> ${appt.notes || "No notes added."}</p>
+      ${appt.inspiration_image ? `
+        <div>
+          <b>Inspiration Photo:</b><br>
+          <a
+            href="/api/appointments/${appt.id}/inspiration"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="/api/appointments/${appt.id}/inspiration"
+              alt="Client inspiration photo"
+              loading="lazy"
+              style="display:block;width:min(240px,100%);max-height:240px;margin-top:8px;object-fit:cover;border-radius:16px;border:1px solid #ffd3e4;"
+            />
+          </a>
+        </div>
+      ` : ""}
 
       <div class="status-row">
         <button class="status-confirmed" onclick="confirmAppointment(${appt.id})">Confirm Appointment</button>

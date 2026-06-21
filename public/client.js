@@ -411,12 +411,27 @@ if (bookingForm) {
     const form = new FormData(e.target);
     const payload = Object.fromEntries(form.entries());
     const message = document.getElementById("bookingMessage");
+    const inspirationPhoto = form.get("inspiration_image");
 
     const selectedServices = getSelectedServices();
 
     if (!selectedServices.length) {
       message.textContent = "Please select at least one service.";
       return;
+    }
+
+    if (inspirationPhoto instanceof File && inspirationPhoto.size > 0) {
+      const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+      if (!allowedImageTypes.includes(inspirationPhoto.type)) {
+        message.textContent = "Please choose a JPEG, PNG, or WebP inspiration photo.";
+        return;
+      }
+
+      if (inspirationPhoto.size > 5 * 1024 * 1024) {
+        message.textContent = "Your inspiration photo must be 5MB or smaller.";
+        return;
+      }
     }
 
     payload.service_id = selectedServices[0].id;
@@ -438,6 +453,10 @@ Client Notes:
 ${payload.notes || "No notes added."}
 `;
 
+    form.set("service_id", String(payload.service_id));
+    form.set("duration_minutes", String(payload.duration_minutes));
+    form.set("notes", payload.notes);
+
     if (isWeekend(payload.appointment_date)) {
       message.textContent = "PinkSpa is closed on Saturdays and Sundays. Please choose Monday through Friday.";
       return;
@@ -451,8 +470,7 @@ ${payload.notes || "No notes added."}
     try {
       const response = await fetch("/api/appointments", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload)
+        body: form
       });
 
       const data = await response.json().catch(() => ({}));
