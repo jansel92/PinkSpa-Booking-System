@@ -114,6 +114,11 @@ function getPrimaryService(selectedServices = getSelectedServices()) {
   }) || selectedServices[0];
 }
 
+function syncServiceChoiceCard(checkbox) {
+  const card = checkbox?.closest(".service-checkbox-item");
+  if (card) card.classList.toggle("is-selected", checkbox.checked);
+}
+
 function getSelectedDuration() {
   return getSelectedServices().reduce((sum, service) => {
     return sum + Number(service.duration || 0);
@@ -280,6 +285,7 @@ function selectServiceForBooking(serviceId, serviceName) {
   if (checkbox) {
     primaryServiceId = String(serviceId);
     checkbox.checked = true;
+    syncServiceChoiceCard(checkbox);
     updateBookingSummary();
   }
 
@@ -404,9 +410,12 @@ async function loadServices() {
 
     const serviceOption = document.createElement("label");
     serviceOption.className = "service-checkbox-item";
+    const checkboxId = `service-choice-${service.id}`;
+    serviceOption.htmlFor = checkboxId;
 
     serviceOption.innerHTML = `
       <input
+        id="${checkboxId}"
         type="checkbox"
         class="service-choice"
         value="${service.id}"
@@ -426,6 +435,7 @@ async function loadServices() {
         primaryServiceId = null;
       }
 
+      syncServiceChoiceCard(checkbox);
       updateBookingSummary();
     });
 
@@ -531,6 +541,7 @@ ${payload.notes || "No notes added."}
 
       document.querySelectorAll(".service-choice").forEach(input => {
         input.checked = false;
+        syncServiceChoiceCard(input);
       });
 
       primaryServiceId = null;

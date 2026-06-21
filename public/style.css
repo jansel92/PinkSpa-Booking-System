@@ -1383,6 +1383,69 @@ footer{text-align:center;color:var(--muted);padding:28px}
   box-shadow: var(--home-shadow);
 }
 
+.home-page .service-picker {
+  min-width: 0;
+  margin: 0 0 15px;
+  padding: 0;
+  border: 0;
+}
+
+.home-page .service-picker legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: #493940;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.home-page .service-checkbox-list {
+  display: grid;
+  gap: 10px;
+}
+
+.home-page .service-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(183, 25, 86, .16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .96);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+
+.home-page .service-checkbox-item:hover,
+.home-page .service-checkbox-item.is-selected {
+  border-color: var(--pink);
+  background: #fff4f8;
+}
+
+.home-page .service-checkbox-item:focus-within {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 4px rgba(255, 95, 147, .12);
+}
+
+.home-page .service-checkbox-item input.service-choice {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 20px;
+  accent-color: var(--deep);
+  cursor: pointer;
+}
+
+.home-page .service-checkbox-item span {
+  min-width: 0;
+  pointer-events: none;
+}
+
 .home-page #statusForm {
   max-width: 700px !important;
 }
