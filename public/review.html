@@ -46,21 +46,26 @@
       const payload = Object.fromEntries(new FormData(e.target).entries());
       const message = document.getElementById("reviewMessage");
 
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload)
-      });
+      try {
+        const response = await fetch("/api/reviews", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
 
-      const data = await response.json();
+        const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        message.textContent = data.error || "Something went wrong.";
-        return;
+        if (!response.ok) {
+          message.textContent = data.error || "We couldn't submit your review. Please check your information and try again.";
+          return;
+        }
+
+        e.target.reset();
+        message.textContent = "Thank you! Your review was submitted to PinkSpa.";
+      } catch (error) {
+        console.error("Unable to submit review:", error);
+        message.textContent = "We couldn't submit your review. Please check your connection and try again. Your review is still in the form.";
       }
-
-      e.target.reset();
-      message.textContent = "Thank you! Your review was submitted to PinkSpa.";
     });
   </script>
 </body>

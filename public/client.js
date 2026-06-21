@@ -271,38 +271,76 @@ function selectServiceForBooking(serviceId, serviceName) {
 }
 
 async function loadSettings() {
-  const settings = await fetch("/api/settings").then(r => r.json());
-
   const cityText = document.getElementById("cityText");
   const businessPhoneText = document.getElementById("businessPhoneText");
   const businessHoursText = document.getElementById("businessHoursText");
   const phoneLink = document.getElementById("phoneLink");
   const ctaPhone = document.getElementById("ctaPhone");
+  const message = document.getElementById("bookingMessage");
 
-  if (cityText) cityText.textContent = "📍 " + settings.city;
-  if (businessPhoneText) businessPhoneText.textContent = "☎ " + settings.phone;
-  if (businessHoursText) businessHoursText.textContent = "🕘 " + settings.hours;
+  try {
+    const response = await fetch("/api/settings");
+    const settings = await response.json().catch(() => null);
 
-  if (phoneLink) {
-    phoneLink.href = "tel:" + settings.phone;
-    phoneLink.textContent = "Call PinkSpa";
-  }
+    if (!response.ok || !settings) {
+      throw new Error(settings?.error || `Settings request failed with status ${response.status}.`);
+    }
 
-  if (ctaPhone) {
-    ctaPhone.href = "tel:" + settings.phone;
+    if (cityText) cityText.textContent = "📍 " + settings.city;
+    if (businessPhoneText) businessPhoneText.textContent = "☎ " + settings.phone;
+    if (businessHoursText) businessHoursText.textContent = "🕘 " + settings.hours;
+
+    if (phoneLink) {
+      phoneLink.href = "tel:" + settings.phone;
+      phoneLink.textContent = "Call PinkSpa";
+    }
+
+    if (ctaPhone) {
+      ctaPhone.href = "tel:" + settings.phone;
+    }
+  } catch (error) {
+    console.error("Unable to load business settings:", error);
+    if (message && !message.textContent) {
+      message.textContent = "We couldn't refresh PinkSpa's business details. The contact information shown may be outdated. Please try again later.";
+    }
   }
 }
 
 async function loadServices() {
-  const services = await fetch("/api/services").then(r => r.json());
-  allServices = services;
-
   const grid = document.getElementById("serviceGrid");
   const hiddenServiceInput = document.getElementById("serviceSelect");
   const checkboxList = document.getElementById("serviceCheckboxList");
+  const summary = document.getElementById("bookingSummary");
+  const message = document.getElementById("bookingMessage");
 
   if (!grid || !hiddenServiceInput || !checkboxList) return;
 
+  let services;
+
+  try {
+    const response = await fetch("/api/services");
+    services = await response.json().catch(() => null);
+
+    if (!response.ok || !Array.isArray(services)) {
+      throw new Error(services?.error || `Services request failed with status ${response.status}.`);
+    }
+  } catch (error) {
+    console.error("Unable to load services:", error);
+    allServices = [];
+    hiddenServiceInput.value = "";
+
+    const serviceError = document.createElement("p");
+    serviceError.className = "message";
+    serviceError.textContent = "We couldn't load PinkSpa services. Please refresh the page or try again later.";
+    grid.replaceChildren(serviceError);
+
+    checkboxList.textContent = "Services are temporarily unavailable.";
+    if (summary) summary.textContent = "Services are temporarily unavailable.";
+    if (message) message.textContent = "We couldn't load the service list, so booking is temporarily unavailable. Please refresh the page or try again later.";
+    return;
+  }
+
+  allServices = services;
   grid.innerHTML = "";
   checkboxList.innerHTML = "";
 
@@ -410,30 +448,36 @@ ${payload.notes || "No notes added."}
       return;
     }
 
-    const response = await fetch("/api/appointments", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload)
-    });
+    try {
+      const response = await fetch("/api/appointments", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
 
-    const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      message.textContent = data.error || "Something went wrong.";
-      await updateAvailableTimes();
-      return;
+      if (!response.ok) {
+        const errorMessage = data.error || "We couldn't send your appointment request. Please review your information and try again.";
+        await updateAvailableTimes();
+        message.textContent = errorMessage;
+        return;
+      }
+
+      e.target.reset();
+
+      document.querySelectorAll(".service-choice").forEach(input => {
+        input.checked = false;
+      });
+
+      updateBookingSummary();
+      renderTimeOptions(allTimes);
+
+      message.textContent = "Your appointment request was sent to PinkSpa. You can check your appointment status using your phone number.";
+    } catch (error) {
+      console.error("Unable to submit appointment:", error);
+      message.textContent = "We couldn't send your appointment request. Please check your connection and try again. Your information is still in the form.";
     }
-
-    e.target.reset();
-
-    document.querySelectorAll(".service-choice").forEach(input => {
-      input.checked = false;
-    });
-
-    updateBookingSummary();
-    renderTimeOptions(allTimes);
-
-    message.textContent = "Your appointment request was sent to PinkSpa. You can check your appointment status using your phone number.";
   });
 }
 
@@ -448,28 +492,38 @@ if (statusForm) {
 
     resultBox.innerHTML = "Checking appointment status...";
 
-    const response = await fetch(`/api/appointment-status?phone=${encodeURIComponent(phone)}`);
-    const data = await response.json();
+    try {
+      const response = await fetch(`/api/appointment-status?phone=${encodeURIComponent(phone)}`);
+      const data = await response.json().catch(() => ({}));
 
-    if (!response.ok || !data.appointments || data.appointments.length === 0) {
-      resultBox.innerHTML = `
+      if (!response.ok) {
+        resultBox.textContent = data.error || "We couldn't check your appointment status right now. Please try again.";
+        return;
+      }
+
+      if (!data.appointments || data.appointments.length === 0) {
+        resultBox.innerHTML = `
+          <div class="status-result-card">
+            <strong>No appointment found.</strong>
+            <p>Please check the phone number and try again.</p>
+          </div>
+        `;
+        return;
+      }
+
+      resultBox.innerHTML = data.appointments.map(appt => `
         <div class="status-result-card">
-          <strong>No appointment found.</strong>
-          <p>Please check the phone number and try again.</p>
+          <h3>${appt.service_name}</h3>
+          <p><b>Name:</b> ${appt.client_name}</p>
+          <p><b>Date:</b> ${appt.appointment_date}</p>
+          <p><b>Time:</b> ${appt.appointment_time}</p>
+          <p><b>Status:</b> ${statusText(appt.status)}</p>
         </div>
-      `;
-      return;
+      `).join("");
+    } catch (error) {
+      console.error("Unable to check appointment status:", error);
+      resultBox.textContent = "We couldn't check your appointment status. Please check your connection and try again.";
     }
-
-    resultBox.innerHTML = data.appointments.map(appt => `
-      <div class="status-result-card">
-        <h3>${appt.service_name}</h3>
-        <p><b>Name:</b> ${appt.client_name}</p>
-        <p><b>Date:</b> ${appt.appointment_date}</p>
-        <p><b>Time:</b> ${appt.appointment_time}</p>
-        <p><b>Status:</b> ${statusText(appt.status)}</p>
-      </div>
-    `).join("");
   });
 }
 
