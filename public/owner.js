@@ -171,6 +171,77 @@ function statusLabel(status) {
   return labels[status] || status;
 }
 
+function parseServicePrice(value) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, value);
+  }
+
+  const match = String(value || "").replace(/,/g, "").match(/\d+(?:\.\d{1,2})?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function localDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function renderRevenueDashboard(appointments) {
+  const completedAppointments = appointments.filter(appt => appt.status === "completed");
+  const today = new Date();
+  const todayKey = localDateKey(today);
+  const monthKey = todayKey.slice(0, 7);
+  const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const daysSinceMonday = (weekStart.getDay() + 6) % 7;
+  weekStart.setDate(weekStart.getDate() - daysSinceMonday);
+  const weekStartKey = localDateKey(weekStart);
+
+  const appointmentValue = appt => parseServicePrice(appt.service_price);
+  const revenueTotal = completedAppointments.reduce((sum, appt) => {
+    return sum + appointmentValue(appt);
+  }, 0);
+  const revenueToday = completedAppointments
+    .filter(appt => appt.appointment_date === todayKey)
+    .reduce((sum, appt) => sum + appointmentValue(appt), 0);
+  const revenueWeek = completedAppointments
+    .filter(appt => appt.appointment_date >= weekStartKey && appt.appointment_date <= todayKey)
+    .reduce((sum, appt) => sum + appointmentValue(appt), 0);
+  const revenueMonth = completedAppointments
+    .filter(appt => appt.appointment_date.startsWith(monthKey) && appt.appointment_date <= todayKey)
+    .reduce((sum, appt) => sum + appointmentValue(appt), 0);
+  const revenueAverage = completedAppointments.length
+    ? revenueTotal / completedAppointments.length
+    : 0;
+
+  const serviceCounts = completedAppointments.reduce((counts, appt) => {
+    const serviceName = appt.service_name || "Unknown Service";
+    counts.set(serviceName, (counts.get(serviceName) || 0) + 1);
+    return counts;
+  }, new Map());
+  const mostPopularService = Array.from(serviceCounts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "-";
+
+  const currency = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const values = {
+    revenueToday: currency.format(revenueToday),
+    revenueWeek: currency.format(revenueWeek),
+    revenueMonth: currency.format(revenueMonth),
+    revenueTotal: currency.format(revenueTotal),
+    revenueCompleted: String(completedAppointments.length),
+    revenueAverage: currency.format(revenueAverage),
+    revenuePopular: mostPopularService
+  };
+
+  Object.entries(values).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  });
+}
+
 async function loadAppointments() {
   const appointments = await api("/api/appointments");
   const list = document.getElementById("appointmentsList");
@@ -218,6 +289,8 @@ async function loadAppointments() {
   if (statWeek) statWeek.textContent = weekCount;
   if (statMonth) statMonth.textContent = monthCount;
   if (statCompleted) statCompleted.textContent = completed;
+
+  renderRevenueDashboard(appointments);
 
   if (!appointments.length) {
     list.innerHTML = "<p>No appointment requests yet.</p>";
@@ -453,6 +526,7 @@ document.getElementById("serviceForm").addEventListener("submit", async (e) => {
   }
 
   loadServices();
+  loadAppointments();
 });
 
 async function deleteService(id) {

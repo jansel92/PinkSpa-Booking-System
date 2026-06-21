@@ -394,9 +394,10 @@ app.delete("/api/services/:id", requireOwner, (req, res) => {
 
 app.get("/api/appointments", requireOwner, (req, res) => {
   const appts = db.prepare(`
-    SELECT *
-    FROM appointments
-    ORDER BY appointment_date DESC, appointment_time DESC, id DESC
+    SELECT a.*, s.price AS service_price
+    FROM appointments a
+    LEFT JOIN services s ON a.service_id = s.id
+    ORDER BY a.appointment_date DESC, a.appointment_time DESC, a.id DESC
   `).all();
 
   res.json(appts);
