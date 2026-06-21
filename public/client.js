@@ -22,6 +22,7 @@ const allTimes = [
 let allServices = [];
 let revealObserver = null;
 let availabilityRequestId = 0;
+let primaryServiceId = null;
 
 function observeRevealElements(elements) {
   if (!revealObserver) return;
@@ -105,6 +106,14 @@ function getSelectedServices() {
     .filter(Boolean);
 }
 
+function getPrimaryService(selectedServices = getSelectedServices()) {
+  if (!selectedServices.length) return null;
+
+  return selectedServices.find(service => {
+    return String(service.id) === String(primaryServiceId);
+  }) || selectedServices[0];
+}
+
 function getSelectedDuration() {
   return getSelectedServices().reduce((sum, service) => {
     return sum + Number(service.duration || 0);
@@ -119,22 +128,37 @@ function updateBookingSummary() {
   if (!hiddenServiceInput || !summary) return;
 
   if (!selected.length) {
+    primaryServiceId = null;
     hiddenServiceInput.value = "";
     summary.textContent = "Select one or more services.";
     updateAvailableTimes();
     return;
   }
 
-  hiddenServiceInput.value = selected[0].id;
+  const primaryService = getPrimaryService(selected);
+  primaryServiceId = String(primaryService.id);
+  hiddenServiceInput.value = primaryService.id;
 
   const totalMinutes = getSelectedDuration();
 
   const serviceNames = selected.map(service => service.name).join(", ");
 
-  summary.innerHTML = `
-    <strong>Selected:</strong> ${serviceNames}<br>
-    <strong>Total estimated time:</strong> ${totalMinutes} minutes
-  `;
+  const primaryLine = document.createElement("div");
+  const primaryLabel = document.createElement("strong");
+  primaryLabel.textContent = "Primary service: ";
+  primaryLine.append(primaryLabel, primaryService.name);
+
+  const selectedLine = document.createElement("div");
+  const selectedLabel = document.createElement("strong");
+  selectedLabel.textContent = "Selected services: ";
+  selectedLine.append(selectedLabel, serviceNames);
+
+  const durationLine = document.createElement("div");
+  const durationLabel = document.createElement("strong");
+  durationLabel.textContent = "Total estimated time: ";
+  durationLine.append(durationLabel, `${totalMinutes} minutes`);
+
+  summary.replaceChildren(primaryLine, selectedLine, durationLine);
 
   updateAvailableTimes();
 }
@@ -254,6 +278,7 @@ function selectServiceForBooking(serviceId, serviceName) {
   const message = document.getElementById("bookingMessage");
 
   if (checkbox) {
+    primaryServiceId = String(serviceId);
     checkbox.checked = true;
     updateBookingSummary();
   }
@@ -341,6 +366,7 @@ async function loadServices() {
   }
 
   allServices = services;
+  primaryServiceId = null;
   grid.innerHTML = "";
   checkboxList.innerHTML = "";
 
@@ -393,7 +419,15 @@ async function loadServices() {
 
     const checkbox = serviceOption.querySelector("input");
 
-    checkbox.addEventListener("change", updateBookingSummary);
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        primaryServiceId = String(checkbox.value);
+      } else if (String(primaryServiceId) === String(checkbox.value)) {
+        primaryServiceId = null;
+      }
+
+      updateBookingSummary();
+    });
 
     checkboxList.appendChild(serviceOption);
   });
@@ -408,17 +442,22 @@ if (bookingForm) {
   bookingForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const form = new FormData(e.target);
-    const payload = Object.fromEntries(form.entries());
     const message = document.getElementById("bookingMessage");
-    const inspirationPhoto = form.get("inspiration_image");
-
     const selectedServices = getSelectedServices();
+    const primaryService = getPrimaryService(selectedServices);
 
-    if (!selectedServices.length) {
+    if (!selectedServices.length || !primaryService) {
       message.textContent = "Please select at least one service.";
       return;
     }
+
+    primaryServiceId = String(primaryService.id);
+    updateBookingSummary();
+
+    const form = new FormData(e.target);
+    const payload = Object.fromEntries(form.entries());
+    const inspirationPhoto = form.get("inspiration_image");
+    const clientNotes = String(payload.notes || "").trim();
 
     if (inspirationPhoto instanceof File && inspirationPhoto.size > 0) {
       const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -434,7 +473,7 @@ if (bookingForm) {
       }
     }
 
-    payload.service_id = selectedServices[0].id;
+    payload.service_id = primaryService.id;
 
     const selectedServiceText = selectedServices
       .map(service => `${service.name} (${service.duration} min)`)
@@ -454,8 +493,14 @@ ${payload.notes || "No notes added."}
 `;
 
     form.set("service_id", String(payload.service_id));
+    form.set("selected_service_ids", selectedServices.map(service => service.id).join(","));
     form.set("duration_minutes", String(payload.duration_minutes));
+    form.set("client_notes", clientNotes);
     form.set("notes", payload.notes);
+
+    message.textContent = selectedServices.length > 1
+      ? `Submitting ${primaryService.name} as the primary service with ${selectedServices.length - 1} additional service${selectedServices.length === 2 ? "" : "s"}.`
+      : `Submitting your appointment for ${primaryService.name}.`;
 
     if (isWeekend(payload.appointment_date)) {
       message.textContent = "PinkSpa is closed on Saturdays and Sundays. Please choose Monday through Friday.";
@@ -488,6 +533,7 @@ ${payload.notes || "No notes added."}
         input.checked = false;
       });
 
+      primaryServiceId = null;
       updateBookingSummary();
       renderTimeOptions(allTimes);
 

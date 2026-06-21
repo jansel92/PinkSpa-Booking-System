@@ -499,14 +499,32 @@ app.post("/api/appointments", handleInspirationUpload, async (req, res) => {
     client_phone,
     client_email,
     service_id,
+    selected_service_ids,
     appointment_date,
     appointment_time,
     duration_minutes,
+    client_notes,
     notes
   } = req.body;
 
   if (!client_name || !client_phone || !service_id || !appointment_date || !appointment_time) {
     return res.status(400).json({ error: "Name, phone, service, date, and time are required." });
+  }
+
+  const hasStructuredSelection = Boolean(String(selected_service_ids || "").trim());
+  const selectedServiceIds = hasStructuredSelection
+    ? [...new Set(String(selected_service_ids).split(",").map(id => id.trim()).filter(Boolean))]
+    : [String(service_id)];
+
+  if (
+    !selectedServiceIds.length ||
+    selectedServiceIds.length > 20 ||
+    selectedServiceIds.some(id => !/^\d+$/.test(id)) ||
+    !selectedServiceIds.includes(String(service_id))
+  ) {
+    return res.status(400).json({
+      error: "The primary service does not match the selected services. Please select your services again."
+    });
   }
 
   const inspirationExtension = req.file
@@ -536,8 +554,24 @@ app.post("/api/appointments", handleInspirationUpload, async (req, res) => {
     return res.status(400).json({ error: "This date is unavailable. Please choose another day." });
   }
 
-  const service = db.prepare("SELECT * FROM services WHERE id = ? AND active = 1").get(service_id);
-  if (!service) return res.status(400).json({ error: "Service not found." });
+  const servicePlaceholders = selectedServiceIds.map(() => "?").join(",");
+  const matchingServices = db.prepare(`
+    SELECT *
+    FROM services
+    WHERE active = 1 AND id IN (${servicePlaceholders})
+  `).all(...selectedServiceIds);
+
+  const serviceById = new Map(
+    matchingServices.map(selectedService => [String(selectedService.id), selectedService])
+  );
+  const selectedServices = selectedServiceIds.map(id => serviceById.get(id));
+  const service = serviceById.get(String(service_id));
+
+  if (!service || selectedServices.some(selectedService => !selectedService)) {
+    return res.status(400).json({
+      error: "One or more selected services are no longer available. Please select your services again."
+    });
+  }
 
   const cleanAppointmentTime = normalizeTime(appointment_time);
   const requestedStart = timeToMinutes(cleanAppointmentTime);
@@ -546,10 +580,11 @@ app.post("/api/appointments", handleInspirationUpload, async (req, res) => {
     return res.status(400).json({ error: "Invalid appointment time." });
   }
 
-  const requestedDuration = Math.max(
-    30,
-    Number(duration_minutes || service.duration || 60)
-  );
+  const requestedDuration = hasStructuredSelection
+    ? Math.max(30, selectedServices.reduce((total, selectedService) => {
+        return total + Number(selectedService.duration || 0);
+      }, 0))
+    : Math.max(30, Number(duration_minutes || service.duration || 60));
 
   const requestedEnd = requestedStart + requestedDuration;
   const businessEnd = timeToMinutes("2:30 PM") + 30;
@@ -585,6 +620,16 @@ app.post("/api/appointments", handleInspirationUpload, async (req, res) => {
     });
   }
 
+  const storedNotes = hasStructuredSelection
+    ? `Selected Services: ${selectedServices
+        .map(selectedService => `${selectedService.name} (${selectedService.duration} min)`)
+        .join(", ")}
+Total Estimated Time: ${requestedDuration} minutes
+
+Client Notes:
+${String(client_notes || "").trim() || "No notes added."}`
+    : notes || "";
+
   let inspirationImage = "";
 
   if (req.file) {
@@ -618,7 +663,7 @@ app.post("/api/appointments", handleInspirationUpload, async (req, res) => {
       cleanAppointmentTime,
       requestedDuration,
       inspirationImage,
-      notes || ""
+      storedNotes
     );
   } catch (error) {
     deleteInspirationFile(inspirationImage);
@@ -639,7 +684,7 @@ app.post("/api/appointments", handleInspirationUpload, async (req, res) => {
     appointment_time: cleanAppointmentTime,
     duration_minutes: requestedDuration,
     inspiration_image: inspirationImage,
-    notes: notes || ""
+    notes: storedNotes
   };
 
   sendAppointmentEmail(appointment).catch(error => {
