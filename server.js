@@ -11,9 +11,6 @@ const crypto = require("crypto");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 
-const app = express();
-const db = new Database(path.join(__dirname, "data", "pinkspa.sqlite"));
-
 const PORT = process.env.PORT || 3000;
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "admin@pinkspa.com";
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "PinkSpa123!";
@@ -22,16 +19,29 @@ const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "pinkspaadmin@gmail.com";
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 
-const uploadsDir = path.join(__dirname, "public", "uploads");
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+const app = express();
 
-const inspirationUploadsDir = path.join(__dirname, "data", "inspiration-uploads");
-if (!fs.existsSync(inspirationUploadsDir)) {
-  fs.mkdirSync(inspirationUploadsDir, { recursive: true });
-}
+// Render persistent disk setup:
+// Mount the disk (recommended: /var/data) and set DATA_DIR to that same path.
+// Without DATA_DIR, local development keeps the existing project directories.
+const configuredDataDir = String(process.env.DATA_DIR || "").trim();
+const dataDir = configuredDataDir
+  ? path.resolve(configuredDataDir)
+  : path.join(__dirname, "data");
+const serviceUploadsDir = configuredDataDir
+  ? path.join(dataDir, "service-uploads")
+  : path.join(__dirname, "public", "uploads");
+const inspirationUploadsDir = path.join(dataDir, "inspiration-uploads");
+const databasePath = path.join(dataDir, "pinkspa.sqlite");
+
+[dataDir, serviceUploadsDir, inspirationUploadsDir].forEach(directory => {
+  fs.mkdirSync(directory, { recursive: true });
+});
+
+const db = new Database(databasePath);
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
+  destination: (req, file, cb) => cb(null, serviceUploadsDir),
   filename: (req, file, cb) => {
     const safeName = file.originalname.toLowerCase().replace(/[^a-z0-9.]/g, "-").replace(/-+/g, "-");
     cb(null, Date.now() + "-" + safeName);
@@ -128,6 +138,12 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: "lax" }
+}));
+// Service images keep their existing /uploads/... URLs while their files live
+// on DATA_DIR in production. Inspiration images are intentionally not static.
+app.use("/uploads", express.static(serviceUploadsDir, {
+  index: false,
+  fallthrough: false
 }));
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -853,5 +869,9 @@ app.get("/owner", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`PinkSpa booking system running on port ${PORT}`);
+  console.log(`Storage mode: ${configuredDataDir ? "persistent DATA_DIR" : "local development"}`);
+  console.log(`SQLite database: ${databasePath}`);
+  console.log(`Service uploads: ${serviceUploadsDir}`);
+  console.log(`Private inspiration uploads: ${inspirationUploadsDir}`);
   console.log(`Owner login email: ${OWNER_EMAIL}`);
 });
