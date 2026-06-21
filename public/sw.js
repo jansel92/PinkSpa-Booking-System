@@ -1,11 +1,13 @@
-const CACHE_NAME = "pinkspa-cache-v7";
+const CACHE_NAME = "pinkspa-cache-v8";
 const urlsToCache = [
   "/",
   "/index.html",
   "/style.css",
   "/client.js",
   "/manifest.json",
-  "/images/favicon.ico"
+  "/images/favicon.png",
+  "/images/PinkSpa.png",
+  "/images/hero-luxury.png"
 ];
 
 self.addEventListener("install", event => {

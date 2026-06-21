@@ -20,6 +20,41 @@ const allTimes = [
 ];
 
 let allServices = [];
+let revealObserver = null;
+
+function observeRevealElements(elements) {
+  if (!revealObserver) return;
+
+  Array.from(elements).forEach((element, index) => {
+    element.classList.add("scroll-reveal");
+    element.style.setProperty("--reveal-delay", `${Math.min(index * 55, 220)}ms`);
+    revealObserver.observe(element);
+  });
+}
+
+function setupScrollReveal() {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (reduceMotion || !("IntersectionObserver" in window)) return;
+
+  document.documentElement.classList.add("reveal-enabled");
+
+  revealObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      revealObserver.unobserve(entry.target);
+    });
+  }, {
+    rootMargin: "0px 0px -8%",
+    threshold: 0.12
+  });
+
+  observeRevealElements(document.querySelectorAll(
+    ".home-page .heading, .home-page .gallery-grid img, .home-page .review-card, " +
+    ".home-page .booking-copy, .home-page .form-card, .home-page .cta"
+  ));
+}
 
 function categoryImage(service) {
   if (service.image) return service.image;
@@ -304,6 +339,7 @@ async function loadServices() {
     checkboxList.appendChild(serviceOption);
   });
 
+  observeRevealElements(grid.querySelectorAll(".service-card"));
   updateBookingSummary();
 }
 
@@ -437,11 +473,14 @@ function setupGalleryLightbox() {
     currentIndex = index;
     lightboxImage.src = galleryImages[currentIndex].src;
     lightbox.classList.add("active");
+    lightbox.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    closeBtn.focus();
   }
 
   function closeLightbox() {
     lightbox.classList.remove("active");
+    lightbox.setAttribute("aria-hidden", "true");
     lightboxImage.src = "";
     document.body.style.overflow = "";
   }
@@ -497,12 +536,15 @@ setupGalleryLightbox();
 function setupReviewSlider() {
   const reviewGrid = document.querySelector(".reviews-grid");
   const reviewCards = document.querySelectorAll(".review-card");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  if (!reviewGrid || reviewCards.length === 0) return;
+  if (!reviewGrid || reviewCards.length === 0 || reduceMotion) return;
 
   let index = 0;
 
   setInterval(() => {
+    if (document.hidden) return;
+
     index = (index + 1) % reviewCards.length;
 
     reviewGrid.scrollTo({
@@ -511,8 +553,6 @@ function setupReviewSlider() {
     });
   }, 4000);
 }
-
-setupReviewSlider();
 
 async function loadApprovedReviews() {
   const reviewsGrid = document.querySelector(".reviews-grid");
@@ -532,9 +572,12 @@ async function loadApprovedReviews() {
         <strong>- ${review.client_name}</strong>
       </div>
     `).join("");
+
+    observeRevealElements(reviewsGrid.querySelectorAll(".review-card"));
   } catch (error) {
     console.error("Error loading reviews:", error);
   }
 }
 
-loadApprovedReviews();
+setupScrollReveal();
+loadApprovedReviews().finally(setupReviewSlider);
