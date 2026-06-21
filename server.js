@@ -199,6 +199,20 @@ function rangesOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
 }
 
+const BOOKING_TIMES = [
+  "9:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "12:00 PM",
+  "12:30 PM",
+  "1:00 PM",
+  "1:30 PM",
+  "2:00 PM",
+  "2:30 PM"
+];
+
 async function sendAppointmentEmail(appointment) {
   if (!mailTransporter) {
     console.log("Email not configured yet. Appointment saved without email notification.");
@@ -300,8 +314,14 @@ app.get("/api/appointments", requireOwner, (req, res) => {
 
 app.get("/api/booked-times", (req, res) => {
   const date = String(req.query.date || "").trim();
+  const requestedDuration = req.query.duration_minutes === undefined
+    ? 30
+    : Number(req.query.duration_minutes);
 
   if (!date) return res.status(400).json({ error: "Date is required." });
+  if (!Number.isFinite(requestedDuration) || requestedDuration < 30) {
+    return res.status(400).json({ error: "Duration must be at least 30 minutes." });
+  }
 
   const blockedDay = db.prepare(`
     SELECT *
@@ -341,10 +361,28 @@ app.get("/api/booked-times", (req, res) => {
     }
   });
 
+  const businessEnd = timeToMinutes("2:30 PM") + 30;
+  const availableTimes = BOOKING_TIMES.filter(time => {
+    const requestedStart = timeToMinutes(time);
+    const requestedEnd = requestedStart + requestedDuration;
+
+    if (requestedEnd > businessEnd) return false;
+
+    return bookedAppointments.every(appt => {
+      const existingStart = timeToMinutes(appt.appointment_time);
+      const existingDuration = Number(appt.duration_minutes || 60);
+      if (existingStart === null) return true;
+
+      const existingEnd = existingStart + existingDuration;
+      return !rangesOverlap(requestedStart, requestedEnd, existingStart, existingEnd);
+    });
+  });
+
   res.json({
     blocked: false,
     bookedTimes: Array.from(occupiedSlots),
-    bookedAppointments
+    bookedAppointments,
+    availableTimes
   });
 });
 

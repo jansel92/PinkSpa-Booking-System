@@ -21,6 +21,7 @@ const allTimes = [
 
 let allServices = [];
 let revealObserver = null;
+let availabilityRequestId = 0;
 
 function observeRevealElements(elements) {
   if (!revealObserver) return;
@@ -104,6 +105,12 @@ function getSelectedServices() {
     .filter(Boolean);
 }
 
+function getSelectedDuration() {
+  return getSelectedServices().reduce((sum, service) => {
+    return sum + Number(service.duration || 0);
+  }, 0);
+}
+
 function updateBookingSummary() {
   const selected = getSelectedServices();
   const hiddenServiceInput = document.getElementById("serviceSelect");
@@ -114,14 +121,13 @@ function updateBookingSummary() {
   if (!selected.length) {
     hiddenServiceInput.value = "";
     summary.textContent = "Select one or more services.";
+    updateAvailableTimes();
     return;
   }
 
   hiddenServiceInput.value = selected[0].id;
 
-  const totalMinutes = selected.reduce((sum, service) => {
-    return sum + Number(service.duration || 0);
-  }, 0);
+  const totalMinutes = getSelectedDuration();
 
   const serviceNames = selected.map(service => service.name).join(", ");
 
@@ -129,6 +135,8 @@ function updateBookingSummary() {
     <strong>Selected:</strong> ${serviceNames}<br>
     <strong>Total estimated time:</strong> ${totalMinutes} minutes
   `;
+
+  updateAvailableTimes();
 }
 
 function renderTimeOptions(availableTimes) {
@@ -165,6 +173,7 @@ function isWeekend(dateValue) {
 async function updateAvailableTimes() {
   const dateInput = document.querySelector('input[name="appointment_date"]');
   const message = document.getElementById("bookingMessage");
+  const requestId = ++availabilityRequestId;
 
   if (!dateInput || !dateInput.value) {
     renderTimeOptions(allTimes);
@@ -182,8 +191,17 @@ async function updateAvailableTimes() {
   if (message) message.textContent = "";
 
   try {
-    const response = await fetch(`/api/booked-times?date=${encodeURIComponent(dateInput.value)}`);
+    const params = new URLSearchParams({ date: dateInput.value });
+    const selectedDuration = getSelectedDuration();
+
+    if (selectedDuration) {
+      params.set("duration_minutes", String(selectedDuration));
+    }
+
+    const response = await fetch(`/api/booked-times?${params.toString()}`);
     const data = await response.json();
+
+    if (requestId !== availabilityRequestId) return;
 
     if (!response.ok) {
       renderTimeOptions(allTimes);
@@ -200,8 +218,9 @@ async function updateAvailableTimes() {
       return;
     }
 
-    const bookedTimes = data.bookedTimes || [];
-    const availableTimes = allTimes.filter(time => !bookedTimes.includes(time));
+    const availableTimes = Array.isArray(data.availableTimes)
+      ? data.availableTimes
+      : allTimes.filter(time => !(data.bookedTimes || []).includes(time));
 
     renderTimeOptions(availableTimes);
 
@@ -209,7 +228,9 @@ async function updateAvailableTimes() {
       message.textContent = "No times are available for this date. Please choose another date.";
     }
   } catch (error) {
-    renderTimeOptions(allTimes);
+    if (requestId === availabilityRequestId) {
+      renderTimeOptions(allTimes);
+    }
   }
 }
 
