@@ -12,6 +12,110 @@ let editingServiceId = null;
 let allClients = [];
 let allAppointments = [];
 
+function createEmptyState(title, detail = "") {
+  const empty = document.createElement("div");
+  empty.className = "owner-empty-state";
+  const heading = document.createElement("strong");
+  heading.textContent = title;
+  empty.appendChild(heading);
+
+  if (detail) {
+    const text = document.createElement("span");
+    text.textContent = detail;
+    empty.appendChild(text);
+  }
+
+  return empty;
+}
+
+function setLoadingState(container, message = "Loading...") {
+  if (!container) return;
+  container.setAttribute("aria-busy", "true");
+  const loading = document.createElement("div");
+  loading.className = "owner-loading";
+  const spinner = document.createElement("span");
+  spinner.className = "owner-spinner";
+  spinner.setAttribute("aria-hidden", "true");
+  const text = document.createElement("span");
+  text.textContent = message;
+  loading.append(spinner, text);
+  container.replaceChildren(loading);
+}
+
+function finishLoading(container) {
+  if (container) container.removeAttribute("aria-busy");
+}
+
+function setLoadError(container, message) {
+  if (!container) return;
+  finishLoading(container);
+  container.replaceChildren(createEmptyState("Unable to load", message));
+}
+
+function setFormLoading(form, loading) {
+  if (!form) return;
+  form.toggleAttribute("aria-busy", loading);
+  form.querySelectorAll("input, select, textarea, button").forEach(control => {
+    control.disabled = loading;
+  });
+}
+
+function setButtonBusy(button, busy, busyText = "Working...") {
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  if (busy) {
+    button.dataset.originalText = button.textContent;
+    button.textContent = busyText;
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    return;
+  }
+
+  button.textContent = button.dataset.originalText || button.textContent;
+  delete button.dataset.originalText;
+  button.disabled = false;
+  button.removeAttribute("aria-busy");
+}
+
+function showToast(message, type = "success") {
+  const region = document.getElementById("ownerToastRegion");
+  if (!region) return;
+
+  const toast = document.createElement("div");
+  toast.className = `owner-toast owner-toast-${type}`;
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+  const text = document.createElement("span");
+  text.textContent = message;
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "owner-toast-close";
+  close.setAttribute("aria-label", "Dismiss notification");
+  close.textContent = "×";
+  close.addEventListener("click", () => toast.remove());
+  toast.append(text, close);
+  region.appendChild(toast);
+
+  window.setTimeout(() => {
+    toast.classList.add("owner-toast-leaving");
+    window.setTimeout(() => toast.remove(), 220);
+  }, type === "error" ? 6500 : 4200);
+}
+
+async function performAction({ button, busyText, successMessage, action }) {
+  setButtonBusy(button, true, busyText);
+  try {
+    await action();
+    if (successMessage) showToast(successMessage);
+    return true;
+  } catch (error) {
+    console.error(error);
+    showToast(error.message || "Something went wrong. Please try again.", "error");
+    return false;
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
 function serviceImage(service) {
   if (service.image) return service.image;
 
@@ -106,8 +210,13 @@ function setupImageFilePreview() {
 }
 
 async function checkLogin() {
-  const data = await api("/api/me");
-  if (data.owner) showDashboard();
+  try {
+    const data = await api("/api/me");
+    if (data.owner) showDashboard();
+  } catch (error) {
+    console.error(error);
+    showToast("The owner session could not be checked. Please sign in again.", "error");
+  }
 }
 
 function showDashboard() {
@@ -121,45 +230,90 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const payload = Object.fromEntries(new FormData(e.target).entries());
   const msg = document.getElementById("loginMessage");
+  const button = e.submitter;
 
+  setButtonBusy(button, true, "Signing in...");
   try {
     await api("/api/login", {
       method: "POST",
       body: JSON.stringify(payload)
     });
     showDashboard();
+    showToast("Welcome back. Your dashboard is loading.");
   } catch (err) {
     msg.textContent = err.message;
+  } finally {
+    setButtonBusy(button, false);
   }
 });
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await api("/api/logout", { method: "POST" });
-  location.reload();
+document.getElementById("logoutBtn").addEventListener("click", async (event) => {
+  const success = await performAction({
+    button: event.currentTarget,
+    busyText: "Logging out...",
+    action: () => api("/api/logout", { method: "POST" })
+  });
+  if (success) location.reload();
 });
 
-document.querySelectorAll(".tab").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+const dashboardTabs = Array.from(document.querySelectorAll(".tab"));
 
-    document.querySelectorAll(".tab-content").forEach(section => {
-      section.classList.add("hidden");
-    });
+function activateDashboardTab(button, moveFocus = false) {
+  dashboardTabs.forEach(tab => {
+    const active = tab === button;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+  });
 
-    document.getElementById(btn.dataset.tab + "Tab").classList.remove("hidden");
+  document.querySelectorAll(".tab-content").forEach(section => {
+    section.classList.add("hidden");
+  });
+
+  const panel = document.getElementById(button.dataset.tab + "Tab");
+  if (panel) panel.classList.remove("hidden");
+  if (moveFocus) button.focus();
+}
+
+dashboardTabs.forEach((btn, index) => {
+  btn.id = `${btn.dataset.tab}TabButton`;
+  btn.setAttribute("role", "tab");
+  btn.setAttribute("aria-controls", btn.dataset.tab + "Tab");
+  btn.setAttribute("aria-selected", String(btn.classList.contains("active")));
+  btn.tabIndex = btn.classList.contains("active") ? 0 : -1;
+  btn.addEventListener("click", () => activateDashboardTab(btn));
+  btn.addEventListener("keydown", event => {
+    let nextIndex = null;
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") nextIndex = (index + 1) % dashboardTabs.length;
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") nextIndex = (index - 1 + dashboardTabs.length) % dashboardTabs.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = dashboardTabs.length - 1;
+
+    if (nextIndex !== null) {
+      event.preventDefault();
+      activateDashboardTab(dashboardTabs[nextIndex], true);
+    }
   });
 });
 
+document.querySelectorAll(".tab-content").forEach(panel => {
+  panel.setAttribute("role", "tabpanel");
+  panel.setAttribute("aria-labelledby", `${panel.id.replace(/Tab$/, "")}TabButton`);
+});
+
 async function loadAll() {
-  await Promise.all([
-  loadAppointments(),
-  loadServices(),
-  loadClients(),
-  loadSettings(),
-  loadBlockedDays(),
-  loadReviews()
-]);
+  const results = await Promise.allSettled([
+    loadAppointments(),
+    loadServices(),
+    loadClients(),
+    loadSettings(),
+    loadBlockedDays(),
+    loadReviews()
+  ]);
+
+  if (results.some(result => result.status === "rejected")) {
+    showToast("Some dashboard information could not be loaded. Please refresh and try again.", "error");
+  }
 }
 
 function statusLabel(status) {
@@ -602,6 +756,8 @@ async function loadClients() {
   const summary = document.getElementById("clientsSummary");
   if (!list || !summary) return;
 
+  setLoadingState(list, "Loading client relationships...");
+  summary.textContent = "Loading clients...";
   try {
     const data = await api("/api/clients");
     allClients = Array.isArray(data.clients) ? data.clients : [];
@@ -612,9 +768,12 @@ async function loadClients() {
     allClients = [];
     summary.textContent = "Clients unavailable";
     const message = document.createElement("p");
-    message.className = "message";
+    message.className = "owner-empty-state";
     message.textContent = "Client information could not be loaded. Please try again.";
     list.replaceChildren(message);
+    throw error;
+  } finally {
+    finishLoading(list);
   }
 }
 
@@ -764,11 +923,29 @@ const calendarTodayButton = document.getElementById("calendarTodayBtn");
 if (calendarTodayButton) calendarTodayButton.addEventListener("click", goToCalendarToday);
 
 async function loadAppointments() {
-  const appointments = await api("/api/appointments");
+  const list = document.getElementById("appointmentsList");
+  const calendarList = document.getElementById("calendarList");
+  const financialDashboard = document.querySelector(".revenue-dashboard");
+  setLoadingState(list, "Loading appointments...");
+  setLoadingState(calendarList, "Loading calendar...");
+  if (financialDashboard) financialDashboard.setAttribute("aria-busy", "true");
+
+  let appointments;
+  try {
+    appointments = await api("/api/appointments");
+  } catch (error) {
+    setLoadError(list, "Appointments could not be loaded. Please try again.");
+    setLoadError(calendarList, "The calendar could not be loaded. Please try again.");
+    throw error;
+  } finally {
+    if (financialDashboard) financialDashboard.removeAttribute("aria-busy");
+  }
+
   allAppointments = appointments;
   renderCalendar(allAppointments);
-  const list = document.getElementById("appointmentsList");
-  list.innerHTML = "";
+  finishLoading(calendarList);
+  finishLoading(list);
+  list.replaceChildren();
 
   const pending = appointments.filter(a => a.status === "pending").length;
   const confirmed = appointments.filter(a => a.status === "confirmed").length;
@@ -816,7 +993,7 @@ async function loadAppointments() {
   renderRevenueDashboard(appointments, allClients);
 
   if (!appointments.length) {
-    list.innerHTML = "<p>No appointment requests yet.</p>";
+    list.appendChild(createEmptyState("No appointment requests yet", "New bookings will appear here automatically."));
     return;
   }
 
@@ -852,16 +1029,16 @@ async function loadAppointments() {
       ` : ""}
 
       <div class="status-row">
-        <button class="status-confirmed" onclick="confirmAppointment(${appt.id})">Confirm Appointment</button>
-        <button class="status-cancelled" onclick="cancelAppointment(${appt.id})">Cancel Appointment</button>
-        <button class="status-completed" onclick="completeAppointment(${appt.id})">Mark Completed</button>
-        <button class="status-pending" onclick="setStatus(${appt.id}, 'pending')">Back to Pending</button>
-        <button class="status-no-show" onclick="setStatus(${appt.id}, 'no-show')">No-show</button>
-        <button onclick="copyReviewRequest('${appt.client_name}')">
+        <button class="status-confirmed" onclick="confirmAppointment(${appt.id}, this)">Confirm Appointment</button>
+        <button class="status-cancelled" onclick="cancelAppointment(${appt.id}, this)">Cancel Appointment</button>
+        <button class="status-completed" onclick="completeAppointment(${appt.id}, this)">Mark Completed</button>
+        <button class="status-pending" onclick="setStatus(${appt.id}, 'pending', this)">Back to Pending</button>
+        <button class="status-no-show" onclick="setStatus(${appt.id}, 'no-show', this)">No-show</button>
+        <button onclick="copyReviewRequest('${appt.client_name}', this)">
            Request Review
         </button>
 
-       <button onclick="deleteAppointment(${appt.id})">Delete</button>
+       <button onclick="deleteAppointment(${appt.id}, this)">Delete</button>
        </div>
     `;
 
@@ -869,47 +1046,75 @@ async function loadAppointments() {
   });
 }
 
-async function setStatus(id, status) {
-  await api(`/api/appointments/${id}/status`, {
-    method: "PUT",
-    body: JSON.stringify({ status })
+async function setStatus(id, status, button) {
+  const statusMessages = {
+    pending: "Appointment moved back to pending.",
+    confirmed: "Appointment confirmed successfully.",
+    completed: "Appointment marked as completed.",
+    cancelled: "Appointment cancelled.",
+    "no-show": "Appointment marked as a no-show."
+  };
+  await performAction({
+    button,
+    busyText: "Updating...",
+    successMessage: statusMessages[status] || "Appointment updated.",
+    action: async () => {
+      await api(`/api/appointments/${id}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status })
+      });
+      await Promise.all([loadAppointments(), loadClients()]);
+    }
   });
-
-  await Promise.all([loadAppointments(), loadClients()]);
 }
 
-async function confirmAppointment(id) {
+async function confirmAppointment(id, button) {
   if (!confirm("Confirm this appointment?")) return;
-  await setStatus(id, "confirmed");
+  await setStatus(id, "confirmed", button);
 }
 
-async function cancelAppointment(id) {
+async function cancelAppointment(id, button) {
   if (!confirm("Cancel this appointment?")) return;
-  await setStatus(id, "cancelled");
+  await setStatus(id, "cancelled", button);
 }
 
-async function completeAppointment(id) {
+async function completeAppointment(id, button) {
   if (!confirm("Mark this appointment as completed?")) return;
-  await setStatus(id, "completed");
+  await setStatus(id, "completed", button);
 }
 
-async function deleteAppointment(id) {
+async function deleteAppointment(id, button) {
   if (!confirm("Delete this appointment request permanently?")) return;
-
-  await api(`/api/appointments/${id}`, {
-    method: "DELETE"
+  await performAction({
+    button,
+    busyText: "Deleting...",
+    successMessage: "Appointment deleted.",
+    action: async () => {
+      await api(`/api/appointments/${id}`, { method: "DELETE" });
+      await Promise.all([loadAppointments(), loadClients()]);
+    }
   });
-
-  await Promise.all([loadAppointments(), loadClients()]);
 }
 
 async function loadServices() {
-  const services = await api("/api/services");
+  const list = document.getElementById("servicesList");
+  setLoadingState(list, "Loading services...");
+  let services;
+  try {
+    services = await api("/api/services");
+  } catch (error) {
+    setLoadError(list, "Services could not be loaded. Please try again.");
+    throw error;
+  }
 
   document.getElementById("statServices").textContent = services.length;
+  finishLoading(list);
+  list.replaceChildren();
 
-  const list = document.getElementById("servicesList");
-  list.innerHTML = "";
+  if (!services.length) {
+    list.appendChild(createEmptyState("No active services", "Add a service to make it available for booking."));
+    return;
+  }
 
   services.forEach(service => {
     const row = document.createElement("div");
@@ -930,7 +1135,7 @@ async function loadServices() {
 
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button onclick='editService(${JSON.stringify(service)})'>Edit</button>
-        <button onclick="deleteService(${service.id})">Remove</button>
+        <button onclick="deleteService(${service.id}, this)">Remove</button>
       </div>
     `;
 
@@ -994,95 +1199,118 @@ function cancelEditService() {
   if (cancelButton) cancelButton.remove();
 }
 
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && editingServiceId) {
+    cancelEditService();
+    showToast("Service editing cancelled.");
+  }
+});
+
 document.getElementById("serviceForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const form = e.target;
-  let imagePath = form.elements.image.value || "";
+  const serviceId = editingServiceId;
+  const success = await performAction({
+    button: e.submitter,
+    busyText: serviceId ? "Saving changes..." : "Adding service...",
+    successMessage: serviceId ? "Service updated successfully." : "Service added successfully.",
+    action: async () => {
+      let imagePath = form.elements.image.value || "";
+      const imageFile = form.elements.image_file?.files?.[0];
 
-  const imageFile = form.elements.image_file?.files?.[0];
+      if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.append("image", imageFile);
+        const uploadResponse = await fetch("/api/upload-service-image", {
+          method: "POST",
+          body: uploadData
+        });
+        const uploadResult = await uploadResponse.json().catch(() => ({}));
+        if (!uploadResponse.ok) throw new Error(uploadResult.error || "Image upload failed.");
+        imagePath = uploadResult.image;
+      }
 
-  if (imageFile) {
-    const uploadData = new FormData();
-    uploadData.append("image", imageFile);
+      const payload = {
+        name: form.elements.name.value,
+        category: form.elements.category.value,
+        price: form.elements.price.value,
+        duration: form.elements.duration.value,
+        image: imagePath
+      };
 
-    const uploadResponse = await fetch("/api/upload-service-image", {
-      method: "POST",
-      body: uploadData
-    });
+      if (serviceId) {
+        payload.active = true;
+        await api(`/api/services/${serviceId}`, {
+          method: "PUT",
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await api("/api/services", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+      }
 
-    const uploadResult = await uploadResponse.json();
-
-    if (!uploadResponse.ok) {
-      alert(uploadResult.error || "Image upload failed.");
-      return;
+      await Promise.all([loadServices(), loadAppointments(), loadClients()]);
     }
-
-    imagePath = uploadResult.image;
-  }
-
-  const payload = {
-    name: form.elements.name.value,
-    category: form.elements.category.value,
-    price: form.elements.price.value,
-    duration: form.elements.duration.value,
-    image: imagePath
-  };
-
-  if (editingServiceId) {
-    payload.active = true;
-
-    await api(`/api/services/${editingServiceId}`, {
-      method: "PUT",
-      body: JSON.stringify(payload)
-    });
-
-    cancelEditService();
-  } else {
-    await api("/api/services", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    form.reset();
-    showImagePreview("");
-  }
-
-  await Promise.all([loadServices(), loadAppointments(), loadClients()]);
-});
-
-async function deleteService(id) {
-  if (!confirm("Remove this service?")) return;
-
-  await api(`/api/services/${id}`, {
-    method: "DELETE"
   });
 
-  await Promise.all([loadServices(), loadClients()]);
+  if (success) {
+    if (serviceId) cancelEditService();
+    else {
+      form.reset();
+      showImagePreview("");
+    }
+  }
+});
+
+async function deleteService(id, button) {
+  if (!confirm("Remove this service?")) return;
+  await performAction({
+    button,
+    busyText: "Removing...",
+    successMessage: "Service removed from booking.",
+    action: async () => {
+      await api(`/api/services/${id}`, { method: "DELETE" });
+      await Promise.all([loadServices(), loadClients()]);
+    }
+  });
 }
 
 async function loadSettings() {
-  const settings = await api("/api/settings");
   const form = document.getElementById("settingsForm");
-
-  Object.keys(settings).forEach(key => {
-    if (form.elements[key]) {
-      form.elements[key].value = settings[key] || "";
-    }
-  });
+  const message = document.getElementById("settingsMessage");
+  if (message) message.textContent = "Loading business settings...";
+  setFormLoading(form, true);
+  try {
+    const settings = await api("/api/settings");
+    Object.keys(settings).forEach(key => {
+      if (form.elements[key]) form.elements[key].value = settings[key] || "";
+    });
+    if (message) message.textContent = "";
+  } catch (error) {
+    if (message) message.textContent = "Business settings could not be loaded. Please try again.";
+    throw error;
+  } finally {
+    setFormLoading(form, false);
+  }
 }
 
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-
   const payload = Object.fromEntries(new FormData(e.target).entries());
-
-  await api("/api/settings", {
-    method: "PUT",
-    body: JSON.stringify(payload)
+  const success = await performAction({
+    button: e.submitter,
+    busyText: "Saving settings...",
+    successMessage: "Business settings saved.",
+    action: () => api("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    })
   });
 
-  document.getElementById("settingsMessage").textContent = "Settings saved.";
+  if (success) document.getElementById("settingsMessage").textContent = "Settings saved.";
 });
 
 async function loadBlockedDays() {
@@ -1090,12 +1318,20 @@ async function loadBlockedDays() {
 
   if (!list) return;
 
-  const days = await api("/api/blocked-days");
+  setLoadingState(list, "Loading blocked dates...");
+  let days;
+  try {
+    days = await api("/api/blocked-days");
+  } catch (error) {
+    setLoadError(list, "Blocked dates could not be loaded. Please try again.");
+    throw error;
+  }
 
-  list.innerHTML = "";
+  finishLoading(list);
+  list.replaceChildren();
 
   if (!days.length) {
-    list.innerHTML = "<p>No blocked dates.</p>";
+    list.appendChild(createEmptyState("No blocked dates", "Your booking calendar is currently open."));
     return;
   }
 
@@ -1109,7 +1345,7 @@ async function loadBlockedDays() {
         <small>${day.reason || "Unavailable"}</small>
       </div>
 
-      <button onclick="deleteBlockedDay(${day.id})">
+      <button onclick="deleteBlockedDay(${day.id}, this)">
         Remove
       </button>
     `;
@@ -1118,14 +1354,18 @@ async function loadBlockedDays() {
   });
 }
 
-async function deleteBlockedDay(id) {
+async function deleteBlockedDay(id, button) {
   if (!confirm("Remove this blocked date?")) return;
 
-  await api(`/api/blocked-days/${id}`, {
-    method: "DELETE"
+  await performAction({
+    button,
+    busyText: "Removing...",
+    successMessage: "Blocked date removed.",
+    action: async () => {
+      await api(`/api/blocked-days/${id}`, { method: "DELETE" });
+      await loadBlockedDays();
+    }
   });
-
-  loadBlockedDays();
 }
 
 const blockedDayForm = document.getElementById("blockedDayForm");
@@ -1136,17 +1376,23 @@ if (blockedDayForm) {
 
     const payload = Object.fromEntries(new FormData(e.target).entries());
 
-    await api("/api/blocked-days", {
-      method: "POST",
-      body: JSON.stringify(payload)
+    const success = await performAction({
+      button: e.submitter,
+      busyText: "Blocking date...",
+      successMessage: "Date blocked successfully.",
+      action: async () => {
+        await api("/api/blocked-days", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        await loadBlockedDays();
+      }
     });
 
-    e.target.reset();
-
-    document.getElementById("blockedDayMessage").textContent =
-      "Date blocked successfully.";
-
-    loadBlockedDays();
+    if (success) {
+      e.target.reset();
+      document.getElementById("blockedDayMessage").textContent = "Date blocked successfully.";
+    }
   });
 }
 
@@ -1154,11 +1400,19 @@ async function loadReviews() {
   const container = document.getElementById("ownerReviewsList");
   if (!container) return;
 
-  const data = await api("/api/admin/reviews");
+  setLoadingState(container, "Loading client reviews...");
+  let data;
+  try {
+    data = await api("/api/admin/reviews");
+  } catch (error) {
+    setLoadError(container, "Reviews could not be loaded. Please try again.");
+    throw error;
+  }
   const reviews = data.reviews || [];
+  finishLoading(container);
 
   if (!reviews.length) {
-    container.innerHTML = "<p>No reviews submitted yet.</p>";
+    container.replaceChildren(createEmptyState("No reviews submitted yet", "New client feedback will appear here."));
     return;
   }
 
@@ -1170,35 +1424,56 @@ async function loadReviews() {
       <p><b>Status:</b> ${review.approved ? "Approved" : "Pending Approval"}</p>
 
       <div class="status-row">
-        <button onclick="approveReview(${review.id})">Approve</button>
-        <button onclick="unapproveReview(${review.id})">Hide</button>
-        <button onclick="deleteReview(${review.id})">Delete</button>
+        <button onclick="approveReview(${review.id}, this)">Approve</button>
+        <button onclick="unapproveReview(${review.id}, this)">Hide</button>
+        <button onclick="deleteReview(${review.id}, this)">Delete</button>
       </div>
     </div>
   `).join("");
 }
 
-async function approveReview(id) {
-  await api(`/api/admin/reviews/${id}/approve`, { method: "PUT" });
-  await Promise.all([loadReviews(), loadClients()]);
+async function approveReview(id, button) {
+  await performAction({
+    button,
+    busyText: "Approving...",
+    successMessage: "Review approved and published.",
+    action: async () => {
+      await api(`/api/admin/reviews/${id}/approve`, { method: "PUT" });
+      await Promise.all([loadReviews(), loadClients()]);
+    }
+  });
 }
 
-async function unapproveReview(id) {
-  await api(`/api/admin/reviews/${id}/unapprove`, { method: "PUT" });
-  await Promise.all([loadReviews(), loadClients()]);
+async function unapproveReview(id, button) {
+  await performAction({
+    button,
+    busyText: "Hiding...",
+    successMessage: "Review hidden from the website.",
+    action: async () => {
+      await api(`/api/admin/reviews/${id}/unapprove`, { method: "PUT" });
+      await Promise.all([loadReviews(), loadClients()]);
+    }
+  });
 }
 
-async function deleteReview(id) {
+async function deleteReview(id, button) {
   if (!confirm("Delete this review?")) return;
-  await api(`/api/admin/reviews/${id}`, { method: "DELETE" });
-  await Promise.all([loadReviews(), loadClients()]);
+  await performAction({
+    button,
+    busyText: "Deleting...",
+    successMessage: "Review deleted.",
+    action: async () => {
+      await api(`/api/admin/reviews/${id}`, { method: "DELETE" });
+      await Promise.all([loadReviews(), loadClients()]);
+    }
+  });
 }
 
 window.approveReview = approveReview;
 window.unapproveReview = unapproveReview;
 window.deleteReview = deleteReview;
 
-function copyReviewRequest(clientName) {
+async function copyReviewRequest(clientName, button) {
   const message =
 `Hi ${clientName || ""}! Thank you for visiting PinkSpa 💖
 
@@ -1207,9 +1482,12 @@ We would love your feedback.
 Please leave us a quick review here:
 https://rachelpinkspa.com/review`;
 
-  navigator.clipboard.writeText(message);
-
-  alert("Review request copied! Paste it into text message, WhatsApp, Instagram DM, or Facebook Messenger.");
+  await performAction({
+    button,
+    busyText: "Copying...",
+    successMessage: "Review request copied. It is ready to paste into a message.",
+    action: () => navigator.clipboard.writeText(message)
+  });
 }
 
 checkLogin();

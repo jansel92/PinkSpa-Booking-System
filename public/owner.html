@@ -12,6 +12,8 @@
 </head> 
 
 <body class="owner-body">
+  <div id="ownerToastRegion" class="owner-toast-region" aria-live="polite" aria-atomic="true"></div>
+
   <section id="loginScreen" class="login-screen">
     <form id="loginForm" class="login-card" autocomplete="off">
       <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="login-logo" />
@@ -42,13 +44,15 @@
         <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="sidebar-logo" />
       </a>
 
-      <button data-tab="appointments" class="tab active">Appointments</button>
-      <button data-tab="calendar" class="tab">Calendar</button>
-      <button data-tab="clients" class="tab">Clients</button>
-      <button data-tab="services" class="tab">Services & Prices</button>
-      <button data-tab="reviews" class="tab">Reviews</button>
-      <button data-tab="blocked" class="tab">Blocked Dates</button>
-      <button data-tab="settings" class="tab">Business Settings</button>
+      <div class="sidebar-tabs" role="tablist" aria-label="Owner dashboard sections">
+        <button data-tab="appointments" class="tab active">Appointments</button>
+        <button data-tab="calendar" class="tab">Calendar</button>
+        <button data-tab="clients" class="tab">Clients</button>
+        <button data-tab="services" class="tab">Services & Prices</button>
+        <button data-tab="reviews" class="tab">Reviews</button>
+        <button data-tab="blocked" class="tab">Blocked Dates</button>
+        <button data-tab="settings" class="tab">Business Settings</button>
+      </div>
       <button id="logoutBtn" class="logout">Logout</button>
     </aside>
 
@@ -58,7 +62,7 @@
           <p class="eyebrow dark">Owner Dashboard</p>
           <h1>Manage PinkSpa</h1>
         </div>
-        <a class="btn primary" href="/" target="_blank">View Website</a>
+        <a class="btn primary" href="/" target="_blank" rel="noopener noreferrer">View Website</a>
       </div>
 
       <div class="stats">

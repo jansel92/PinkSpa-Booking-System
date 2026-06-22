@@ -200,6 +200,22 @@ footer{text-align:center;color:var(--muted);padding:28px}
 
 /* Owner */
 .owner-body{background:#fff1f7}
+.owner-toast-region{position:fixed;top:22px;right:22px;z-index:10000;display:grid;width:min(390px,calc(100% - 32px));gap:10px;pointer-events:none}
+.owner-toast{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid #ffd4e4;border-radius:18px;background:rgba(255,255,255,.96);color:var(--text);box-shadow:0 20px 55px rgba(79,17,44,.2);font-size:14px;font-weight:800;pointer-events:auto;animation:ownerToastIn .32s cubic-bezier(.22,1,.36,1) both;backdrop-filter:blur(16px)}
+.owner-toast::before{width:8px;height:8px;flex:0 0 auto;border-radius:50%;background:#2d9c5f;content:""}
+.owner-toast-error::before{background:#d82f5b}
+.owner-toast>span{flex:1}
+.owner-toast-close{border:0;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.owner-toast-leaving{animation:ownerToastOut .22s ease both}
+.owner-loading{display:flex;min-height:92px;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--muted);font-size:13px;font-weight:800}
+.owner-spinner{width:20px;height:20px;border:2px solid #ffd7e5;border-top-color:var(--deep);border-radius:50%;animation:ownerSpin .75s linear infinite}
+.owner-empty-state{display:grid;gap:6px;margin:0;padding:28px;border:1px dashed #f5b9ce;border-radius:18px;background:rgba(255,255,255,.55);color:var(--muted);text-align:center}
+.owner-empty-state strong{color:var(--deep);font-size:15px}
+.owner-empty-state span{font-size:13px;line-height:1.5}
+.owner-body :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid rgba(255,95,147,.38);outline-offset:3px}
+.owner-body button:disabled{cursor:wait;opacity:.68}
+.owner-body :is(.btn,input,select,textarea){transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.owner-body :is(input,select,textarea):focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(255,95,147,.11)}
 .login-screen{min-height:100vh;display:grid;place-items:center;padding:24px}
 .login-card{width:min(430px,100%)}
 .login-card h1{font-size:42px;letter-spacing:-2px;margin:18px 0 4px}
@@ -207,13 +223,16 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .hidden{display:none!important}
 .dashboard{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
 .sidebar{background:white;border-right:1px solid #ffe0eb;padding:24px;display:flex;flex-direction:column;gap:12px;position:sticky;top:0;height:100vh}
+.sidebar-tabs{display:contents}
 .sidebar .brand{margin-bottom:18px}
 .tab,.logout{
-  border:0;border-radius:18px;padding:15px;text-align:left;background:#fff1f7;color:#5e4650;font-weight:900;cursor:pointer;
+  border:0;border-radius:18px;padding:15px;text-align:left;background:#fff1f7;color:#5e4650;font-weight:900;cursor:pointer;transition:transform .2s ease,background .2s ease,box-shadow .2s ease;
 }
-.tab.active{background:linear-gradient(135deg,var(--pink),var(--deep));color:white}
+.tab.active{background:linear-gradient(135deg,var(--pink),var(--deep));color:white;box-shadow:0 10px 26px rgba(183,25,86,.2)}
 .logout{margin-top:auto;background:#21171c;color:white}
 .dash-main{padding:34px}
+.tab-content:not(.hidden){animation:ownerContentIn .38s cubic-bezier(.22,1,.36,1) both}
+.tab-content{margin-top:0}
 .dash-header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}
 .dash-header h1{margin:0;font-size:52px;letter-spacing:-3px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
@@ -313,10 +332,13 @@ footer{text-align:center;color:var(--muted);padding:28px}
   margin-top:12px;
 }
 .appointment-card{display:grid;gap:10px}
+.owner-body :is(#appointmentsList,#servicesList,#ownerReviewsList,#blockedDaysList){display:grid;gap:12px}
+.owner-body :is(.appointment-card,.service-row){margin-top:0;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.owner-body :is(.financial-panel,.calendar-day,.client-card){transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 .appointment-card strong,.service-row strong{color:var(--deep)}
 .status-row{display:flex;gap:8px;flex-wrap:wrap}
 .status-row button{
-  border:0;border-radius:999px;padding:9px 12px;font-weight:900;cursor:pointer;
+  min-height:40px;border:0;border-radius:999px;padding:9px 12px;font-weight:900;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
 }
 .status-pending{background:#fff1c7;color:#8a6200}
 .status-confirmed{background:#dff8e8;color:#126c37}
@@ -326,6 +348,20 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .service-row{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .service-row button{border:0;border-radius:999px;background:white;color:var(--deep);font-weight:900;padding:10px 14px;cursor:pointer}
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.settings-grid[aria-busy="true"]{opacity:.64}
+
+@media(hover:hover){
+  .owner-body .btn:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(183,25,86,.24)}
+  .owner-body :is(input,select,textarea):hover{border-color:#f5abc6}
+  .owner-body .tab:hover:not(.active),.owner-body .logout:hover{transform:translateX(3px);box-shadow:0 9px 22px rgba(151,22,77,.1)}
+  .owner-body :is(.appointment-card,.service-row,.financial-panel,.calendar-day,.client-card):hover{transform:translateY(-2px);border-color:#f7bfd3;box-shadow:0 18px 44px rgba(151,22,77,.1)}
+  .owner-body .status-row button:hover,.owner-body .service-row button:hover{transform:translateY(-1px);filter:saturate(1.08);box-shadow:0 8px 18px rgba(79,17,44,.1)}
+}
+
+@keyframes ownerSpin{to{transform:rotate(360deg)}}
+@keyframes ownerToastIn{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes ownerToastOut{to{opacity:0;transform:translateX(14px)}}
+@keyframes ownerContentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* Owner Calendar */
 .calendar-panel{overflow:hidden}
@@ -431,17 +467,30 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .hero,.booking-section,.dashboard,.grid-two{grid-template-columns:1fr}
   .floating-card{justify-self:start}
   .service-grid,.stats,.settings-grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .financial-analytics{grid-template-columns:1fr}
   .financial-panel-wide{grid-column:auto}
-  .sidebar{position:relative;height:auto}
+  .sidebar{position:sticky;top:0;z-index:100;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:12px;border-right:0;border-bottom:1px solid #ffe0eb;box-shadow:0 10px 28px rgba(79,17,44,.08);scrollbar-width:none}
+  .sidebar::-webkit-scrollbar{display:none}
+  .sidebar .brand{flex:0 0 auto;margin:0}
+  .sidebar-logo{width:72px!important;margin:0!important}
+  .sidebar .tab,.sidebar .logout{flex:0 0 auto;min-height:44px;white-space:nowrap}
+  .sidebar .logout{margin:0 0 0 auto}
 }
 @media(max-width:650px){
+  .owner-body{padding-bottom:0}
   .hero{padding:115px 22px 55px}
   .hero h1{letter-spacing:-3px}
   .section,.booking-section{padding:70px 22px}
   .two{grid-template-columns:1fr}
   .cta{margin:40px 22px;padding:32px;flex-direction:column;align-items:flex-start}
-  .dash-main{padding:22px}
+  .dash-main{padding:20px 16px}
+  .owner-body .panel{padding:20px;border-radius:24px}
+  .dash-header{align-items:flex-start;flex-direction:column;margin-bottom:20px}
+  .dash-header h1{font-size:40px;letter-spacing:-2px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .stats div{padding:16px;border-radius:18px}
+  .stats strong{font-size:28px}
   .revenue-dashboard{padding:20px}
   .revenue-heading{align-items:flex-start;flex-direction:column}
   .revenue-heading>p{text-align:left}
@@ -464,10 +513,19 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .client-card{padding:20px}
   .client-metrics{grid-template-columns:1fr 1fr}
   .client-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .service-row{align-items:stretch;flex-direction:column}
+  .status-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .status-row button{width:100%;min-height:44px}
+  .owner-toast-region{top:auto;right:16px;bottom:16px;left:16px;width:auto}
+}
+@media(max-width:380px){
+  .owner-body .stats,.owner-body .status-row{grid-template-columns:1fr}
+  .dash-header h1{font-size:35px}
 }
 @media(prefers-reduced-motion:reduce){
-  .revenue-card,.client-card{animation:none}
-  .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar{transition:none}
+  .owner-body *{scroll-behavior:auto!important}
+  .revenue-card,.client-card,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner{animation:none}
+  .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button){transition:none}
 }
 /* Logo Images */
 .nav-logo{
