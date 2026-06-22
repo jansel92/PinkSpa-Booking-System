@@ -9,6 +9,7 @@ async function api(url, options = {}) {
 }
 
 let editingServiceId = null;
+let allClients = [];
 
 function serviceImage(service) {
   if (service.image) return service.image;
@@ -153,6 +154,7 @@ async function loadAll() {
   await Promise.all([
   loadAppointments(),
   loadServices(),
+  loadClients(),
   loadSettings(),
   loadBlockedDays(),
   loadReviews()
@@ -241,6 +243,201 @@ function renderRevenueDashboard(appointments) {
     if (element) element.textContent = value;
   });
 }
+
+function formatClientDate(dateValue) {
+  if (!dateValue) return "No completed visits";
+
+  const date = new Date(`${dateValue}T00:00:00`);
+  return Number.isNaN(date.getTime())
+    ? dateValue
+    : date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+}
+
+function createClientMetric(label, value) {
+  const metric = document.createElement("div");
+  metric.className = "client-metric";
+
+  const metricLabel = document.createElement("span");
+  metricLabel.textContent = label;
+
+  const metricValue = document.createElement("strong");
+  metricValue.textContent = value;
+
+  metric.append(metricLabel, metricValue);
+  return metric;
+}
+
+function renderClientCard(client) {
+  const card = document.createElement("article");
+  card.className = "client-card";
+
+  const header = document.createElement("div");
+  header.className = "client-card-header";
+
+  const identity = document.createElement("div");
+  const name = document.createElement("h3");
+  name.textContent = client.name || "PinkSpa Client";
+  const contact = document.createElement("div");
+  contact.className = "client-contact";
+
+  if (client.phone) {
+    const phone = document.createElement("a");
+    phone.href = `tel:${String(client.phone).replace(/\D/g, "")}`;
+    phone.textContent = client.phone;
+    contact.appendChild(phone);
+  }
+
+  if (client.email) {
+    const email = document.createElement("a");
+    email.href = `mailto:${client.email}`;
+    email.textContent = client.email;
+    contact.appendChild(email);
+  } else {
+    const noEmail = document.createElement("span");
+    noEmail.textContent = "No email provided";
+    contact.appendChild(noEmail);
+  }
+
+  identity.append(name, contact);
+
+  const appointmentBadge = document.createElement("span");
+  appointmentBadge.className = "client-appointment-badge";
+  appointmentBadge.textContent = `${client.total_appointments} appointment${client.total_appointments === 1 ? "" : "s"}`;
+  header.append(identity, appointmentBadge);
+
+  const currency = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const metrics = document.createElement("div");
+  metrics.className = "client-metrics";
+  metrics.append(
+    createClientMetric("Total Appointments", String(client.total_appointments)),
+    createClientMetric("Total Money Spent", currency.format(Number(client.total_spent || 0))),
+    createClientMetric("Favorite Service", client.favorite_service || "-"),
+    createClientMetric("Last Visit", formatClientDate(client.last_visit_date)),
+    createClientMetric("Reviews Submitted", String(client.reviews?.length || 0))
+  );
+
+  card.append(header, metrics);
+
+  if (client.reviews?.length) {
+    const reviewDetails = document.createElement("details");
+    reviewDetails.className = "client-details";
+    const reviewSummary = document.createElement("summary");
+    reviewSummary.textContent = `Reviews submitted (${client.reviews.length})`;
+    reviewDetails.appendChild(reviewSummary);
+
+    client.reviews.forEach(review => {
+      const reviewItem = document.createElement("div");
+      reviewItem.className = "client-review";
+      const rating = document.createElement("strong");
+      const safeRating = Math.max(0, Math.min(5, Math.round(Number(review.rating) || 0)));
+      rating.textContent = `${"★".repeat(safeRating)}${"☆".repeat(5 - safeRating)}`;
+      const reviewText = document.createElement("p");
+      reviewText.textContent = review.review_text;
+      const reviewStatus = document.createElement("small");
+      reviewStatus.textContent = review.approved ? "Approved" : "Pending approval";
+      reviewItem.append(rating, reviewText, reviewStatus);
+      reviewDetails.appendChild(reviewItem);
+    });
+
+    card.appendChild(reviewDetails);
+  }
+
+  if (client.inspiration_photos?.length) {
+    const photoSection = document.createElement("div");
+    photoSection.className = "client-photos";
+    const photoHeading = document.createElement("h4");
+    photoHeading.textContent = `Inspiration Photos (${client.inspiration_photos.length})`;
+    const photoGrid = document.createElement("div");
+    photoGrid.className = "client-photo-grid";
+
+    client.inspiration_photos.forEach(photo => {
+      const photoLink = document.createElement("a");
+      photoLink.href = `/api/appointments/${photo.appointment_id}/inspiration`;
+      photoLink.target = "_blank";
+      photoLink.rel = "noopener noreferrer";
+      photoLink.title = `${photo.service_name} - ${formatClientDate(photo.appointment_date)}`;
+
+      const image = document.createElement("img");
+      image.src = photoLink.href;
+      image.alt = `${photo.service_name} inspiration photo`;
+      image.loading = "lazy";
+
+      const caption = document.createElement("span");
+      caption.textContent = photo.service_name;
+      photoLink.append(image, caption);
+      photoGrid.appendChild(photoLink);
+    });
+
+    photoSection.append(photoHeading, photoGrid);
+    card.appendChild(photoSection);
+  }
+
+  return card;
+}
+
+function applyClientSearch() {
+  const searchInput = document.getElementById("clientSearch");
+  const query = String(searchInput?.value || "").trim().toLowerCase();
+  const digits = query.replace(/\D/g, "");
+  const filteredClients = allClients.filter(client => {
+    const text = [client.name, client.phone, client.email, client.favorite_service]
+      .join(" ")
+      .toLowerCase();
+    const phone = String(client.phone || "").replace(/\D/g, "");
+    return !query || text.includes(query) || (digits && phone.includes(digits));
+  });
+
+  const list = document.getElementById("clientsList");
+  const summary = document.getElementById("clientsSummary");
+  if (!list || !summary) return;
+
+  summary.textContent = query
+    ? `${filteredClients.length} of ${allClients.length} clients`
+    : `${allClients.length} client${allClients.length === 1 ? "" : "s"}`;
+  list.replaceChildren();
+
+  if (!filteredClients.length) {
+    const empty = document.createElement("p");
+    empty.className = "clients-empty";
+    empty.textContent = query
+      ? "No clients match your search."
+      : "No clients have booked yet.";
+    list.appendChild(empty);
+    return;
+  }
+
+  filteredClients.forEach(client => list.appendChild(renderClientCard(client)));
+}
+
+async function loadClients() {
+  const list = document.getElementById("clientsList");
+  const summary = document.getElementById("clientsSummary");
+  if (!list || !summary) return;
+
+  try {
+    const data = await api("/api/clients");
+    allClients = Array.isArray(data.clients) ? data.clients : [];
+    applyClientSearch();
+  } catch (error) {
+    console.error("Unable to load clients:", error);
+    allClients = [];
+    summary.textContent = "Clients unavailable";
+    const message = document.createElement("p");
+    message.className = "message";
+    message.textContent = "Client information could not be loaded. Please try again.";
+    list.replaceChildren(message);
+  }
+}
+
+const clientSearch = document.getElementById("clientSearch");
+if (clientSearch) clientSearch.addEventListener("input", applyClientSearch);
 
 async function loadAppointments() {
   const appointments = await api("/api/appointments");
@@ -352,7 +549,7 @@ async function setStatus(id, status) {
     body: JSON.stringify({ status })
   });
 
-  loadAppointments();
+  await Promise.all([loadAppointments(), loadClients()]);
 }
 
 async function confirmAppointment(id) {
@@ -377,7 +574,7 @@ async function deleteAppointment(id) {
     method: "DELETE"
   });
 
-  loadAppointments();
+  await Promise.all([loadAppointments(), loadClients()]);
 }
 
 async function loadServices() {
@@ -525,8 +722,7 @@ document.getElementById("serviceForm").addEventListener("submit", async (e) => {
     showImagePreview("");
   }
 
-  loadServices();
-  loadAppointments();
+  await Promise.all([loadServices(), loadAppointments(), loadClients()]);
 });
 
 async function deleteService(id) {
@@ -536,7 +732,7 @@ async function deleteService(id) {
     method: "DELETE"
   });
 
-  loadServices();
+  await Promise.all([loadServices(), loadClients()]);
 }
 
 async function loadSettings() {
@@ -658,18 +854,18 @@ async function loadReviews() {
 
 async function approveReview(id) {
   await api(`/api/admin/reviews/${id}/approve`, { method: "PUT" });
-  loadReviews();
+  await Promise.all([loadReviews(), loadClients()]);
 }
 
 async function unapproveReview(id) {
   await api(`/api/admin/reviews/${id}/unapprove`, { method: "PUT" });
-  loadReviews();
+  await Promise.all([loadReviews(), loadClients()]);
 }
 
 async function deleteReview(id) {
   if (!confirm("Delete this review?")) return;
   await api(`/api/admin/reviews/${id}`, { method: "DELETE" });
-  loadReviews();
+  await Promise.all([loadReviews(), loadClients()]);
 }
 
 window.approveReview = approveReview;

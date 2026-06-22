@@ -289,6 +289,23 @@ function rangesOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
 }
 
+function normalizeClientPhone(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function normalizeClientEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizeClientName(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function parseCurrencyValue(value) {
+  const match = String(value || "").replace(/,/g, "").match(/\d+(?:\.\d{1,2})?/);
+  return match ? Number(match[0]) : 0;
+}
+
 const BOOKING_TIMES = [
   "9:30 AM",
   "10:00 AM",
@@ -401,6 +418,111 @@ app.get("/api/appointments", requireOwner, (req, res) => {
   `).all();
 
   res.json(appts);
+});
+
+app.get("/api/clients", requireOwner, (req, res) => {
+  const appointments = db.prepare(`
+    SELECT a.*, s.price AS service_price
+    FROM appointments a
+    LEFT JOIN services s ON a.service_id = s.id
+    ORDER BY a.appointment_date DESC, a.appointment_time DESC, a.id DESC
+  `).all();
+  const reviews = db.prepare(`
+    SELECT id, client_name, rating, review_text, approved, created_at
+    FROM reviews
+    ORDER BY created_at DESC, id DESC
+  `).all();
+
+  const parent = appointments.map((_, index) => index);
+  const find = index => {
+    if (parent[index] !== index) parent[index] = find(parent[index]);
+    return parent[index];
+  };
+  const union = (left, right) => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+    if (leftRoot !== rightRoot) parent[rightRoot] = leftRoot;
+  };
+  const phoneOwners = new Map();
+  const emailOwners = new Map();
+
+  appointments.forEach((appointment, index) => {
+    const phone = normalizeClientPhone(appointment.client_phone);
+    const email = normalizeClientEmail(appointment.client_email);
+
+    if (phone) {
+      if (phoneOwners.has(phone)) union(index, phoneOwners.get(phone));
+      else phoneOwners.set(phone, index);
+    }
+
+    if (email) {
+      if (emailOwners.has(email)) union(index, emailOwners.get(email));
+      else emailOwners.set(email, index);
+    }
+  });
+
+  const groupedAppointments = new Map();
+  appointments.forEach((appointment, index) => {
+    const root = find(index);
+    if (!groupedAppointments.has(root)) groupedAppointments.set(root, []);
+    groupedAppointments.get(root).push(appointment);
+  });
+
+  const clients = Array.from(groupedAppointments.values()).map(clientAppointments => {
+    const latestAppointment = clientAppointments[0];
+    const phone = clientAppointments
+      .map(appointment => appointment.client_phone)
+      .find(Boolean) || "";
+    const email = clientAppointments
+      .map(appointment => appointment.client_email)
+      .find(Boolean) || "";
+    const completedAppointments = clientAppointments.filter(appointment => {
+      return appointment.status === "completed";
+    });
+    const totalSpent = completedAppointments.reduce((sum, appointment) => {
+      return sum + parseCurrencyValue(appointment.service_price);
+    }, 0);
+    const serviceCounts = clientAppointments.reduce((counts, appointment) => {
+      const serviceName = appointment.service_name || "Unknown Service";
+      counts.set(serviceName, (counts.get(serviceName) || 0) + 1);
+      return counts;
+    }, new Map());
+    const favoriteService = Array.from(serviceCounts.entries())
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0]?.[0] || "-";
+    const clientNames = new Set(
+      clientAppointments.map(appointment => normalizeClientName(appointment.client_name)).filter(Boolean)
+    );
+
+    // Reviews currently have no phone/email, so exact normalized name is the
+    // safest available match until the review form captures a client identity.
+    const clientReviews = reviews.filter(review => {
+      return clientNames.has(normalizeClientName(review.client_name));
+    });
+
+    return {
+      id: normalizeClientPhone(phone) || normalizeClientEmail(email) || `appointment-${latestAppointment.id}`,
+      name: latestAppointment.client_name,
+      phone,
+      email,
+      total_appointments: clientAppointments.length,
+      total_spent: totalSpent,
+      favorite_service: favoriteService,
+      last_visit_date: completedAppointments[0]?.appointment_date || "",
+      reviews: clientReviews,
+      inspiration_photos: clientAppointments
+        .filter(appointment => appointment.inspiration_image)
+        .map(appointment => ({
+          appointment_id: appointment.id,
+          appointment_date: appointment.appointment_date,
+          service_name: appointment.service_name
+        }))
+    };
+  }).sort((left, right) => {
+    return (right.last_visit_date || "").localeCompare(left.last_visit_date || "") ||
+      String(left.name || "").localeCompare(String(right.name || ""));
+  });
+
+  res.json({ clients });
 });
 
 app.get("/api/appointments/:id/inspiration", requireOwner, (req, res) => {

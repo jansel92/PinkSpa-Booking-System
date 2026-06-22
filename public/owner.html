@@ -43,6 +43,7 @@
       </a>
 
       <button data-tab="appointments" class="tab active">Appointments</button>
+      <button data-tab="clients" class="tab">Clients</button>
       <button data-tab="services" class="tab">Services & Prices</button>
       <button data-tab="reviews" class="tab">Reviews</button>
       <button data-tab="blocked" class="tab">Blocked Dates</button>
@@ -116,6 +117,34 @@
         <div class="panel">
           <h2>Appointment Requests</h2>
           <div id="appointmentsList"></div>
+        </div>
+      </section>
+
+      <section id="clientsTab" class="tab-content hidden">
+        <div class="panel clients-panel">
+          <div class="clients-header">
+            <div>
+              <p class="eyebrow dark">Customer Relationships</p>
+              <h2>Clients</h2>
+              <p id="clientsSummary" class="clients-summary">Loading clients...</p>
+            </div>
+
+            <label class="client-search-label" for="clientSearch">
+              Search Clients
+              <input
+                id="clientSearch"
+                type="search"
+                placeholder="Name, phone, email, or service"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+
+          <p class="clients-note">
+            Clients are grouped by matching phone or email. Reviews are matched by exact client name because reviews do not currently collect contact information.
+          </p>
+
+          <div id="clientsList" class="clients-list" aria-live="polite"></div>
         </div>
       </section>
 
