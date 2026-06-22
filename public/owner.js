@@ -81,24 +81,67 @@ function showToast(message, type = "success") {
   const region = document.getElementById("ownerToastRegion");
   if (!region) return;
 
+  while (region.children.length >= 4) {
+    region.firstElementChild.remove();
+  }
+
   const toast = document.createElement("div");
   toast.className = `owner-toast owner-toast-${type}`;
   toast.setAttribute("role", type === "error" ? "alert" : "status");
+  const duration = type === "error" ? 6500 : 4200;
+  toast.style.setProperty("--toast-duration", `${duration}ms`);
+
+  const icon = document.createElement("span");
+  icon.className = "owner-toast-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = type === "error" ? "!" : "OK";
+
+  const content = document.createElement("div");
+  content.className = "owner-toast-content";
+  const title = document.createElement("strong");
+  title.textContent = type === "error" ? "Action unsuccessful" : "Success";
   const text = document.createElement("span");
   text.textContent = message;
+  content.append(title, text);
+
   const close = document.createElement("button");
   close.type = "button";
   close.className = "owner-toast-close";
   close.setAttribute("aria-label", "Dismiss notification");
   close.textContent = "×";
-  close.addEventListener("click", () => toast.remove());
-  toast.append(text, close);
+
+  const progress = document.createElement("span");
+  progress.className = "owner-toast-progress";
+  progress.setAttribute("aria-hidden", "true");
+  toast.append(icon, content, close, progress);
   region.appendChild(toast);
 
-  window.setTimeout(() => {
+  let remaining = duration;
+  let startedAt = Date.now();
+  let dismissTimer;
+
+  const dismiss = () => {
+    if (!toast.isConnected || toast.classList.contains("owner-toast-leaving")) return;
+    window.clearTimeout(dismissTimer);
     toast.classList.add("owner-toast-leaving");
     window.setTimeout(() => toast.remove(), 220);
-  }, type === "error" ? 6500 : 4200);
+  };
+  const scheduleDismissal = () => {
+    startedAt = Date.now();
+    dismissTimer = window.setTimeout(dismiss, remaining);
+  };
+
+  close.addEventListener("click", dismiss);
+  toast.addEventListener("mouseenter", () => {
+    window.clearTimeout(dismissTimer);
+    remaining = Math.max(0, remaining - (Date.now() - startedAt));
+    toast.classList.add("owner-toast-paused");
+  });
+  toast.addEventListener("mouseleave", () => {
+    toast.classList.remove("owner-toast-paused");
+    scheduleDismissal();
+  });
+  scheduleDismissal();
 }
 
 async function performAction({ button, busyText, successMessage, action }) {
@@ -1270,7 +1313,7 @@ async function deleteService(id, button) {
   await performAction({
     button,
     busyText: "Removing...",
-    successMessage: "Service removed from booking.",
+    successMessage: "Service deleted successfully.",
     action: async () => {
       await api(`/api/services/${id}`, { method: "DELETE" });
       await Promise.all([loadServices(), loadClients()]);

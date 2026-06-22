@@ -201,11 +201,16 @@ footer{text-align:center;color:var(--muted);padding:28px}
 /* Owner */
 .owner-body{background:#fff1f7}
 .owner-toast-region{position:fixed;top:22px;right:22px;z-index:10000;display:grid;width:min(390px,calc(100% - 32px));gap:10px;pointer-events:none}
-.owner-toast{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid #ffd4e4;border-radius:18px;background:rgba(255,255,255,.96);color:var(--text);box-shadow:0 20px 55px rgba(79,17,44,.2);font-size:14px;font-weight:800;pointer-events:auto;animation:ownerToastIn .32s cubic-bezier(.22,1,.36,1) both;backdrop-filter:blur(16px)}
-.owner-toast::before{width:8px;height:8px;flex:0 0 auto;border-radius:50%;background:#2d9c5f;content:""}
-.owner-toast-error::before{background:#d82f5b}
-.owner-toast>span{flex:1}
-.owner-toast-close{border:0;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.owner-toast{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:12px;overflow:hidden;padding:15px 14px 17px;border:1px solid #ffd4e4;border-radius:18px;background:rgba(255,255,255,.97);color:var(--text);box-shadow:0 20px 55px rgba(79,17,44,.2);pointer-events:auto;animation:ownerToastIn .32s cubic-bezier(.22,1,.36,1) both;backdrop-filter:blur(16px)}
+.owner-toast-icon{display:grid;width:34px;height:34px;place-items:center;border-radius:50%;background:#e2f7e9;color:#126c37;font-size:11px;font-weight:900}
+.owner-toast-error .owner-toast-icon{background:#ffe0e6;color:#a60d35;font-size:18px}
+.owner-toast-content{display:grid;gap:3px;min-width:0}
+.owner-toast-content strong{font-size:13px}
+.owner-toast-content span{color:var(--muted);font-size:12px;font-weight:700;line-height:1.45}
+.owner-toast-close{align-self:start;border:0;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.owner-toast-progress{position:absolute;right:0;bottom:0;left:0;height:3px;background:linear-gradient(90deg,var(--pink),var(--deep));transform-origin:left;animation:ownerToastProgress var(--toast-duration) linear forwards}
+.owner-toast-error .owner-toast-progress{background:#d82f5b}
+.owner-toast-paused .owner-toast-progress{animation-play-state:paused}
 .owner-toast-leaving{animation:ownerToastOut .22s ease both}
 .owner-loading{display:flex;min-height:92px;align-items:center;justify-content:center;gap:12px;padding:24px;color:var(--muted);font-size:13px;font-weight:800}
 .owner-spinner{width:20px;height:20px;border:2px solid #ffd7e5;border-top-color:var(--deep);border-radius:50%;animation:ownerSpin .75s linear infinite}
@@ -361,6 +366,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 @keyframes ownerSpin{to{transform:rotate(360deg)}}
 @keyframes ownerToastIn{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes ownerToastOut{to{opacity:0;transform:translateX(14px)}}
+@keyframes ownerToastProgress{to{transform:scaleX(0)}}
 @keyframes ownerContentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* Owner Calendar */
@@ -524,7 +530,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 }
 @media(prefers-reduced-motion:reduce){
   .owner-body *{scroll-behavior:auto!important}
-  .revenue-card,.client-card,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner{animation:none}
+  .revenue-card,.client-card,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
   .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button){transition:none}
 }
 /* Logo Images */
