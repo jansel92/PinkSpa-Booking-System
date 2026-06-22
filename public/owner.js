@@ -10,6 +10,7 @@ async function api(url, options = {}) {
 
 let editingServiceId = null;
 let allClients = [];
+let allAppointments = [];
 
 function serviceImage(service) {
   if (service.image) return service.image;
@@ -439,8 +440,152 @@ async function loadClients() {
 const clientSearch = document.getElementById("clientSearch");
 if (clientSearch) clientSearch.addEventListener("input", applyClientSearch);
 
+function appointmentTimeMinutes(value) {
+  const match = String(value || "").trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+
+  let hours = Number(match[1]) % 12;
+  const minutes = Number(match[2]);
+  if (match[3].toUpperCase() === "PM") hours += 12;
+  return hours * 60 + minutes;
+}
+
+function calendarStatusName(status) {
+  const names = {
+    pending: "Pending",
+    confirmed: "Confirmed",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    "no-show": "No-show"
+  };
+  return names[status] || "Unknown";
+}
+
+function formatCalendarDate(dateValue) {
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateValue;
+
+  const formatted = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+  return dateValue === localDateKey(new Date()) ? `Today, ${formatted}` : formatted;
+}
+
+function createCalendarAppointment(appointment) {
+  const item = document.createElement("article");
+  const supportedStatuses = ["pending", "confirmed", "completed", "cancelled", "no-show"];
+  const status = supportedStatuses.includes(appointment.status) ? appointment.status : "pending";
+  item.className = `calendar-appointment calendar-status-${status}`;
+
+  const time = document.createElement("time");
+  time.className = "calendar-time";
+  time.textContent = appointment.appointment_time || "Time unavailable";
+
+  const details = document.createElement("div");
+  details.className = "calendar-appointment-details";
+  const client = document.createElement("strong");
+  client.textContent = appointment.client_name || "PinkSpa Client";
+  const service = document.createElement("span");
+  service.textContent = appointment.service_name || "Service unavailable";
+  details.append(client, service);
+
+  const duration = document.createElement("span");
+  duration.className = "calendar-duration";
+  duration.textContent = `${Number(appointment.duration_minutes) || 60} min`;
+
+  const statusBadge = document.createElement("span");
+  statusBadge.className = `calendar-status-badge calendar-status-${status}`;
+  statusBadge.textContent = calendarStatusName(appointment.status);
+
+  item.append(time, details, duration, statusBadge);
+  return item;
+}
+
+function renderCalendar(appointments) {
+  const list = document.getElementById("calendarList");
+  const summary = document.getElementById("calendarSummary");
+  if (!list || !summary) return;
+
+  const groups = appointments.reduce((dates, appointment) => {
+    const date = appointment.appointment_date || "Date unavailable";
+    if (!dates.has(date)) dates.set(date, []);
+    dates.get(date).push(appointment);
+    return dates;
+  }, new Map());
+  const today = localDateKey(new Date());
+  const dates = Array.from(groups.keys()).sort((left, right) => {
+    const leftUpcoming = left >= today;
+    const rightUpcoming = right >= today;
+    if (leftUpcoming !== rightUpcoming) return leftUpcoming ? -1 : 1;
+    return leftUpcoming ? left.localeCompare(right) : right.localeCompare(left);
+  });
+
+  summary.textContent = `${appointments.length} appointment${appointments.length === 1 ? "" : "s"} across ${dates.length} day${dates.length === 1 ? "" : "s"}`;
+  list.replaceChildren();
+
+  if (!appointments.length) {
+    const empty = document.createElement("p");
+    empty.className = "calendar-empty";
+    empty.textContent = "No appointments are scheduled yet.";
+    list.appendChild(empty);
+    return;
+  }
+
+  dates.forEach(date => {
+    const day = document.createElement("section");
+    day.className = "calendar-day";
+    day.dataset.calendarDate = date;
+    day.tabIndex = -1;
+    if (date === today) day.classList.add("calendar-day-today");
+
+    const dayHeader = document.createElement("div");
+    dayHeader.className = "calendar-day-header";
+    const heading = document.createElement("h3");
+    heading.textContent = formatCalendarDate(date);
+    const count = document.createElement("span");
+    count.textContent = `${groups.get(date).length} appointment${groups.get(date).length === 1 ? "" : "s"}`;
+    dayHeader.append(heading, count);
+
+    const appointmentsList = document.createElement("div");
+    appointmentsList.className = "calendar-day-appointments";
+    groups.get(date)
+      .slice()
+      .sort((left, right) => appointmentTimeMinutes(left.appointment_time) - appointmentTimeMinutes(right.appointment_time))
+      .forEach(appointment => appointmentsList.appendChild(createCalendarAppointment(appointment)));
+
+    day.append(dayHeader, appointmentsList);
+    list.appendChild(day);
+  });
+}
+
+function goToCalendarToday() {
+  const message = document.getElementById("calendarMessage");
+  const today = localDateKey(new Date());
+  const todayGroup = Array.from(document.querySelectorAll(".calendar-day")).find(day => {
+    return day.dataset.calendarDate === today;
+  });
+
+  if (!todayGroup) {
+    if (message) message.textContent = "No appointments are scheduled for today.";
+    return;
+  }
+
+  if (message) message.textContent = "Showing today's appointments.";
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  todayGroup.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  todayGroup.focus({ preventScroll: true });
+}
+
+const calendarTodayButton = document.getElementById("calendarTodayBtn");
+if (calendarTodayButton) calendarTodayButton.addEventListener("click", goToCalendarToday);
+
 async function loadAppointments() {
   const appointments = await api("/api/appointments");
+  allAppointments = appointments;
+  renderCalendar(allAppointments);
   const list = document.getElementById("appointmentsList");
   list.innerHTML = "";
 

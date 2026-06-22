@@ -293,6 +293,50 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .service-row button{border:0;border-radius:999px;background:white;color:var(--deep);font-weight:900;padding:10px 14px;cursor:pointer}
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
+/* Owner Calendar */
+.calendar-panel{overflow:hidden}
+.calendar-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.calendar-header h2{margin-bottom:5px}
+.calendar-summary{margin:0;color:var(--muted);font-weight:800}
+.calendar-today-button{
+  border:0;border-radius:999px;padding:12px 20px;cursor:pointer;
+  background:linear-gradient(135deg,var(--pink),var(--deep));color:white;
+  box-shadow:0 12px 28px rgba(183,25,86,.2);font:800 14px Inter,sans-serif;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.calendar-today-button:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(183,25,86,.28)}
+.calendar-today-button:focus-visible{outline:3px solid rgba(255,95,147,.35);outline-offset:3px}
+.calendar-message{min-height:20px;margin:16px 0 0;color:var(--deep);font-size:13px;font-weight:800}
+.calendar-list{display:grid;gap:18px;margin-top:8px}
+.calendar-day{
+  scroll-margin-top:24px;overflow:hidden;border:1px solid #ffe0eb;border-radius:24px;
+  background:linear-gradient(145deg,#fff,#fff8fb);box-shadow:0 16px 42px rgba(151,22,77,.07);
+}
+.calendar-day:focus-visible{outline:3px solid rgba(255,95,147,.3);outline-offset:3px}
+.calendar-day-today{border-color:#f5a6c3;box-shadow:0 18px 46px rgba(151,22,77,.12)}
+.calendar-day-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;border-bottom:1px solid #ffe0eb;background:rgba(255,241,247,.7)}
+.calendar-day-header h3{margin:0;font-size:19px;letter-spacing:-.3px}
+.calendar-day-header span{flex:0 0 auto;color:var(--deep);font-size:12px;font-weight:900}
+.calendar-day-appointments{display:grid}
+.calendar-appointment{
+  position:relative;display:grid;grid-template-columns:110px minmax(180px,1fr) 80px 110px;
+  align-items:center;gap:18px;padding:18px 22px;border-bottom:1px solid #ffedf3;
+}
+.calendar-appointment:last-child{border-bottom:0}
+.calendar-appointment::before{position:absolute;inset:12px auto 12px 0;width:4px;border-radius:0 4px 4px 0;content:"";background:var(--calendar-status)}
+.calendar-time{color:var(--text);font-size:15px;font-weight:900}
+.calendar-appointment-details{display:grid;gap:4px;min-width:0}
+.calendar-appointment-details strong{overflow:hidden;color:var(--text);font-size:16px;text-overflow:ellipsis;white-space:nowrap}
+.calendar-appointment-details span{overflow:hidden;color:var(--muted);font-size:14px;text-overflow:ellipsis;white-space:nowrap}
+.calendar-duration{color:var(--muted);font-size:13px;font-weight:800}
+.calendar-status-badge{justify-self:end;padding:7px 10px;border-radius:999px;background:var(--calendar-status-bg);color:var(--calendar-status-text);font-size:11px;font-weight:900;text-align:center}
+.calendar-status-pending{--calendar-status:#d59a00;--calendar-status-bg:#fff1c7;--calendar-status-text:#795700}
+.calendar-status-confirmed{--calendar-status:#2d9c5f;--calendar-status-bg:#dff8e8;--calendar-status-text:#126c37}
+.calendar-status-completed{--calendar-status:#655bd7;--calendar-status-bg:#e6e5ff;--calendar-status-text:#4035a8}
+.calendar-status-cancelled{--calendar-status:#d82f5b;--calendar-status-bg:#ffe0e6;--calendar-status-text:#a60d35}
+.calendar-status-no-show{--calendar-status:#686168;--calendar-status-bg:#eee;--calendar-status-text:#333}
+.calendar-empty{margin:0;padding:36px;border:1px dashed #f5b9ce;border-radius:20px;color:var(--muted);text-align:center;font-weight:800}
+
 /* Owner CRM */
 .clients-panel{overflow:hidden}
 .clients-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
@@ -365,6 +409,13 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .revenue-dashboard{padding:20px}
   .revenue-heading{align-items:flex-start;flex-direction:column}
   .revenue-heading>p{text-align:left}
+  .calendar-header{align-items:flex-start;flex-direction:column}
+  .calendar-day-header{align-items:flex-start;flex-direction:column;padding:16px 18px}
+  .calendar-appointment{grid-template-columns:1fr auto;gap:8px 14px;padding:17px 18px}
+  .calendar-time{grid-column:1}
+  .calendar-status-badge{grid-column:2;grid-row:1;align-self:start}
+  .calendar-appointment-details{grid-column:1/-1}
+  .calendar-duration{grid-column:1/-1}
   .clients-header,.client-card-header{align-items:stretch;flex-direction:column}
   .client-search-label{width:100%}
   .client-appointment-badge{align-self:flex-start}
@@ -374,7 +425,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 }
 @media(prefers-reduced-motion:reduce){
   .revenue-card,.client-card{animation:none}
-  .client-photo-grid a{transition:none}
+  .client-photo-grid a,.calendar-today-button{transition:none}
 }
 /* Logo Images */
 .nav-logo{

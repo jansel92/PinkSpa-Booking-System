@@ -43,6 +43,7 @@
       </a>
 
       <button data-tab="appointments" class="tab active">Appointments</button>
+      <button data-tab="calendar" class="tab">Calendar</button>
       <button data-tab="clients" class="tab">Clients</button>
       <button data-tab="services" class="tab">Services & Prices</button>
       <button data-tab="reviews" class="tab">Reviews</button>
@@ -117,6 +118,22 @@
         <div class="panel">
           <h2>Appointment Requests</h2>
           <div id="appointmentsList"></div>
+        </div>
+      </section>
+
+      <section id="calendarTab" class="tab-content hidden">
+        <div class="panel calendar-panel">
+          <div class="calendar-header">
+            <div>
+              <p class="eyebrow dark">Salon Schedule</p>
+              <h2>Appointment Calendar</h2>
+              <p id="calendarSummary" class="calendar-summary">Loading appointments...</p>
+            </div>
+            <button id="calendarTodayBtn" class="calendar-today-button" type="button">Today</button>
+          </div>
+
+          <p id="calendarMessage" class="calendar-message" role="status" aria-live="polite"></p>
+          <div id="calendarList" class="calendar-list" aria-live="polite"></div>
         </div>
       </section>
 
