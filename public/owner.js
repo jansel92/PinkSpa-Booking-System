@@ -190,8 +190,18 @@ function localDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
-function renderRevenueDashboard(appointments) {
+function createFinancialEmpty(message) {
+  const empty = document.createElement("p");
+  empty.className = "financial-empty";
+  empty.textContent = message;
+  return empty;
+}
+
+function renderRevenueDashboard(appointments, clients = allClients) {
   const completedAppointments = appointments.filter(appt => appt.status === "completed");
+  const pendingAppointments = appointments.filter(appt => {
+    return appt.status === "pending" || appt.status === "confirmed";
+  });
   const today = new Date();
   const todayKey = localDateKey(today);
   const monthKey = todayKey.slice(0, 7);
@@ -216,14 +226,21 @@ function renderRevenueDashboard(appointments) {
   const revenueAverage = completedAppointments.length
     ? revenueTotal / completedAppointments.length
     : 0;
+  const pendingRevenue = pendingAppointments.reduce((sum, appt) => {
+    return sum + appointmentValue(appt);
+  }, 0);
 
-  const serviceCounts = completedAppointments.reduce((counts, appt) => {
+  const serviceMetrics = completedAppointments.reduce((metrics, appt) => {
     const serviceName = appt.service_name || "Unknown Service";
-    counts.set(serviceName, (counts.get(serviceName) || 0) + 1);
-    return counts;
+    const current = metrics.get(serviceName) || { count: 0, revenue: 0 };
+    current.count += 1;
+    current.revenue += appointmentValue(appt);
+    metrics.set(serviceName, current);
+    return metrics;
   }, new Map());
-  const mostPopularService = Array.from(serviceCounts.entries())
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] || "-";
+  const rankedServices = Array.from(serviceMetrics.entries())
+    .sort((left, right) => right[1].count - left[1].count || right[1].revenue - left[1].revenue || left[0].localeCompare(right[0]));
+  const mostPopularService = rankedServices[0]?.[0] || "-";
 
   const currency = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -236,6 +253,7 @@ function renderRevenueDashboard(appointments) {
     revenueTotal: currency.format(revenueTotal),
     revenueCompleted: String(completedAppointments.length),
     revenueAverage: currency.format(revenueAverage),
+    revenuePending: currency.format(pendingRevenue),
     revenuePopular: mostPopularService
   };
 
@@ -243,6 +261,168 @@ function renderRevenueDashboard(appointments) {
     const element = document.getElementById(id);
     if (element) element.textContent = value;
   });
+
+  const topClientsList = document.getElementById("topClientsList");
+  if (topClientsList) {
+    topClientsList.replaceChildren();
+    const topClients = clients
+      .filter(client => Number(client.total_spent) > 0)
+      .slice()
+      .sort((left, right) => Number(right.total_spent) - Number(left.total_spent) || String(left.name || "").localeCompare(String(right.name || "")))
+      .slice(0, 5);
+
+    if (!topClients.length) {
+      topClientsList.appendChild(createFinancialEmpty("No completed client spending yet."));
+    } else {
+      topClients.forEach((client, index) => {
+        const item = document.createElement("div");
+        item.className = "financial-ranked-item";
+        const rank = document.createElement("span");
+        rank.className = "financial-rank";
+        rank.textContent = String(index + 1);
+        const identity = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = client.name || "PinkSpa Client";
+        const detail = document.createElement("span");
+        detail.textContent = `${client.total_appointments || 0} total appointment${client.total_appointments === 1 ? "" : "s"}`;
+        identity.append(name, detail);
+        const amount = document.createElement("b");
+        amount.textContent = currency.format(Number(client.total_spent) || 0);
+        item.append(rank, identity, amount);
+        topClientsList.appendChild(item);
+      });
+    }
+  }
+
+  const topServicesList = document.getElementById("topServicesList");
+  if (topServicesList) {
+    topServicesList.replaceChildren();
+    const topServices = rankedServices.slice(0, 5);
+
+    if (!topServices.length) {
+      topServicesList.appendChild(createFinancialEmpty("No completed service data yet."));
+    } else {
+      topServices.forEach(([serviceName, metrics], index) => {
+        const item = document.createElement("div");
+        item.className = "financial-ranked-item";
+        const rank = document.createElement("span");
+        rank.className = "financial-rank";
+        rank.textContent = String(index + 1);
+        const service = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = serviceName;
+        const detail = document.createElement("span");
+        detail.textContent = `${metrics.count} completed appointment${metrics.count === 1 ? "" : "s"}`;
+        service.append(name, detail);
+        const amount = document.createElement("b");
+        amount.textContent = currency.format(metrics.revenue);
+        item.append(rank, service, amount);
+        topServicesList.appendChild(item);
+      });
+    }
+  }
+
+  const revenueTrend = document.getElementById("revenueTrend");
+  if (revenueTrend) {
+    const weekDays = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+      const dateKey = localDateKey(date);
+      const revenue = completedAppointments
+        .filter(appt => appt.appointment_date === dateKey)
+        .reduce((sum, appt) => sum + appointmentValue(appt), 0);
+      return { date, dateKey, revenue };
+    });
+    const maximumRevenue = Math.max(...weekDays.map(day => day.revenue), 0);
+    revenueTrend.replaceChildren();
+
+    weekDays.forEach(day => {
+      const column = document.createElement("div");
+      column.className = "trend-day";
+      if (day.dateKey === todayKey) column.classList.add("trend-day-today");
+      const amount = document.createElement("span");
+      amount.className = "trend-amount";
+      amount.textContent = currency.format(day.revenue);
+      const track = document.createElement("div");
+      track.className = "trend-track";
+      const bar = document.createElement("div");
+      bar.className = "trend-bar";
+      bar.style.height = maximumRevenue ? `${(day.revenue / maximumRevenue) * 100}%` : "0";
+      track.appendChild(bar);
+      const label = document.createElement("strong");
+      label.textContent = day.date.toLocaleDateString("en-US", { weekday: "short" });
+      const dateLabel = document.createElement("small");
+      dateLabel.textContent = day.date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
+      column.append(amount, track, label, dateLabel);
+      revenueTrend.appendChild(column);
+    });
+  }
+
+  const statusBreakdown = document.getElementById("statusBreakdown");
+  if (statusBreakdown) {
+    const statuses = ["pending", "confirmed", "completed", "cancelled", "no-show"];
+    statusBreakdown.replaceChildren();
+
+    statuses.forEach(status => {
+      const count = appointments.filter(appt => appt.status === status).length;
+      const percentage = appointments.length ? (count / appointments.length) * 100 : 0;
+      const row = document.createElement("div");
+      row.className = "status-breakdown-row";
+      const heading = document.createElement("div");
+      const label = document.createElement("span");
+      label.textContent = calendarStatusName(status);
+      const value = document.createElement("strong");
+      value.textContent = `${count} (${Math.round(percentage)}%)`;
+      heading.append(label, value);
+      const track = document.createElement("div");
+      track.className = "financial-status-track";
+      const bar = document.createElement("div");
+      bar.className = `financial-status-bar calendar-status-${status}`;
+      bar.style.width = `${percentage}%`;
+      track.appendChild(bar);
+      row.append(heading, track);
+      statusBreakdown.appendChild(row);
+    });
+  }
+
+  const recentCompletedList = document.getElementById("recentCompletedList");
+  if (recentCompletedList) {
+    recentCompletedList.replaceChildren();
+    const recentCompleted = completedAppointments
+      .slice()
+      .sort((left, right) => {
+        return String(right.appointment_date || "").localeCompare(String(left.appointment_date || "")) ||
+          appointmentTimeMinutes(right.appointment_time) - appointmentTimeMinutes(left.appointment_time) ||
+          Number(right.id || 0) - Number(left.id || 0);
+      })
+      .slice(0, 5);
+
+    if (!recentCompleted.length) {
+      recentCompletedList.appendChild(createFinancialEmpty("No completed appointments yet."));
+    } else {
+      recentCompleted.forEach(appt => {
+        const item = document.createElement("div");
+        item.className = "recent-completed-item";
+        const date = document.createElement("div");
+        date.className = "recent-completed-date";
+        const dateText = document.createElement("strong");
+        dateText.textContent = formatClientDate(appt.appointment_date);
+        const time = document.createElement("span");
+        time.textContent = appt.appointment_time || "Time unavailable";
+        date.append(dateText, time);
+        const details = document.createElement("div");
+        const client = document.createElement("strong");
+        client.textContent = appt.client_name || "PinkSpa Client";
+        const service = document.createElement("span");
+        service.textContent = appt.service_name || "Unknown Service";
+        details.append(client, service);
+        const amount = document.createElement("b");
+        amount.textContent = currency.format(appointmentValue(appt));
+        item.append(date, details, amount);
+        recentCompletedList.appendChild(item);
+      });
+    }
+  }
 }
 
 function formatClientDate(dateValue) {
@@ -426,6 +606,7 @@ async function loadClients() {
     const data = await api("/api/clients");
     allClients = Array.isArray(data.clients) ? data.clients : [];
     applyClientSearch();
+    renderRevenueDashboard(allAppointments, allClients);
   } catch (error) {
     console.error("Unable to load clients:", error);
     allClients = [];
@@ -632,7 +813,7 @@ async function loadAppointments() {
   if (statMonth) statMonth.textContent = monthCount;
   if (statCompleted) statCompleted.textContent = completed;
 
-  renderRevenueDashboard(appointments);
+  renderRevenueDashboard(appointments, allClients);
 
   if (!appointments.length) {
     list.innerHTML = "<p>No appointment requests yet.</p>";
