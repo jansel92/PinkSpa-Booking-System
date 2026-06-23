@@ -621,6 +621,133 @@ function parseServicePrice(value) {
   return match ? Number(match[0]) : 0;
 }
 
+function whatsappPhoneNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (digits.length === 10) return `1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return digits;
+  return digits;
+}
+
+function appointmentMessageDetails(appointment) {
+  return {
+    clientName: appointment.client_name || "there",
+    service: appointment.service_name || "your service",
+    date: appointment.appointment_date || "your appointment date",
+    time: appointment.appointment_time || "your appointment time",
+    businessName: "PinkSpa"
+  };
+}
+
+function whatsappTemplateMessage(type, appointment) {
+  const { clientName, service, date, time, businessName } = appointmentMessageDetails(appointment);
+  const templates = {
+    received: `Hi ${clientName}! This is ${businessName}. We received your booking request for ${service} on ${date} at ${time}. We will confirm your appointment shortly. Thank you!`,
+    confirmed: `Hi ${clientName}! This is ${businessName}. Your ${service} appointment is confirmed for ${date} at ${time}. We look forward to seeing you!`,
+    reminder: `Hi ${clientName}! This is a friendly reminder from ${businessName} for your ${service} appointment on ${date} at ${time}. Please reply if you have any questions.`,
+    thankYou: `Hi ${clientName}! Thank you for visiting ${businessName} for your ${service} appointment on ${date}. We loved having you and hope to see you again soon!`,
+    review: `Hi ${clientName}! Thank you for choosing ${businessName} for ${service}. We would love your feedback when you have a moment: https://rachelpinkspa.com/review`,
+    cancellation: `Hi ${clientName}. This is ${businessName}. Your ${service} appointment on ${date} at ${time} has been cancelled. Please contact us if you would like to reschedule.`
+  };
+
+  return templates[type] || templates.received;
+}
+
+function whatsappUrl(type, appointment) {
+  const phone = whatsappPhoneNumber(appointment.client_phone);
+  if (!phone) return "";
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(whatsappTemplateMessage(type, appointment))}`;
+}
+
+function createWhatsAppButton(label, type, appointment) {
+  const phone = whatsappPhoneNumber(appointment.client_phone);
+  const link = document.createElement("a");
+  link.className = "whatsapp-action";
+  link.textContent = label;
+
+  if (!phone) {
+    link.href = "#";
+    link.setAttribute("aria-disabled", "true");
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      showToast("This appointment does not have a valid phone number for WhatsApp.", "error");
+    });
+    return link;
+  }
+
+  link.href = whatsappUrl(type, appointment);
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.setAttribute("aria-label", `Send WhatsApp ${label} message to ${appointment.client_name || "client"}`);
+  return link;
+}
+
+async function copyAppointmentPhone(phone, button) {
+  const cleanPhone = String(phone || "").trim();
+  if (!cleanPhone) {
+    showToast("This appointment does not have a phone number to copy.", "error");
+    return;
+  }
+
+  await performAction({
+    button,
+    busyText: "Copying...",
+    successMessage: "Client phone number copied.",
+    action: () => navigator.clipboard.writeText(cleanPhone)
+  });
+}
+
+function createAppointmentQuickActions(appointment) {
+  const wrap = document.createElement("div");
+  wrap.className = "appointment-quick-actions";
+
+  const title = document.createElement("div");
+  title.className = "appointment-quick-actions-title";
+  title.textContent = "Client Quick Actions";
+
+  const whatsappActions = document.createElement("div");
+  whatsappActions.className = "whatsapp-actions";
+  [
+    ["Booking received", "received"],
+    ["Confirmed", "confirmed"],
+    ["Reminder", "reminder"],
+    ["Thank you", "thankYou"],
+    ["Review request", "review"],
+    ["Cancellation", "cancellation"]
+  ].forEach(([label, type]) => {
+    whatsappActions.appendChild(createWhatsAppButton(label, type, appointment));
+  });
+
+  const directActions = document.createElement("div");
+  directActions.className = "client-direct-actions";
+
+  const callLink = document.createElement("a");
+  callLink.className = "client-direct-action";
+  callLink.textContent = "Call Client";
+  const callablePhone = String(appointment.client_phone || "").replace(/[^\d+]/g, "");
+  if (callablePhone) {
+    callLink.href = `tel:${callablePhone}`;
+  } else {
+    callLink.href = "#";
+    callLink.setAttribute("aria-disabled", "true");
+    callLink.addEventListener("click", event => {
+      event.preventDefault();
+      showToast("This appointment does not have a valid phone number to call.", "error");
+    });
+  }
+
+  const copyButton = document.createElement("button");
+  copyButton.type = "button";
+  copyButton.className = "client-direct-action";
+  copyButton.textContent = "Copy Phone";
+  copyButton.addEventListener("click", () => copyAppointmentPhone(appointment.client_phone, copyButton));
+
+  directActions.append(callLink, copyButton);
+  wrap.append(title, whatsappActions, directActions);
+
+  return wrap;
+}
+
 function localDateKey(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -1439,22 +1566,31 @@ async function loadAppointments() {
               style="display:block;width:min(240px,100%);max-height:240px;margin-top:8px;object-fit:cover;border-radius:16px;border:1px solid #ffd3e4;"
             />
           </a>
-        </div>
-      ` : ""}
-
-      <div class="status-row">
-        <button class="status-confirmed" onclick="confirmAppointment(${appt.id}, this)">Confirm Appointment</button>
-        <button class="status-cancelled" onclick="cancelAppointment(${appt.id}, this)">Cancel Appointment</button>
-        <button class="status-completed" onclick="completeAppointment(${appt.id}, this)">Mark Completed</button>
-        <button class="status-pending" onclick="setStatus(${appt.id}, 'pending', this)">Back to Pending</button>
-        <button class="status-no-show" onclick="setStatus(${appt.id}, 'no-show', this)">No-show</button>
-        <button onclick="copyReviewRequest('${appt.client_name}', this)">
-           Request Review
-        </button>
-
-       <button onclick="deleteAppointment(${appt.id}, this)">Delete</button>
        </div>
+      ` : ""}
     `;
+
+    card.appendChild(createAppointmentQuickActions(appt));
+
+    const statusRow = document.createElement("div");
+    statusRow.className = "status-row";
+    [
+      ["Confirm Appointment", "status-confirmed", button => confirmAppointment(appt.id, button)],
+      ["Cancel Appointment", "status-cancelled", button => cancelAppointment(appt.id, button)],
+      ["Mark Completed", "status-completed", button => completeAppointment(appt.id, button)],
+      ["Back to Pending", "status-pending", button => setStatus(appt.id, "pending", button)],
+      ["No-show", "status-no-show", button => setStatus(appt.id, "no-show", button)],
+      ["Request Review", "", button => copyReviewRequest(appt.client_name, button)],
+      ["Delete", "", button => deleteAppointment(appt.id, button)]
+    ].forEach(([label, className, handler]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      if (className) button.className = className;
+      button.textContent = label;
+      button.addEventListener("click", () => handler(button));
+      statusRow.appendChild(button);
+    });
+    card.appendChild(statusRow);
 
     list.appendChild(card);
   });

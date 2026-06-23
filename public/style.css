@@ -480,6 +480,43 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .owner-body :is(.appointment-card,.service-row){margin-top:0;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 .owner-body :is(.financial-panel,.calendar-day,.client-card){transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 .appointment-card strong,.service-row strong{color:var(--deep)}
+.appointment-quick-actions{
+  display:grid;
+  gap:10px;
+  margin-top:4px;
+  padding:14px;
+  border:1px solid #ffe0eb;
+  border-radius:18px;
+  background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(255,248,251,.9));
+}
+.appointment-quick-actions-title{
+  color:var(--deep);
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+}
+.whatsapp-actions,.client-direct-actions{display:flex;gap:8px;flex-wrap:wrap}
+.whatsapp-action,.client-direct-action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:38px;
+  padding:8px 12px;
+  border:1px solid #ffd1e2;
+  border-radius:999px;
+  background:white;
+  color:var(--deep);
+  font-size:12px;
+  font-weight:900;
+  text-decoration:none;
+  cursor:pointer;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.whatsapp-action{border-color:#ccefd9;background:#effbf3;color:#126c37}
+.whatsapp-action[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
+.client-direct-action{border-color:#ffd7e5;background:#fff;color:var(--deep)}
+button.client-direct-action{font-family:inherit}
 .status-row{display:flex;gap:8px;flex-wrap:wrap}
 .status-row button{
   min-height:40px;border:0;border-radius:999px;padding:9px 12px;font-weight:900;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
@@ -500,6 +537,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .owner-body .tab:hover:not(.active),.owner-body .logout:hover{transform:translateX(3px);box-shadow:0 9px 22px rgba(151,22,77,.1)}
   .owner-body :is(.appointment-card,.service-row,.financial-panel,.calendar-day,.client-card,.notification-item):hover{transform:translateY(-2px);border-color:#f7bfd3;box-shadow:0 18px 44px rgba(151,22,77,.1)}
   .owner-body .status-row button:hover,.owner-body .service-row button:hover{transform:translateY(-1px);filter:saturate(1.08);box-shadow:0 8px 18px rgba(79,17,44,.1)}
+  .whatsapp-action:hover:not([aria-disabled="true"]),.client-direct-action:hover{transform:translateY(-1px);border-color:#f5abc6;box-shadow:0 8px 18px rgba(79,17,44,.1)}
   .notification-bell:hover{transform:translateY(-2px);border-color:#f5abc6;box-shadow:0 16px 34px rgba(151,22,77,.18)}
   .notification-mark-all:hover:not(:disabled),.notification-read-button:hover:not(:disabled){transform:translateY(-1px);border-color:#f5abc6;box-shadow:0 8px 20px rgba(151,22,77,.1)}
 }
@@ -710,12 +748,15 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .client-timeline-price{grid-column:1/-1}
   .client-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .service-row{align-items:stretch;flex-direction:column}
+  .whatsapp-actions,.client-direct-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .whatsapp-action,.client-direct-action{width:100%;min-height:44px}
   .status-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .status-row button{width:100%;min-height:44px}
   .owner-toast-region{top:auto;right:16px;bottom:16px;left:16px;width:auto}
 }
 @media(max-width:380px){
   .owner-body .stats,.owner-body .status-row{grid-template-columns:1fr}
+  .owner-body .whatsapp-actions,.owner-body .client-direct-actions{grid-template-columns:1fr}
   .owner-body .client-metrics,.owner-body .client-loyalty-summary{grid-template-columns:1fr}
   .owner-body .client-metric-wide{grid-column:auto}
   .notification-panel{right:10px;left:10px;padding:15px}
@@ -725,7 +766,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 @media(prefers-reduced-motion:reduce){
   .owner-body *{scroll-behavior:auto!important}
   .revenue-card,.client-card,.client-timeline-content,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
-  .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
+  .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.whatsapp-action,.client-direct-action,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
 }
 /* Logo Images */
 .nav-logo{
