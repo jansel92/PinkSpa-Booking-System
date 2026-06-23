@@ -24,6 +24,26 @@ let revealObserver = null;
 let availabilityRequestId = 0;
 let primaryServiceId = null;
 
+function setupHeroEntrance() {
+  if (!document.body?.classList.contains("home-page")) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) {
+    document.documentElement.classList.remove("hero-entrance-prep");
+    document.documentElement.classList.add("hero-entrance-ready");
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      document.documentElement.classList.add("hero-entrance-ready");
+      window.setTimeout(() => {
+        document.documentElement.classList.remove("hero-entrance-prep");
+      }, 1700);
+    });
+  });
+}
+
 function setupGlassNavigation() {
   const nav = document.querySelector(".home-page .nav");
   if (!nav) return;
@@ -748,6 +768,7 @@ async function loadApprovedReviews() {
   }
 }
 
+setupHeroEntrance();
 setupScrollReveal();
 setupGlassNavigation();
 loadApprovedReviews().finally(setupReviewSlider);
