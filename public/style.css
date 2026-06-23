@@ -1628,77 +1628,53 @@ button.client-direct-action{font-family:inherit}
   margin-top: 32px;
 }
 
-.home-page .hero {
-  animation: heroSoftEntrance 700ms cubic-bezier(.22,1,.36,1) both;
+body.home-page .hero {
+  opacity: 1;
+  transition: opacity 700ms cubic-bezier(.22,1,.36,1);
 }
 
-.home-page .hero::before {
+body.home-page .hero::before {
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: center;
+  transition: opacity 1100ms cubic-bezier(.22,1,.36,1), transform 1100ms cubic-bezier(.22,1,.36,1);
+  will-change: opacity, transform;
+}
+
+body.home-page .hero-logo,
+body.home-page .hero .eyebrow,
+body.home-page .hero h1,
+body.home-page .hero p,
+body.home-page .hero .cta-row {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 820ms cubic-bezier(.22,1,.36,1), transform 820ms cubic-bezier(.22,1,.36,1);
+  will-change: opacity, transform;
+}
+
+body.home-page:not(.hero-animate-ready) .hero {
+  opacity: 0;
+}
+
+body.home-page:not(.hero-animate-ready) .hero::before {
   opacity: 0;
   transform: scale(1.04);
-  transform-origin: center;
-  animation: heroBackgroundEntrance 1100ms cubic-bezier(.22,1,.36,1) 60ms both;
-  will-change: opacity, transform;
 }
 
-.home-page .hero-logo {
+body.home-page:not(.hero-animate-ready) .hero-logo,
+body.home-page:not(.hero-animate-ready) .hero .eyebrow,
+body.home-page:not(.hero-animate-ready) .hero h1,
+body.home-page:not(.hero-animate-ready) .hero p,
+body.home-page:not(.hero-animate-ready) .hero .cta-row {
   opacity: 0;
-  transform: translateY(20px) scale(.9);
-  animation: heroLogoEntrance 900ms cubic-bezier(.22,1,.36,1) 170ms both;
-  will-change: opacity, transform;
+  transform: translateY(24px) scale(.96);
 }
 
-.home-page .hero .eyebrow,
-.home-page .hero h1,
-.home-page .hero p,
-.home-page .hero .cta-row {
-  opacity: 0;
-  transform: translateY(22px);
-  animation: heroContentEntrance 780ms cubic-bezier(.22,1,.36,1) both;
-  will-change: opacity, transform;
-}
-
-.home-page .hero .eyebrow { animation-delay: 320ms; }
-.home-page .hero h1 { animation-delay: 460ms; }
-.home-page .hero p { animation-delay: 620ms; }
-.home-page .hero .cta-row { animation-delay: 780ms; }
-
-@keyframes heroSoftEntrance {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes heroBackgroundEntrance {
-  from {
-    opacity: 0;
-    transform: scale(1.04);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes heroLogoEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes heroContentEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(22px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+body.home-page .hero-logo { transition-delay: 140ms; }
+body.home-page .hero .eyebrow { transition-delay: 300ms; }
+body.home-page .hero h1 { transition-delay: 440ms; }
+body.home-page .hero p { transition-delay: 600ms; }
+body.home-page .hero .cta-row { transition-delay: 760ms; }
 
 .home-page .btn,
 .home-page .service-book-btn,
@@ -2249,16 +2225,17 @@ button.client-direct-action{font-family:inherit}
     will-change:auto;
   }
 
-  .home-page .hero,
-  .home-page .hero::before,
-  .home-page .hero-logo,
-  .home-page .hero .eyebrow,
-  .home-page .hero h1,
-  .home-page .hero p,
-  .home-page .hero .cta-row{
+  body.home-page .hero,
+  body.home-page .hero::before,
+  body.home-page .hero-logo,
+  body.home-page .hero .eyebrow,
+  body.home-page .hero h1,
+  body.home-page .hero p,
+  body.home-page .hero .cta-row{
     opacity:1;
     transform:none;
     animation:none;
+    transition:none;
     will-change:auto;
   }
 }

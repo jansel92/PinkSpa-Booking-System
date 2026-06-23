@@ -24,8 +24,19 @@ let revealObserver = null;
 let availabilityRequestId = 0;
 let primaryServiceId = null;
 
-if (document.body?.classList.contains("home-page")) {
-  document.documentElement.classList.add("home-entrance-ready");
+function setupHeroEntrance() {
+  const hero = document.querySelector(".home-page .hero");
+  if (!hero || !document.body) return;
+
+  window.setTimeout(() => {
+    document.body.classList.add("hero-animate-ready");
+  }, 120);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupHeroEntrance, { once: true });
+} else {
+  setupHeroEntrance();
 }
 
 function observeRevealElements(elements) {
