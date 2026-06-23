@@ -16,6 +16,71 @@ let notificationUnreadCount = 0;
 let notificationRefreshTimer = null;
 let notificationPanelCloseTimer = null;
 let dashboardBusinessName = "PinkSpa";
+const reduceOwnerMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const animatedCounterValues = new WeakMap();
+
+function prefersReducedOwnerMotion() {
+  return reduceOwnerMotion.matches;
+}
+
+function initializeDashboardEntrance() {
+  const dashboard = document.getElementById("dashboard");
+  if (!dashboard || dashboard.dataset.entranceReady) return;
+
+  dashboard.dataset.entranceReady = "true";
+
+  document.querySelectorAll(".stats > div").forEach((card, index) => {
+    card.style.setProperty("--entrance-delay", `${90 + index * 45}ms`);
+  });
+
+  document.querySelectorAll(".tab-content").forEach((section, index) => {
+    section.style.setProperty("--entrance-delay", `${280 + index * 55}ms`);
+  });
+
+  window.requestAnimationFrame(() => dashboard.classList.add("dashboard-entrance-ready"));
+}
+
+function animateCounter(element, finalValue, duration = 850) {
+  if (!element) return;
+
+  const numericValue = Number(finalValue) || 0;
+  if (prefersReducedOwnerMotion()) {
+    element.textContent = String(numericValue);
+    animatedCounterValues.set(element, numericValue);
+    return;
+  }
+
+  const startValue = animatedCounterValues.has(element)
+    ? Number(animatedCounterValues.get(element)) || 0
+    : 0;
+
+  if (startValue === numericValue) {
+    element.textContent = String(numericValue);
+    return;
+  }
+
+  const startedAt = performance.now();
+  const easeOut = progress => 1 - Math.pow(1 - progress, 3);
+
+  function frame(now) {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    const current = Math.round(startValue + (numericValue - startValue) * easeOut(progress));
+    element.textContent = String(current);
+
+    if (progress < 1) {
+      window.requestAnimationFrame(frame);
+      return;
+    }
+
+    animatedCounterValues.set(element, numericValue);
+  }
+
+  window.requestAnimationFrame(frame);
+}
+
+function setCounterValue(id, value) {
+  animateCounter(document.getElementById(id), value);
+}
 
 function createEmptyState(title, detail = "") {
   const empty = document.createElement("div");
@@ -501,6 +566,7 @@ function showDashboard() {
   document.getElementById("dashboard").classList.remove("hidden");
   setupImageFilePreview();
   updateDashboardGreeting();
+  initializeDashboardEntrance();
   loadAll();
 
   if (!notificationRefreshTimer) {
@@ -1517,19 +1583,14 @@ async function loadAppointments() {
     );
   }).length;
 
-  document.getElementById("statAppointments").textContent = appointments.length;
-  document.getElementById("statPending").textContent = pending;
-  document.getElementById("statConfirmed").textContent = confirmed;
+  setCounterValue("statAppointments", appointments.length);
+  setCounterValue("statPending", pending);
+  setCounterValue("statConfirmed", confirmed);
 
-  const statToday = document.getElementById("statToday");
-  const statWeek = document.getElementById("statWeek");
-  const statMonth = document.getElementById("statMonth");
-  const statCompleted = document.getElementById("statCompleted");
-
-  if (statToday) statToday.textContent = todayCount;
-  if (statWeek) statWeek.textContent = weekCount;
-  if (statMonth) statMonth.textContent = monthCount;
-  if (statCompleted) statCompleted.textContent = completed;
+  setCounterValue("statToday", todayCount);
+  setCounterValue("statWeek", weekCount);
+  setCounterValue("statMonth", monthCount);
+  setCounterValue("statCompleted", completed);
 
   renderRevenueDashboard(appointments, allClients);
 
@@ -1658,7 +1719,7 @@ async function loadServices() {
     throw error;
   }
 
-  document.getElementById("statServices").textContent = services.length;
+  setCounterValue("statServices", services.length);
   finishLoading(list);
   list.replaceChildren();
 

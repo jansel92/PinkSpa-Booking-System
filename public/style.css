@@ -227,6 +227,14 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .login-card p{color:var(--muted)}
 .hidden{display:none!important}
 .dashboard{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div,.revenue-dashboard,.tab-content){
+  animation:dashboardFadeUp .72s cubic-bezier(.22,1,.36,1) both;
+  animation-delay:var(--entrance-delay,0ms);
+  will-change:opacity,transform;
+}
+.dashboard-entrance-ready .dashboard-greeting{--entrance-delay:0ms}
+.dashboard-entrance-ready .dash-header-actions{--entrance-delay:70ms}
+.dashboard-entrance-ready .revenue-dashboard{--entrance-delay:245ms}
 .sidebar{background:white;border-right:1px solid #ffe0eb;padding:24px;display:flex;flex-direction:column;gap:12px;position:sticky;top:0;height:100vh}
 .sidebar-tabs{display:contents}
 .sidebar .brand{margin-bottom:18px}
@@ -548,6 +556,7 @@ button.client-direct-action{font-family:inherit}
 @keyframes ownerToastProgress{to{transform:scaleX(0)}}
 @keyframes ownerContentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes notificationIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dashboardFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
 /* Owner Calendar */
 .calendar-panel{overflow:hidden}
@@ -765,6 +774,7 @@ button.client-direct-action{font-family:inherit}
 }
 @media(prefers-reduced-motion:reduce){
   .owner-body *{scroll-behavior:auto!important}
+  .dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div,.revenue-dashboard,.tab-content){animation:none;will-change:auto}
   .revenue-card,.client-card,.client-timeline-content,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
   .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.whatsapp-action,.client-direct-action,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
 }
