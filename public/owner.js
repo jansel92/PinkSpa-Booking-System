@@ -14,6 +14,7 @@ let allAppointments = [];
 let allNotifications = [];
 let notificationUnreadCount = 0;
 let notificationRefreshTimer = null;
+let notificationPanelCloseTimer = null;
 
 function createEmptyState(title, detail = "") {
   const empty = document.createElement("div");
@@ -200,13 +201,13 @@ function renderNotifications(notifications = allNotifications) {
   if (!list || !unreadBadge || !markAllButton) return;
 
   const unreadCount = notificationUnreadCount;
-  unreadBadge.textContent = `${unreadCount} unread`;
-  unreadBadge.classList.toggle("has-unread", unreadCount > 0);
+  unreadBadge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+  unreadBadge.classList.toggle("hidden", unreadCount === 0);
   markAllButton.disabled = unreadCount === 0;
   list.replaceChildren();
 
   if (!notifications.length) {
-    list.appendChild(createEmptyState("No notifications yet", "Important appointment and client updates will appear here."));
+    list.appendChild(createEmptyState("You're all caught up."));
     return;
   }
 
@@ -247,6 +248,30 @@ function renderNotifications(notifications = allNotifications) {
     item.append(icon, content, action);
     list.appendChild(item);
   });
+}
+
+function setNotificationPanelOpen(open) {
+  const panel = document.getElementById("notificationPanel");
+  const bell = document.getElementById("notificationBell");
+  if (!panel || !bell) return;
+
+  window.clearTimeout(notificationPanelCloseTimer);
+  bell.setAttribute("aria-expanded", String(open));
+
+  if (open) {
+    panel.hidden = false;
+    requestAnimationFrame(() => panel.classList.add("is-open"));
+    return;
+  }
+
+  panel.classList.remove("is-open");
+  notificationPanelCloseTimer = window.setTimeout(() => {
+    if (!panel.classList.contains("is-open")) panel.hidden = true;
+  }, 180);
+}
+
+function isNotificationPanelOpen() {
+  return document.getElementById("notificationPanel")?.classList.contains("is-open") || false;
 }
 
 async function loadNotifications() {
@@ -297,6 +322,30 @@ if (markAllNotificationsReadButton) {
     });
   });
 }
+
+const notificationBell = document.getElementById("notificationBell");
+if (notificationBell) {
+  notificationBell.addEventListener("click", event => {
+    event.stopPropagation();
+    setNotificationPanelOpen(!isNotificationPanelOpen());
+  });
+}
+
+const notificationPanel = document.getElementById("notificationPanel");
+if (notificationPanel) {
+  notificationPanel.addEventListener("click", event => event.stopPropagation());
+}
+
+document.addEventListener("click", () => {
+  if (isNotificationPanelOpen()) setNotificationPanelOpen(false);
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && isNotificationPanelOpen()) {
+    setNotificationPanelOpen(false);
+    notificationBell?.focus();
+  }
+});
 
 function serviceImage(service) {
   if (service.image) return service.image;

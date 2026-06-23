@@ -240,6 +240,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .tab-content{margin-top:0}
 .dash-header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}
 .dash-header h1{margin:0;font-size:52px;letter-spacing:-3px}
+.dash-header-actions{display:flex;align-items:center;gap:12px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 .stats div{background:white;border:1px solid #ffe0eb;border-radius:24px;padding:22px;box-shadow:0 18px 50px rgba(151,22,77,.08)}
 .stats span{display:block;color:var(--muted);font-weight:800}
@@ -252,33 +253,66 @@ footer{text-align:center;color:var(--muted);padding:28px}
   background:rgba(255,255,255,.82);
   box-shadow:0 18px 50px rgba(151,22,77,.08);
 }
-.notification-center{
+.notification-bell-wrap{position:relative}
+.notification-bell{
+  position:relative;
   display:grid;
-  gap:16px;
-  margin:0 0 24px;
-  padding:24px;
+  width:48px;
+  height:48px;
+  place-items:center;
+  border:1px solid #ffd1e2;
+  border-radius:50%;
+  background:linear-gradient(145deg,#fff,#fff5f9);
+  color:var(--deep);
+  cursor:pointer;
+  font-size:18px;
+  font-weight:950;
+  box-shadow:0 12px 28px rgba(151,22,77,.1);
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease,background .2s ease;
+}
+.notification-bell[aria-expanded="true"]{border-color:#f5abc6;background:#fff0f6}
+.notification-badge{
+  position:absolute;
+  top:-6px;
+  right:-7px;
+  display:grid;
+  min-width:22px;
+  height:22px;
+  place-items:center;
+  padding:0 6px;
+  border:2px solid white;
+  border-radius:999px;
+  background:#d92d4c;
+  color:white;
+  font-size:10px;
+  font-weight:950;
+  line-height:1;
+  box-shadow:0 8px 18px rgba(217,45,76,.3);
+}
+.notification-panel{
+  position:absolute;
+  top:calc(100% + 12px);
+  right:0;
+  z-index:1500;
+  display:grid;
+  width:min(430px,calc(100vw - 32px));
+  max-height:min(610px,calc(100vh - 130px));
+  gap:14px;
+  padding:18px;
   overflow:hidden;
   border:1px solid #ffd7e5;
-  border-radius:28px;
-  background:radial-gradient(circle at top left,rgba(255,214,230,.9),transparent 34%),linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,248,251,.92));
-  box-shadow:0 18px 48px rgba(151,22,77,.1);
+  border-radius:24px;
+  background:radial-gradient(circle at top left,rgba(255,214,230,.95),transparent 36%),linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,248,251,.96));
+  box-shadow:0 24px 60px rgba(79,17,44,.18);
+  opacity:0;
+  transform:translateY(-8px) scale(.98);
+  transform-origin:top right;
+  transition:opacity .18s ease,transform .18s ease;
 }
-.notification-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
-.notification-heading h2{margin:0;font-size:clamp(24px,3vw,30px);letter-spacing:-.7px}
-.notification-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px}
-.notification-unread-count{
-  display:inline-flex;
-  align-items:center;
-  min-height:34px;
-  padding:7px 12px;
-  border:1px solid #ffd7e5;
-  border-radius:999px;
-  background:rgba(255,255,255,.75);
-  color:var(--muted);
-  font-size:12px;
-  font-weight:900;
-}
-.notification-unread-count.has-unread{border-color:#f5abc6;background:#fff0f6;color:var(--deep)}
+.notification-panel.is-open{opacity:1;transform:translateY(0) scale(1)}
+.notification-panel[hidden]{display:none}
+.notification-panel-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.notification-panel-heading h2{margin:0;font-size:24px;letter-spacing:-.5px}
 .notification-mark-all,.notification-read-button{
   border:1px solid #ffd1e2;
   border-radius:999px;
@@ -292,7 +326,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .notification-mark-all{min-height:36px;padding:8px 13px}
 .notification-read-button{align-self:center;padding:8px 11px;white-space:nowrap}
 .notification-mark-all:disabled,.notification-read-button:disabled{cursor:default;opacity:.58}
-.notifications-list{display:grid;gap:10px}
+.notifications-list{display:grid;gap:10px;max-height:470px;overflow:auto;padding-right:2px}
 .notification-item{
   --notification-accent:#5d8dee;
   --notification-soft:#eaf1ff;
@@ -448,6 +482,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .owner-body .tab:hover:not(.active),.owner-body .logout:hover{transform:translateX(3px);box-shadow:0 9px 22px rgba(151,22,77,.1)}
   .owner-body :is(.appointment-card,.service-row,.financial-panel,.calendar-day,.client-card,.notification-item):hover{transform:translateY(-2px);border-color:#f7bfd3;box-shadow:0 18px 44px rgba(151,22,77,.1)}
   .owner-body .status-row button:hover,.owner-body .service-row button:hover{transform:translateY(-1px);filter:saturate(1.08);box-shadow:0 8px 18px rgba(79,17,44,.1)}
+  .notification-bell:hover{transform:translateY(-2px);border-color:#f5abc6;box-shadow:0 16px 34px rgba(151,22,77,.18)}
   .notification-mark-all:hover:not(:disabled),.notification-read-button:hover:not(:disabled){transform:translateY(-1px);border-color:#f5abc6;box-shadow:0 8px 20px rgba(151,22,77,.1)}
 }
 
@@ -612,13 +647,15 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .dash-main{padding:20px 16px}
   .owner-body .panel{padding:20px;border-radius:24px}
   .dash-header{align-items:flex-start;flex-direction:column;margin-bottom:20px}
+  .dash-header-actions{width:100%;justify-content:space-between}
   .dash-header h1{font-size:40px;letter-spacing:-2px}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .stats div{padding:16px;border-radius:18px}
   .stats strong{font-size:28px}
-  .notification-center{padding:20px;border-radius:24px}
-  .notification-heading{align-items:flex-start;flex-direction:column}
-  .notification-actions{justify-content:flex-start;width:100%}
+  .notification-bell{width:46px;height:46px}
+  .notification-panel{position:fixed;top:92px;right:16px;left:16px;width:auto;max-height:calc(100vh - 116px);transform-origin:top center}
+  .notification-panel-heading{align-items:flex-start;flex-direction:column}
+  .notifications-list{max-height:calc(100vh - 230px)}
   .notification-item{grid-template-columns:34px minmax(0,1fr);align-items:start}
   .notification-icon{width:34px;height:34px;border-radius:12px}
   .notification-title-row{align-items:flex-start;flex-direction:column;gap:4px}
@@ -661,14 +698,14 @@ footer{text-align:center;color:var(--muted);padding:28px}
   .owner-body .stats,.owner-body .status-row{grid-template-columns:1fr}
   .owner-body .client-metrics,.owner-body .client-loyalty-summary{grid-template-columns:1fr}
   .owner-body .client-metric-wide{grid-column:auto}
-  .notification-actions{align-items:stretch;flex-direction:column}
-  .notification-mark-all,.notification-unread-count{justify-content:center;width:100%}
+  .notification-panel{right:10px;left:10px;padding:15px}
+  .notification-panel-heading .notification-mark-all{width:100%}
   .dash-header h1{font-size:35px}
 }
 @media(prefers-reduced-motion:reduce){
   .owner-body *{scroll-behavior:auto!important}
   .revenue-card,.client-card,.client-timeline-content,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
-  .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
+  .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
 }
 /* Logo Images */
 .nav-logo{

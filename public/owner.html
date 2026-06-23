@@ -62,7 +62,32 @@
           <p class="eyebrow dark">Owner Dashboard</p>
           <h1>Manage PinkSpa</h1>
         </div>
-        <a class="btn primary" href="/" target="_blank" rel="noopener noreferrer">View Website</a>
+        <div class="dash-header-actions">
+          <div class="notification-bell-wrap">
+            <button
+              id="notificationBell"
+              class="notification-bell"
+              type="button"
+              aria-label="Open notifications"
+              aria-expanded="false"
+              aria-controls="notificationPanel"
+            >
+              <span aria-hidden="true">🔔</span>
+              <small id="notificationUnreadCount" class="notification-badge hidden">0</small>
+            </button>
+            <section id="notificationPanel" class="notification-panel" aria-labelledby="notificationPanelTitle" hidden>
+              <div class="notification-panel-heading">
+                <div>
+                  <p class="eyebrow dark">Owner Alerts</p>
+                  <h2 id="notificationPanelTitle">Notifications</h2>
+                </div>
+                <button id="markAllNotificationsRead" class="notification-mark-all" type="button">Mark All Read</button>
+              </div>
+              <div id="notificationsList" class="notifications-list" aria-live="polite"></div>
+            </section>
+          </div>
+          <a class="btn primary" href="/" target="_blank" rel="noopener noreferrer">View Website</a>
+        </div>
       </div>
 
       <div class="stats">
@@ -76,20 +101,6 @@
   <div><span>This Month</span><strong id="statMonth">0</strong></div>
   <div><span>Completed</span><strong id="statCompleted">0</strong></div>
 </div>
-
-      <section class="notification-center" aria-labelledby="notificationCenterTitle">
-        <div class="notification-heading">
-          <div>
-            <p class="eyebrow dark">Owner Alerts</p>
-            <h2 id="notificationCenterTitle">Notification Center</h2>
-          </div>
-          <div class="notification-actions">
-            <span id="notificationUnreadCount" class="notification-unread-count">0 unread</span>
-            <button id="markAllNotificationsRead" class="notification-mark-all" type="button">Mark All Read</button>
-          </div>
-        </div>
-        <div id="notificationsList" class="notifications-list" aria-live="polite"></div>
-      </section>
 
       <section class="revenue-dashboard" aria-labelledby="revenueDashboardTitle">
         <div class="revenue-heading">
