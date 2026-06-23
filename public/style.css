@@ -1649,9 +1649,8 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .hero .eyebrow,
 .home-page .hero h1,
-.home-page .hero p:not(.eyebrow),
-.home-page .hero .cta-row,
-.home-page .hero .actions {
+.home-page .hero p,
+.home-page .hero .cta-row {
   opacity: 0;
   transform: translateY(22px);
   animation: heroContentEntrance 780ms cubic-bezier(.22,1,.36,1) both;
@@ -1660,9 +1659,8 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .hero .eyebrow { animation-delay: 320ms; }
 .home-page .hero h1 { animation-delay: 460ms; }
-.home-page .hero p:not(.eyebrow) { animation-delay: 620ms; }
-.home-page .hero .cta-row,
-.home-page .hero .actions { animation-delay: 780ms; }
+.home-page .hero p { animation-delay: 620ms; }
+.home-page .hero .cta-row { animation-delay: 780ms; }
 
 @keyframes heroSoftEntrance {
   from { opacity: 0; }
@@ -2256,81 +2254,11 @@ button.client-direct-action{font-family:inherit}
   .home-page .hero-logo,
   .home-page .hero .eyebrow,
   .home-page .hero h1,
-  .home-page .hero p:not(.eyebrow),
-  .home-page .hero .cta-row,
-  .home-page .hero .actions{
+  .home-page .hero p,
+  .home-page .hero .cta-row{
     opacity:1;
     transform:none;
     animation:none;
     will-change:auto;
-  }
-}
-/* Fresh homepage hero animations */
-@keyframes pinkspaFadeScale {
-  from {
-    opacity: 0;
-    transform: scale(1.06);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes pinkspaFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(28px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.home-page .hero {
-  animation: pinkspaFadeScale 1.2s ease both;
-}
-
-.home-page .hero-logo {
-  opacity: 0;
-  animation: pinkspaFadeUp 0.9s ease both;
-  animation-delay: 0.2s;
-}
-
-.home-page .hero .eyebrow {
-  opacity: 0;
-  animation: pinkspaFadeUp 0.8s ease both;
-  animation-delay: 0.45s;
-}
-
-.home-page .hero h1 {
-  opacity: 0;
-  animation: pinkspaFadeUp 0.9s ease both;
-  animation-delay: 0.65s;
-}
-
-.home-page .hero p {
-  opacity: 0;
-  animation: pinkspaFadeUp 0.8s ease both;
-  animation-delay: 0.9s;
-}
-
-.home-page .hero .cta-row {
-  opacity: 0;
-  animation: pinkspaFadeUp 0.8s ease both;
-  animation-delay: 1.1s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-page .hero,
-  .home-page .hero-logo,
-  .home-page .hero .eyebrow,
-  .home-page .hero h1,
-  .home-page .hero p,
-  .home-page .hero .cta-row {
-    opacity: 1;
-    animation: none !important;
-    transform: none !important;
   }
 }
