@@ -1725,34 +1725,79 @@ button.client-direct-action{font-family:inherit}
   margin-top: 32px;
 }
 
-.home-entrance-ready .home-page{
-  animation:homePageFadeIn .7s cubic-bezier(.22,1,.36,1) both;
+.home-page .hero {
+  animation: heroSoftEntrance 700ms cubic-bezier(.22,1,.36,1) both;
 }
-.home-entrance-ready .home-page .hero::before{
-  opacity:0;
-  transform:scale(1.035);
-  animation:heroImageSettle .9s cubic-bezier(.22,1,.36,1) .08s both;
-  will-change:opacity,transform;
-}
-.home-entrance-ready .home-page .hero-logo,
-.home-entrance-ready .home-page .hero .eyebrow,
-.home-entrance-ready .home-page .hero h1,
-.home-entrance-ready .home-page .hero p:not(.eyebrow),
-.home-entrance-ready .home-page .hero .actions{
-  opacity:0;
-  transform:translateY(22px);
-  animation:cinematicFadeUp .78s cubic-bezier(.22,1,.36,1) both;
-  will-change:opacity,transform;
-}
-.home-entrance-ready .home-page .hero-logo{animation-delay:.12s}
-.home-entrance-ready .home-page .hero .eyebrow{animation-delay:.2s}
-.home-entrance-ready .home-page .hero h1{animation-delay:.3s}
-.home-entrance-ready .home-page .hero p:not(.eyebrow){animation-delay:.46s}
-.home-entrance-ready .home-page .hero .actions{animation-delay:.62s}
 
-@keyframes homePageFadeIn{from{opacity:0}to{opacity:1}}
-@keyframes heroImageSettle{to{opacity:1;transform:scale(1)}}
-@keyframes cinematicFadeUp{to{opacity:1;transform:translateY(0)}}
+.home-page .hero::before {
+  opacity: 0;
+  transform: scale(1.04);
+  transform-origin: center;
+  animation: heroBackgroundEntrance 1100ms cubic-bezier(.22,1,.36,1) 60ms both;
+  will-change: opacity, transform;
+}
+
+.home-page .hero-logo {
+  opacity: 0;
+  transform: translateY(20px) scale(.9);
+  animation: heroLogoEntrance 900ms cubic-bezier(.22,1,.36,1) 170ms both;
+  will-change: opacity, transform;
+}
+
+.home-page .hero .eyebrow,
+.home-page .hero h1,
+.home-page .hero p:not(.eyebrow),
+.home-page .hero .cta-row,
+.home-page .hero .actions {
+  opacity: 0;
+  transform: translateY(22px);
+  animation: heroContentEntrance 780ms cubic-bezier(.22,1,.36,1) both;
+  will-change: opacity, transform;
+}
+
+.home-page .hero .eyebrow { animation-delay: 320ms; }
+.home-page .hero h1 { animation-delay: 460ms; }
+.home-page .hero p:not(.eyebrow) { animation-delay: 620ms; }
+.home-page .hero .cta-row,
+.home-page .hero .actions { animation-delay: 780ms; }
+
+@keyframes heroSoftEntrance {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes heroBackgroundEntrance {
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes heroLogoEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes heroContentEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 .home-page .btn,
 .home-page .service-book-btn,
@@ -2303,15 +2348,17 @@ button.client-direct-action{font-family:inherit}
     will-change:auto;
   }
 
-  .home-entrance-ready .home-page,
-  .home-entrance-ready .home-page .hero::before,
-  .home-entrance-ready .home-page .hero-logo,
-  .home-entrance-ready .home-page .hero .eyebrow,
-  .home-entrance-ready .home-page .hero h1,
-  .home-entrance-ready .home-page .hero p:not(.eyebrow),
-  .home-entrance-ready .home-page .hero .actions{
+  .home-page .hero,
+  .home-page .hero::before,
+  .home-page .hero-logo,
+  .home-page .hero .eyebrow,
+  .home-page .hero h1,
+  .home-page .hero p:not(.eyebrow),
+  .home-page .hero .cta-row,
+  .home-page .hero .actions{
     opacity:1;
     transform:none;
+    animation:none;
     will-change:auto;
   }
 }
