@@ -1749,47 +1749,33 @@ button.client-direct-action{font-family:inherit}
   margin-top: 32px;
 }
 
-.hero-entrance-ready .home-page{
+.home-entrance-ready .home-page{
   animation:homePageFadeIn .7s cubic-bezier(.22,1,.36,1) both;
 }
-.hero-entrance-prep .home-page .hero-bg-animate::before{
+.home-entrance-ready .home-page .hero::before{
   opacity:0;
-  transform:scale(1.06);
-}
-.hero-entrance-ready .home-page .hero-bg-animate::before{
-  animation:heroBackgroundEntrance .9s cubic-bezier(.22,1,.36,1) .04s both;
+  transform:scale(1.035);
+  animation:heroImageSettle .9s cubic-bezier(.22,1,.36,1) .08s both;
   will-change:opacity,transform;
 }
-.hero-entrance-prep .home-page .hero .eyebrow,
-.hero-entrance-prep .home-page .hero-title-animate,
-.hero-entrance-prep .home-page .hero-subtitle-animate,
-.hero-entrance-prep .home-page .hero-actions-animate{
+.home-entrance-ready .home-page .hero-logo,
+.home-entrance-ready .home-page .hero .eyebrow,
+.home-entrance-ready .home-page .hero h1,
+.home-entrance-ready .home-page .hero p:not(.eyebrow),
+.home-entrance-ready .home-page .hero .actions{
   opacity:0;
-  transform:translateY(28px);
-}
-.hero-entrance-ready .home-page .hero .eyebrow,
-.hero-entrance-ready .home-page .hero-title-animate,
-.hero-entrance-ready .home-page .hero-subtitle-animate,
-.hero-entrance-ready .home-page .hero-actions-animate{
+  transform:translateY(22px);
   animation:cinematicFadeUp .78s cubic-bezier(.22,1,.36,1) both;
   will-change:opacity,transform;
 }
-.hero-entrance-prep .home-page .hero-logo-animate{
-  opacity:0;
-  transform:translateY(26px) scale(.92);
-}
-.hero-entrance-ready .home-page .hero-logo-animate{
-  animation:heroLogoEntrance .9s cubic-bezier(.22,1,.36,1) .12s both;
-  will-change:opacity,transform;
-}
-.hero-entrance-ready .home-page .hero .eyebrow{animation-delay:.24s}
-.hero-entrance-ready .home-page .hero-title-animate{animation-delay:.38s}
-.hero-entrance-ready .home-page .hero-subtitle-animate{animation-delay:.58s}
-.hero-entrance-ready .home-page .hero-actions-animate{animation-delay:.78s}
+.home-entrance-ready .home-page .hero-logo{animation-delay:.12s}
+.home-entrance-ready .home-page .hero .eyebrow{animation-delay:.2s}
+.home-entrance-ready .home-page .hero h1{animation-delay:.3s}
+.home-entrance-ready .home-page .hero p:not(.eyebrow){animation-delay:.46s}
+.home-entrance-ready .home-page .hero .actions{animation-delay:.62s}
 
 @keyframes homePageFadeIn{from{opacity:0}to{opacity:1}}
-@keyframes heroBackgroundEntrance{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
-@keyframes heroLogoEntrance{from{opacity:0;transform:translateY(26px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes heroImageSettle{to{opacity:1;transform:scale(1)}}
 @keyframes cinematicFadeUp{to{opacity:1;transform:translateY(0)}}
 
 .home-page .btn,
@@ -2357,30 +2343,15 @@ button.client-direct-action{font-family:inherit}
     will-change:auto;
   }
 
-  .home-page,
-  .hero-entrance-prep .home-page,
-  .hero-entrance-ready .home-page,
-  .home-page .hero-bg-animate::before,
-  .hero-entrance-prep .home-page .hero-bg-animate::before,
-  .hero-entrance-ready .home-page .hero-bg-animate::before,
-  .home-page .hero-logo-animate,
-  .hero-entrance-prep .home-page .hero-logo-animate,
-  .hero-entrance-ready .home-page .hero-logo-animate,
-  .home-page .hero .eyebrow,
-  .hero-entrance-prep .home-page .hero .eyebrow,
-  .hero-entrance-ready .home-page .hero .eyebrow,
-  .home-page .hero-title-animate,
-  .hero-entrance-prep .home-page .hero-title-animate,
-  .hero-entrance-ready .home-page .hero-title-animate,
-  .home-page .hero-subtitle-animate,
-  .hero-entrance-prep .home-page .hero-subtitle-animate,
-  .hero-entrance-ready .home-page .hero-subtitle-animate,
-  .home-page .hero-actions-animate,
-  .hero-entrance-prep .home-page .hero-actions-animate,
-  .hero-entrance-ready .home-page .hero-actions-animate{
+  .home-entrance-ready .home-page,
+  .home-entrance-ready .home-page .hero::before,
+  .home-entrance-ready .home-page .hero-logo,
+  .home-entrance-ready .home-page .hero .eyebrow,
+  .home-entrance-ready .home-page .hero h1,
+  .home-entrance-ready .home-page .hero p:not(.eyebrow),
+  .home-entrance-ready .home-page .hero .actions{
     opacity:1;
     transform:none;
-    animation:none;
     will-change:auto;
   }
 
