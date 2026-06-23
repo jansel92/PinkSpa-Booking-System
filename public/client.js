@@ -25,7 +25,12 @@ let availabilityRequestId = 0;
 let primaryServiceId = null;
 
 if (document.body?.classList.contains("home-page")) {
-  document.documentElement.classList.add("home-entrance-ready");
+  document.documentElement.classList.add("home-entrance-prep");
+  window.requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.documentElement.classList.add("home-entrance-ready");
+    }, 150);
+  });
 }
 
 function setupGlassNavigation() {

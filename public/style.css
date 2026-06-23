@@ -1752,24 +1752,33 @@ button.client-direct-action{font-family:inherit}
 .home-entrance-ready .home-page{
   animation:homePageFadeIn .7s cubic-bezier(.22,1,.36,1) both;
 }
-.home-entrance-ready .home-page .hero::before{
+.home-entrance-prep .home-page .hero::before{
   opacity:0;
   transform:scale(1.04);
+}
+.home-entrance-ready .home-page .hero::before{
   animation:heroBackgroundEntrance .9s cubic-bezier(.22,1,.36,1) .06s both;
   will-change:opacity,transform;
+}
+.home-entrance-prep .home-page .hero .eyebrow,
+.home-entrance-prep .home-page .hero h1,
+.home-entrance-prep .home-page .hero p:not(.eyebrow),
+.home-entrance-prep .home-page .hero .actions{
+  opacity:0;
+  transform:translateY(22px);
 }
 .home-entrance-ready .home-page .hero .eyebrow,
 .home-entrance-ready .home-page .hero h1,
 .home-entrance-ready .home-page .hero p:not(.eyebrow),
 .home-entrance-ready .home-page .hero .actions{
-  opacity:0;
-  transform:translateY(22px);
   animation:cinematicFadeUp .78s cubic-bezier(.22,1,.36,1) both;
   will-change:opacity,transform;
 }
-.home-entrance-ready .home-page .hero-logo{
+.home-entrance-prep .home-page .hero-logo{
   opacity:0;
   transform:translateY(18px) scale(.94);
+}
+.home-entrance-ready .home-page .hero-logo{
   animation:heroLogoEntrance .82s cubic-bezier(.22,1,.36,1) .12s both;
   will-change:opacity,transform;
 }
@@ -2349,11 +2358,17 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-entrance-ready .home-page,
+  .home-entrance-prep .home-page .hero::before,
   .home-entrance-ready .home-page .hero::before,
+  .home-entrance-prep .home-page .hero-logo,
   .home-entrance-ready .home-page .hero-logo,
+  .home-entrance-prep .home-page .hero .eyebrow,
   .home-entrance-ready .home-page .hero .eyebrow,
+  .home-entrance-prep .home-page .hero h1,
   .home-entrance-ready .home-page .hero h1,
+  .home-entrance-prep .home-page .hero p:not(.eyebrow),
   .home-entrance-ready .home-page .hero p:not(.eyebrow),
+  .home-entrance-prep .home-page .hero .actions,
   .home-entrance-ready .home-page .hero .actions{
     opacity:1;
     transform:none;
