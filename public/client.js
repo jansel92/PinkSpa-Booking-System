@@ -24,10 +24,6 @@ let revealObserver = null;
 let availabilityRequestId = 0;
 let primaryServiceId = null;
 
-if (document.body?.classList.contains("home-page")) {
-  document.documentElement.classList.add("home-entrance-ready");
-}
-
 function setupGlassNavigation() {
   const nav = document.querySelector(".home-page .nav");
   if (!nav) return;
