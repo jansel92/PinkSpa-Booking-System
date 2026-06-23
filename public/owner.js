@@ -649,6 +649,108 @@ function createClientMetric(label, value) {
   return metric;
 }
 
+function clientAppointmentDateTime(appointment) {
+  const date = new Date(`${appointment.appointment_date}T00:00:00`);
+  const timeMatch = String(appointment.appointment_time || "")
+    .trim()
+    .match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (Number.isNaN(date.getTime()) || !timeMatch) return null;
+
+  let hours = Number(timeMatch[1]) % 12;
+  if (timeMatch[3].toUpperCase() === "PM") hours += 12;
+  date.setHours(hours, Number(timeMatch[2]), 0, 0);
+  return date;
+}
+
+function nextClientAppointment(appointments) {
+  const now = new Date();
+  return (appointments || [])
+    .filter(appointment => appointment.status === "pending" || appointment.status === "confirmed")
+    .map(appointment => ({ appointment, dateTime: clientAppointmentDateTime(appointment) }))
+    .filter(item => item.dateTime && item.dateTime >= now)
+    .sort((left, right) => left.dateTime - right.dateTime)[0]?.appointment || null;
+}
+
+function renderClientTimeline(container, client, currency) {
+  const appointments = Array.isArray(client.appointments) ? client.appointments : [];
+  const upcoming = nextClientAppointment(appointments);
+  const summary = document.createElement("div");
+  summary.className = "client-loyalty-summary";
+  const nextAppointmentText = upcoming
+    ? `${formatClientDate(upcoming.appointment_date)} at ${upcoming.appointment_time} - ${upcoming.service_name}`
+    : "No upcoming appointment";
+  const loyaltyMetrics = [
+    ["First Visit", formatClientDate(client.first_visit_date)],
+    ["Last Visit", formatClientDate(client.last_visit_date)],
+    ["Next Appointment", nextAppointmentText, "wide"],
+    ["Total Appointments", String(client.total_appointments || 0)],
+    ["Completed Visits", String(client.completed_visits || 0)],
+    ["Cancelled", String(client.cancelled_appointments || 0)],
+    ["No-shows", String(client.no_shows || 0)],
+    ["Total Money Spent", currency.format(Number(client.total_spent) || 0)],
+    ["Average Value", currency.format(Number(client.average_appointment_value) || 0)],
+    ["Favorite Service", client.favorite_service || "-"],
+    ["Reviews Submitted", String(client.reviews?.length || 0)],
+    ["Inspiration Photos", String(client.inspiration_photos?.length || 0)]
+  ];
+
+  loyaltyMetrics.forEach(([label, value, width]) => {
+    const metric = createClientMetric(label, value);
+    if (width === "wide") metric.classList.add("client-metric-wide");
+    summary.appendChild(metric);
+  });
+
+  const timelineSection = document.createElement("section");
+  timelineSection.className = "client-timeline-section";
+  const heading = document.createElement("h4");
+  heading.textContent = `Appointment Timeline (${appointments.length})`;
+  const note = document.createElement("p");
+  note.textContent = "Estimated prices use each primary service's current listed price.";
+  timelineSection.append(heading, note);
+
+  if (!appointments.length) {
+    timelineSection.appendChild(createEmptyState("No appointment history", "Appointments will appear here after booking."));
+  } else {
+    const list = document.createElement("div");
+    list.className = "client-timeline-list";
+    appointments.forEach(appointment => {
+      const item = document.createElement("article");
+      const supportedStatuses = ["pending", "confirmed", "completed", "cancelled", "no-show"];
+      const status = supportedStatuses.includes(appointment.status) ? appointment.status : "pending";
+      item.className = `client-timeline-item calendar-status-${status}`;
+
+      const date = document.createElement("div");
+      date.className = "client-timeline-date";
+      const dateValue = document.createElement("strong");
+      dateValue.textContent = formatClientDate(appointment.appointment_date);
+      const time = document.createElement("span");
+      time.textContent = appointment.appointment_time || "Time unavailable";
+      date.append(dateValue, time);
+
+      const service = document.createElement("div");
+      service.className = "client-timeline-service";
+      const serviceName = document.createElement("strong");
+      serviceName.textContent = appointment.service_name || "Unknown Service";
+      const duration = document.createElement("span");
+      duration.textContent = `${Number(appointment.duration_minutes) || 60} minutes`;
+      service.append(serviceName, duration);
+
+      const price = document.createElement("strong");
+      price.className = "client-timeline-price";
+      price.textContent = `Est. ${currency.format(Number(appointment.estimated_price) || 0)}`;
+
+      const statusBadge = document.createElement("span");
+      statusBadge.className = "client-timeline-status";
+      statusBadge.textContent = calendarStatusName(appointment.status);
+      item.append(date, service, price, statusBadge);
+      list.appendChild(item);
+    });
+    timelineSection.appendChild(list);
+  }
+
+  container.append(summary, timelineSection);
+}
+
 function renderClientCard(client) {
   const card = document.createElement("article");
   card.className = "client-card";
@@ -682,10 +784,19 @@ function renderClientCard(client) {
 
   identity.append(name, contact);
 
+  const badges = document.createElement("div");
+  badges.className = "client-badges";
+  const vipBadge = document.createElement("span");
+  const vipLevel = client.vip_level || "New Client";
+  const vipClass = vipLevel.toLowerCase().replace(/\s+/g, "-");
+  vipBadge.className = `client-vip-badge client-vip-${vipClass}`;
+  vipBadge.textContent = vipLevel;
+  vipBadge.setAttribute("aria-label", `Loyalty level: ${vipLevel}`);
   const appointmentBadge = document.createElement("span");
   appointmentBadge.className = "client-appointment-badge";
   appointmentBadge.textContent = `${client.total_appointments} appointment${client.total_appointments === 1 ? "" : "s"}`;
-  header.append(identity, appointmentBadge);
+  badges.append(vipBadge, appointmentBadge);
+  header.append(identity, badges);
 
   const currency = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -702,6 +813,24 @@ function renderClientCard(client) {
   );
 
   card.append(header, metrics);
+
+  const timelineDetails = document.createElement("details");
+  timelineDetails.className = "client-timeline-details";
+  const timelineSummary = document.createElement("summary");
+  const timelineLabel = document.createElement("span");
+  timelineLabel.textContent = "View Timeline";
+  const timelineCount = document.createElement("small");
+  timelineCount.textContent = `${client.total_appointments || 0} appointment${client.total_appointments === 1 ? "" : "s"}`;
+  timelineSummary.append(timelineLabel, timelineCount);
+  const timelineContent = document.createElement("div");
+  timelineContent.className = "client-timeline-content";
+  timelineDetails.append(timelineSummary, timelineContent);
+  timelineDetails.addEventListener("toggle", () => {
+    if (!timelineDetails.open || timelineContent.dataset.loaded) return;
+    timelineContent.dataset.loaded = "true";
+    renderClientTimeline(timelineContent, client, currency);
+  });
+  card.appendChild(timelineDetails);
 
   if (client.reviews?.length) {
     const reviewDetails = document.createElement("details");
@@ -765,7 +894,7 @@ function applyClientSearch() {
   const query = String(searchInput?.value || "").trim().toLowerCase();
   const digits = query.replace(/\D/g, "");
   const filteredClients = allClients.filter(client => {
-    const text = [client.name, client.phone, client.email, client.favorite_service]
+    const text = [client.name, client.phone, client.email, client.favorite_service, client.vip_level]
       .join(" ")
       .toLowerCase();
     const phone = String(client.phone || "").replace(/\D/g, "");

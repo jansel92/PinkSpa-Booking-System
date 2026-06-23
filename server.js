@@ -306,6 +306,14 @@ function parseCurrencyValue(value) {
   return match ? Number(match[0]) : 0;
 }
 
+function clientVipLevel(completedVisits) {
+  if (completedVisits >= 21) return "Platinum";
+  if (completedVisits >= 11) return "Gold";
+  if (completedVisits >= 6) return "Silver";
+  if (completedVisits >= 3) return "Bronze";
+  return "New Client";
+}
+
 const BOOKING_TIMES = [
   "9:30 AM",
   "10:00 AM",
@@ -479,9 +487,19 @@ app.get("/api/clients", requireOwner, (req, res) => {
     const completedAppointments = clientAppointments.filter(appointment => {
       return appointment.status === "completed";
     });
+    const cancelledAppointments = clientAppointments.filter(appointment => {
+      return appointment.status === "cancelled";
+    });
+    const noShowAppointments = clientAppointments.filter(appointment => {
+      return appointment.status === "no-show";
+    });
     const totalSpent = completedAppointments.reduce((sum, appointment) => {
       return sum + parseCurrencyValue(appointment.service_price);
     }, 0);
+    const completedVisitDates = completedAppointments
+      .map(appointment => appointment.appointment_date)
+      .filter(Boolean)
+      .sort();
     const serviceCounts = clientAppointments.reduce((counts, appointment) => {
       const serviceName = appointment.service_name || "Unknown Service";
       counts.set(serviceName, (counts.get(serviceName) || 0) + 1);
@@ -505,10 +523,35 @@ app.get("/api/clients", requireOwner, (req, res) => {
       phone,
       email,
       total_appointments: clientAppointments.length,
+      completed_visits: completedAppointments.length,
+      cancelled_appointments: cancelledAppointments.length,
+      no_shows: noShowAppointments.length,
       total_spent: totalSpent,
+      average_appointment_value: completedAppointments.length
+        ? totalSpent / completedAppointments.length
+        : 0,
       favorite_service: favoriteService,
-      last_visit_date: completedAppointments[0]?.appointment_date || "",
+      first_visit_date: completedVisitDates[0] || "",
+      last_visit_date: completedVisitDates[completedVisitDates.length - 1] || "",
+      vip_level: clientVipLevel(completedAppointments.length),
       reviews: clientReviews,
+      appointments: clientAppointments
+        .slice()
+        .sort((left, right) => {
+          return String(right.appointment_date || "").localeCompare(String(left.appointment_date || "")) ||
+            timeToMinutes(right.appointment_time) - timeToMinutes(left.appointment_time) ||
+            Number(right.id || 0) - Number(left.id || 0);
+        })
+        .map(appointment => ({
+          id: appointment.id,
+          appointment_date: appointment.appointment_date,
+          appointment_time: appointment.appointment_time,
+          service_name: appointment.service_name,
+          status: appointment.status,
+          duration_minutes: appointment.duration_minutes || 60,
+          estimated_price: parseCurrencyValue(appointment.service_price),
+          has_inspiration_photo: Boolean(appointment.inspiration_image)
+        })),
       inspiration_photos: clientAppointments
         .filter(appointment => appointment.inspiration_image)
         .map(appointment => ({
