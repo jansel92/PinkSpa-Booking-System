@@ -24,6 +24,10 @@ let revealObserver = null;
 let availabilityRequestId = 0;
 let primaryServiceId = null;
 
+if (document.body?.classList.contains("home-page")) {
+  document.documentElement.classList.add("home-entrance-ready");
+}
+
 function observeRevealElements(elements) {
   if (!revealObserver) return;
 
@@ -53,8 +57,9 @@ function setupScrollReveal() {
   });
 
   observeRevealElements(document.querySelectorAll(
+    ".home-page > .section, .home-page > .booking-section, .home-page > .cta, " +
     ".home-page .heading, .home-page .gallery-grid img, .home-page .review-card, " +
-    ".home-page .booking-copy, .home-page .form-card, .home-page .cta"
+    ".home-page .booking-copy, .home-page .form-card"
   ));
 }
 

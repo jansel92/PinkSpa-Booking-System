@@ -1685,7 +1685,6 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .hero-content {
   max-width: 780px;
-  animation: pinkspaFadeUp .95s cubic-bezier(.22, 1, .36, 1) both;
 }
 
 .home-page .hero-logo {
@@ -1725,6 +1724,35 @@ button.client-direct-action{font-family:inherit}
   gap: 12px;
   margin-top: 32px;
 }
+
+.home-entrance-ready .home-page{
+  animation:homePageFadeIn .7s cubic-bezier(.22,1,.36,1) both;
+}
+.home-entrance-ready .home-page .hero::before{
+  opacity:0;
+  transform:scale(1.035);
+  animation:heroImageSettle .9s cubic-bezier(.22,1,.36,1) .08s both;
+  will-change:opacity,transform;
+}
+.home-entrance-ready .home-page .hero-logo,
+.home-entrance-ready .home-page .hero .eyebrow,
+.home-entrance-ready .home-page .hero h1,
+.home-entrance-ready .home-page .hero p:not(.eyebrow),
+.home-entrance-ready .home-page .hero .actions{
+  opacity:0;
+  transform:translateY(22px);
+  animation:cinematicFadeUp .78s cubic-bezier(.22,1,.36,1) both;
+  will-change:opacity,transform;
+}
+.home-entrance-ready .home-page .hero-logo{animation-delay:.12s}
+.home-entrance-ready .home-page .hero .eyebrow{animation-delay:.2s}
+.home-entrance-ready .home-page .hero h1{animation-delay:.3s}
+.home-entrance-ready .home-page .hero p:not(.eyebrow){animation-delay:.46s}
+.home-entrance-ready .home-page .hero .actions{animation-delay:.62s}
+
+@keyframes homePageFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes heroImageSettle{to{opacity:1;transform:scale(1)}}
+@keyframes cinematicFadeUp{to{opacity:1;transform:translateY(0)}}
 
 .home-page .btn,
 .home-page .service-book-btn,
@@ -2051,14 +2079,16 @@ button.client-direct-action{font-family:inherit}
 
 .reveal-enabled .home-page .scroll-reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity .75s cubic-bezier(.22, 1, .36, 1), transform .75s cubic-bezier(.22, 1, .36, 1);
+  transform: translateY(24px);
+  transition: opacity .78s cubic-bezier(.22, 1, .36, 1), transform .78s cubic-bezier(.22, 1, .36, 1);
   transition-delay: var(--reveal-delay, 0ms);
+  will-change:opacity,transform;
 }
 
 .reveal-enabled .home-page .scroll-reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
+  will-change:auto;
 }
 
 @media (max-width: 1050px) {
@@ -2270,5 +2300,18 @@ button.client-direct-action{font-family:inherit}
   .reveal-enabled .home-page .scroll-reveal {
     opacity: 1;
     transform: none;
+    will-change:auto;
+  }
+
+  .home-entrance-ready .home-page,
+  .home-entrance-ready .home-page .hero::before,
+  .home-entrance-ready .home-page .hero-logo,
+  .home-entrance-ready .home-page .hero .eyebrow,
+  .home-entrance-ready .home-page .hero h1,
+  .home-entrance-ready .home-page .hero p:not(.eyebrow),
+  .home-entrance-ready .home-page .hero .actions{
+    opacity:1;
+    transform:none;
+    will-change:auto;
   }
 }
