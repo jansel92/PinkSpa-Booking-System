@@ -1249,6 +1249,62 @@ button.client-direct-action{font-family:inherit}
     padding:22px !important;
   }
 }
+.hero::before {
+  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+@keyframes pinkspaHeroZoom {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.08);
+  }
+}
+.hero {
+  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate;
+  transform-origin: center center;
+}
+
+@keyframes pinkspaHeroZoom {
+  0% {
+    background-size: 100%;
+  }
+
+  100% {
+    background-size: 108%;
+  }
+}
+.hero-content {
+  animation: pinkspaFadeUp 1.2s ease both;
+}
+
+@keyframes pinkspaFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.hero-logo {
+  animation: pinkspaLogoFloat 5s ease-in-out infinite;
+}
+
+@keyframes pinkspaLogoFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
 .hero {
   background-repeat: no-repeat !important;
   background-size: cover !important;
@@ -1260,6 +1316,35 @@ button.client-direct-action{font-family:inherit}
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: 58% center !important;
+  }
+}
+.hero {
+  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate !important;
+}
+
+@keyframes pinkspaHeroZoom {
+  0% {
+    background-size: 100% !important;
+  }
+
+  100% {
+    background-size: 110% !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero {
+    animation: pinkspaHeroZoomMobile 18s ease-in-out infinite alternate !important;
+  }
+
+  @keyframes pinkspaHeroZoomMobile {
+    0% {
+      background-size: 120% !important;
+    }
+
+    100% {
+      background-size: 130% !important;
+    }
   }
 }
 .hero {
@@ -1283,6 +1368,7 @@ button.client-direct-action{font-family:inherit}
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
+  animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
   z-index: 0;
 }
 
@@ -1291,9 +1377,20 @@ button.client-direct-action{font-family:inherit}
   z-index: 1;
 }
 
+@keyframes pinkspaHeroImageZoom {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.08);
+  }
+}
+
 @media (max-width: 700px) {
   .hero::before {
     background-position: center center;
+    animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
   }
 }
 .gallery-lightbox {
@@ -1512,11 +1609,22 @@ button.client-direct-action{font-family:inherit}
 .home-page .nav {
   top: 20px;
   width: min(1180px, calc(100% - 40px));
-  padding: 9px 14px 9px 12px;
-  border: 1px solid rgba(255, 255, 255, .85);
-  background: rgba(255, 252, 253, .88);
-  box-shadow: 0 18px 55px rgba(58, 20, 36, .14);
-  transition: box-shadow .3s ease, background-color .3s ease;
+  padding: 13px 18px 13px 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  transition: padding .32s cubic-bezier(.22,1,.36,1), border-color .32s ease, background-color .32s ease, box-shadow .32s ease, backdrop-filter .32s ease, -webkit-backdrop-filter .32s ease;
+}
+
+.home-page .nav.is-scrolled {
+  padding: 8px 14px 8px 12px;
+  border-color: rgba(255, 190, 214, .78);
+  background: rgba(255, 252, 253, .72);
+  box-shadow: 0 18px 50px rgba(58, 20, 36, .14);
+  backdrop-filter: blur(20px) saturate(1.18);
+  -webkit-backdrop-filter: blur(20px) saturate(1.18);
 }
 
 .home-page .nav-logo {
@@ -1525,6 +1633,13 @@ button.client-direct-action{font-family:inherit}
   height: 52px;
   border-radius: 50%;
   object-fit: cover;
+  transition: width .32s cubic-bezier(.22,1,.36,1), height .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease;
+}
+
+.home-page .nav.is-scrolled .nav-logo {
+  width: 46px;
+  height: 46px;
+  box-shadow: 0 8px 22px rgba(58, 20, 36, .1);
 }
 
 .home-page .nav nav {
@@ -1535,10 +1650,16 @@ button.client-direct-action{font-family:inherit}
 .home-page .nav nav a {
   position: relative;
   padding: 10px 0;
-  color: #533b46;
+  color: rgba(255,255,255,.94);
   font-size: 13px;
   letter-spacing: .015em;
-  transition: color .25s ease;
+  text-shadow: 0 2px 14px rgba(24,8,15,.28);
+  transition: color .25s ease, text-shadow .25s ease;
+}
+
+.home-page .nav.is-scrolled nav a {
+  color: #533b46;
+  text-shadow: none;
 }
 
 .home-page .nav nav a::after {
@@ -1628,53 +1749,39 @@ button.client-direct-action{font-family:inherit}
   margin-top: 32px;
 }
 
-body.home-page .hero {
-  opacity: 1;
-  transition: opacity 700ms cubic-bezier(.22,1,.36,1);
+.home-entrance-ready .home-page{
+  animation:homePageFadeIn .7s cubic-bezier(.22,1,.36,1) both;
 }
-
-body.home-page .hero::before {
-  opacity: 1;
-  transform: scale(1);
-  transform-origin: center;
-  transition: opacity 1100ms cubic-bezier(.22,1,.36,1), transform 1100ms cubic-bezier(.22,1,.36,1);
-  will-change: opacity, transform;
+.home-entrance-ready .home-page .hero::before{
+  opacity:0;
+  transform:scale(1.04);
+  animation:heroBackgroundEntrance .9s cubic-bezier(.22,1,.36,1) .06s both;
+  will-change:opacity,transform;
 }
-
-body.home-page .hero-logo,
-body.home-page .hero .eyebrow,
-body.home-page .hero h1,
-body.home-page .hero p,
-body.home-page .hero .cta-row {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  transition: opacity 820ms cubic-bezier(.22,1,.36,1), transform 820ms cubic-bezier(.22,1,.36,1);
-  will-change: opacity, transform;
+.home-entrance-ready .home-page .hero .eyebrow,
+.home-entrance-ready .home-page .hero h1,
+.home-entrance-ready .home-page .hero p:not(.eyebrow),
+.home-entrance-ready .home-page .hero .actions{
+  opacity:0;
+  transform:translateY(22px);
+  animation:cinematicFadeUp .78s cubic-bezier(.22,1,.36,1) both;
+  will-change:opacity,transform;
 }
-
-body.home-page:not(.hero-animate-ready) .hero {
-  opacity: 0;
+.home-entrance-ready .home-page .hero-logo{
+  opacity:0;
+  transform:translateY(18px) scale(.94);
+  animation:heroLogoEntrance .82s cubic-bezier(.22,1,.36,1) .12s both;
+  will-change:opacity,transform;
 }
+.home-entrance-ready .home-page .hero .eyebrow{animation-delay:.24s}
+.home-entrance-ready .home-page .hero h1{animation-delay:.34s}
+.home-entrance-ready .home-page .hero p:not(.eyebrow){animation-delay:.52s}
+.home-entrance-ready .home-page .hero .actions{animation-delay:.68s}
 
-body.home-page:not(.hero-animate-ready) .hero::before {
-  opacity: 0;
-  transform: scale(1.04);
-}
-
-body.home-page:not(.hero-animate-ready) .hero-logo,
-body.home-page:not(.hero-animate-ready) .hero .eyebrow,
-body.home-page:not(.hero-animate-ready) .hero h1,
-body.home-page:not(.hero-animate-ready) .hero p,
-body.home-page:not(.hero-animate-ready) .hero .cta-row {
-  opacity: 0;
-  transform: translateY(24px) scale(.96);
-}
-
-body.home-page .hero-logo { transition-delay: 140ms; }
-body.home-page .hero .eyebrow { transition-delay: 300ms; }
-body.home-page .hero h1 { transition-delay: 440ms; }
-body.home-page .hero p { transition-delay: 600ms; }
-body.home-page .hero .cta-row { transition-delay: 760ms; }
+@keyframes homePageFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes heroBackgroundEntrance{to{opacity:1;transform:scale(1)}}
+@keyframes heroLogoEntrance{to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cinematicFadeUp{to{opacity:1;transform:translateY(0)}}
 
 .home-page .btn,
 .home-page .service-book-btn,
@@ -2045,13 +2152,22 @@ body.home-page .hero .cta-row { transition-delay: 760ms; }
     left: 10px !important;
     right: 10px !important;
     width: auto !important;
-    padding: 8px !important;
+    padding: 10px !important;
     border-radius: 22px !important;
+  }
+
+  .home-page .nav.is-scrolled {
+    padding: 7px !important;
   }
 
   .home-page .nav-logo {
     width: 42px;
     height: 42px !important;
+  }
+
+  .home-page .nav.is-scrolled .nav-logo {
+    width: 38px;
+    height: 38px !important;
   }
 
   .home-page .nav nav {
@@ -2066,10 +2182,17 @@ body.home-page .hero .cta-row { transition-delay: 760ms; }
 
   .home-page .nav nav a {
     padding: 8px 7px;
-    border: 1px solid rgba(183, 25, 86, .1);
+    border: 1px solid rgba(255, 255, 255, .28);
     border-radius: 999px;
-    background: rgba(255, 241, 247, .72);
+    background: rgba(255, 255, 255, .16);
+    color: white;
     font-size: 11px !important;
+  }
+
+  .home-page .nav.is-scrolled nav a {
+    border-color: rgba(183, 25, 86, .1);
+    background: rgba(255, 241, 247, .72);
+    color: #533b46;
   }
 
   .home-page .nav nav a::after,
@@ -2225,17 +2348,21 @@ body.home-page .hero .cta-row { transition-delay: 760ms; }
     will-change:auto;
   }
 
-  body.home-page .hero,
-  body.home-page .hero::before,
-  body.home-page .hero-logo,
-  body.home-page .hero .eyebrow,
-  body.home-page .hero h1,
-  body.home-page .hero p,
-  body.home-page .hero .cta-row{
+  .home-entrance-ready .home-page,
+  .home-entrance-ready .home-page .hero::before,
+  .home-entrance-ready .home-page .hero-logo,
+  .home-entrance-ready .home-page .hero .eyebrow,
+  .home-entrance-ready .home-page .hero h1,
+  .home-entrance-ready .home-page .hero p:not(.eyebrow),
+  .home-entrance-ready .home-page .hero .actions{
     opacity:1;
     transform:none;
-    animation:none;
-    transition:none;
     will-change:auto;
+  }
+
+  .home-page .nav,
+  .home-page .nav-logo,
+  .home-page .nav nav a {
+    transition:none;
   }
 }
