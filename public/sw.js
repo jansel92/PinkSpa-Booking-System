@@ -1,9 +1,9 @@
-const CACHE_NAME = "pinkspa-cache-v12";
+const CACHE_NAME = "pinkspa-cache-v8";
 const urlsToCache = [
   "/",
   "/index.html",
-  "/style.css?v=12",
-  "/client.js?v=12",
+  "/style.css",
+  "/client.js",
   "/manifest.json",
   "/images/favicon.png",
   "/images/PinkSpa.png",

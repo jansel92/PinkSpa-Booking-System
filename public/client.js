@@ -24,22 +24,8 @@ let revealObserver = null;
 let availabilityRequestId = 0;
 let primaryServiceId = null;
 
-function setupGlassNavigation() {
-  const nav = document.querySelector(".home-page .nav");
-  if (!nav) return;
-
-  let ticking = false;
-  const updateNav = () => {
-    nav.classList.toggle("is-scrolled", window.scrollY > 18);
-    ticking = false;
-  };
-
-  updateNav();
-  window.addEventListener("scroll", () => {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(updateNav);
-  }, { passive: true });
+if (document.body?.classList.contains("home-page")) {
+  document.documentElement.classList.add("home-entrance-ready");
 }
 
 function observeRevealElements(elements) {
@@ -749,5 +735,4 @@ async function loadApprovedReviews() {
 }
 
 setupScrollReveal();
-setupGlassNavigation();
 loadApprovedReviews().finally(setupReviewSlider);
