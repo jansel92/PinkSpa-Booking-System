@@ -15,6 +15,7 @@ let allNotifications = [];
 let notificationUnreadCount = 0;
 let notificationRefreshTimer = null;
 let notificationPanelCloseTimer = null;
+let dashboardBusinessName = "PinkSpa";
 
 function createEmptyState(title, detail = "") {
   const empty = document.createElement("div");
@@ -30,6 +31,48 @@ function createEmptyState(title, detail = "") {
   }
 
   return empty;
+}
+
+function dashboardGreetingPeriod(date = new Date()) {
+  const hour = date.getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+}
+
+function ownerDisplayName() {
+  const cleanName = String(dashboardBusinessName || "").trim();
+  return cleanName || "PinkSpa";
+}
+
+function updateDashboardGreeting() {
+  const greeting = document.getElementById("dashboardGreeting");
+  const dateText = document.getElementById("dashboardDate");
+  const summary = document.getElementById("dashboardSummary");
+  if (!greeting || !dateText || !summary) return;
+
+  const now = new Date();
+  const todayKey = localDateKey(now);
+  const currency = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const todaysAppointments = allAppointments.filter(appointment => {
+    return appointment.appointment_date === todayKey &&
+      !["cancelled", "no-show"].includes(appointment.status);
+  });
+  const expectedRevenue = todaysAppointments.reduce((total, appointment) => {
+    return total + parseServicePrice(appointment.service_price);
+  }, 0);
+
+  greeting.textContent = `${dashboardGreetingPeriod(now)}, ${ownerDisplayName()} 👋`;
+  dateText.textContent = new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(now);
+  summary.textContent = `${todaysAppointments.length} appointment${todaysAppointments.length === 1 ? "" : "s"} today • ${currency.format(expectedRevenue)} expected revenue • ${notificationUnreadCount} unread notification${notificationUnreadCount === 1 ? "" : "s"}`;
 }
 
 function setLoadingState(container, message = "Loading...") {
@@ -284,6 +327,7 @@ async function loadNotifications() {
     allNotifications = Array.isArray(data.notifications) ? data.notifications : [];
     notificationUnreadCount = Number(data.unread_count || 0);
     renderNotifications();
+    updateDashboardGreeting();
     finishLoading(list);
   } catch (error) {
     console.error("Unable to load notifications:", error);
@@ -302,6 +346,7 @@ async function markNotificationRead(id, button) {
       });
       notificationUnreadCount = Math.max(0, notificationUnreadCount - 1);
       renderNotifications();
+      updateDashboardGreeting();
     }
   });
 }
@@ -318,6 +363,7 @@ if (markAllNotificationsReadButton) {
         allNotifications = allNotifications.map(notification => ({ ...notification, is_read: 1 }));
         notificationUnreadCount = 0;
         renderNotifications();
+        updateDashboardGreeting();
       }
     });
   });
@@ -454,6 +500,7 @@ function showDashboard() {
   document.getElementById("loginScreen").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
   setupImageFilePreview();
+  updateDashboardGreeting();
   loadAll();
 
   if (!notificationRefreshTimer) {
@@ -1308,6 +1355,7 @@ async function loadAppointments() {
   }
 
   allAppointments = appointments;
+  updateDashboardGreeting();
   renderCalendar(allAppointments);
   finishLoading(calendarList);
   finishLoading(list);
@@ -1652,9 +1700,11 @@ async function loadSettings() {
   setFormLoading(form, true);
   try {
     const settings = await api("/api/settings");
+    dashboardBusinessName = settings.business_name || "PinkSpa";
     Object.keys(settings).forEach(key => {
       if (form.elements[key]) form.elements[key].value = settings[key] || "";
     });
+    updateDashboardGreeting();
     if (message) message.textContent = "";
   } catch (error) {
     if (message) message.textContent = "Business settings could not be loaded. Please try again.";
@@ -1671,10 +1721,14 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
     button: e.submitter,
     busyText: "Saving settings...",
     successMessage: "Business settings saved.",
-    action: () => api("/api/settings", {
-      method: "PUT",
-      body: JSON.stringify(payload)
-    })
+    action: async () => {
+      await api("/api/settings", {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      });
+      dashboardBusinessName = payload.business_name || "PinkSpa";
+      updateDashboardGreeting();
+    }
   });
 
   if (success) document.getElementById("settingsMessage").textContent = "Settings saved.";
