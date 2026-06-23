@@ -1749,34 +1749,68 @@ button.client-direct-action{font-family:inherit}
   margin-top: 32px;
 }
 
-.home-entrance-ready .home-page{
-  animation:homePageFadeIn .7s cubic-bezier(.22,1,.36,1) both;
+.home-page .luxury-hero-bg::before {
+  opacity: 0;
+  transform: scale(1.055);
+  transform-origin: center;
+  animation: luxuryHeroBackgroundReveal 1200ms cubic-bezier(.22,1,.36,1) 80ms both;
+  will-change: opacity, transform;
 }
-.home-entrance-ready .home-page .hero::before{
-  opacity:0;
-  transform:scale(1.035);
-  animation:heroImageSettle .9s cubic-bezier(.22,1,.36,1) .08s both;
-  will-change:opacity,transform;
-}
-.home-entrance-ready .home-page .hero-logo,
-.home-entrance-ready .home-page .hero .eyebrow,
-.home-entrance-ready .home-page .hero h1,
-.home-entrance-ready .home-page .hero p:not(.eyebrow),
-.home-entrance-ready .home-page .hero .actions{
-  opacity:0;
-  transform:translateY(22px);
-  animation:cinematicFadeUp .78s cubic-bezier(.22,1,.36,1) both;
-  will-change:opacity,transform;
-}
-.home-entrance-ready .home-page .hero-logo{animation-delay:.12s}
-.home-entrance-ready .home-page .hero .eyebrow{animation-delay:.2s}
-.home-entrance-ready .home-page .hero h1{animation-delay:.3s}
-.home-entrance-ready .home-page .hero p:not(.eyebrow){animation-delay:.46s}
-.home-entrance-ready .home-page .hero .actions{animation-delay:.62s}
 
-@keyframes homePageFadeIn{from{opacity:0}to{opacity:1}}
-@keyframes heroImageSettle{to{opacity:1;transform:scale(1)}}
-@keyframes cinematicFadeUp{to{opacity:1;transform:translateY(0)}}
+.home-page .luxury-hero-logo {
+  opacity: 0;
+  transform: translateY(28px) scale(.9);
+  animation: luxuryHeroLogoReveal 900ms cubic-bezier(.22,1,.36,1) 240ms both;
+  will-change: opacity, transform;
+}
+
+.home-page .luxury-hero-eyebrow,
+.home-page .luxury-hero-title,
+.home-page .luxury-hero-subtitle,
+.home-page .luxury-hero-actions {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: luxuryHeroContentReveal 800ms cubic-bezier(.22,1,.36,1) both;
+  will-change: opacity, transform;
+}
+
+.home-page .luxury-hero-eyebrow { animation-delay: 380ms; }
+.home-page .luxury-hero-title { animation-delay: 500ms; }
+.home-page .luxury-hero-subtitle { animation-delay: 680ms; }
+.home-page .luxury-hero-actions { animation-delay: 860ms; }
+
+@keyframes luxuryHeroBackgroundReveal {
+  from {
+    opacity: 0;
+    transform: scale(1.055);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes luxuryHeroLogoReveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes luxuryHeroContentReveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 .home-page .btn,
 .home-page .service-book-btn,
@@ -2343,15 +2377,15 @@ button.client-direct-action{font-family:inherit}
     will-change:auto;
   }
 
-  .home-entrance-ready .home-page,
-  .home-entrance-ready .home-page .hero::before,
-  .home-entrance-ready .home-page .hero-logo,
-  .home-entrance-ready .home-page .hero .eyebrow,
-  .home-entrance-ready .home-page .hero h1,
-  .home-entrance-ready .home-page .hero p:not(.eyebrow),
-  .home-entrance-ready .home-page .hero .actions{
+  .home-page .luxury-hero-bg::before,
+  .home-page .luxury-hero-logo,
+  .home-page .luxury-hero-eyebrow,
+  .home-page .luxury-hero-title,
+  .home-page .luxury-hero-subtitle,
+  .home-page .luxury-hero-actions{
     opacity:1;
     transform:none;
+    animation:none;
     will-change:auto;
   }
 
