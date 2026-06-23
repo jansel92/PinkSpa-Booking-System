@@ -33,10 +33,6 @@ function initializeDashboardEntrance() {
     card.style.setProperty("--entrance-delay", `${90 + index * 45}ms`);
   });
 
-  document.querySelectorAll(".tab-content").forEach((section, index) => {
-    section.style.setProperty("--entrance-delay", `${280 + index * 55}ms`);
-  });
-
   window.requestAnimationFrame(() => dashboard.classList.add("dashboard-entrance-ready"));
 }
 

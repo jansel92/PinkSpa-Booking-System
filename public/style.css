@@ -227,14 +227,13 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .login-card p{color:var(--muted)}
 .hidden{display:none!important}
 .dashboard{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-.dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div,.revenue-dashboard,.tab-content){
+.dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div){
   animation:dashboardFadeUp .72s cubic-bezier(.22,1,.36,1) both;
   animation-delay:var(--entrance-delay,0ms);
   will-change:opacity,transform;
 }
 .dashboard-entrance-ready .dashboard-greeting{--entrance-delay:0ms}
 .dashboard-entrance-ready .dash-header-actions{--entrance-delay:70ms}
-.dashboard-entrance-ready .revenue-dashboard{--entrance-delay:245ms}
 .sidebar{background:white;border-right:1px solid #ffe0eb;padding:24px;display:flex;flex-direction:column;gap:12px;position:sticky;top:0;height:100vh}
 .sidebar-tabs{display:contents}
 .sidebar .brand{margin-bottom:18px}
@@ -244,7 +243,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .tab.active{background:linear-gradient(135deg,var(--pink),var(--deep));color:white;box-shadow:0 10px 26px rgba(183,25,86,.2)}
 .logout{margin-top:auto;background:#21171c;color:white}
 .dash-main{padding:34px}
-.tab-content:not(.hidden){animation:ownerContentIn .38s cubic-bezier(.22,1,.36,1) both}
+.tab-content:not(.hidden){animation:dashboardFadeUp .42s cubic-bezier(.22,1,.36,1) both}
 .tab-content{margin-top:0}
 .dash-header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}
 .dashboard-greeting{
@@ -774,7 +773,7 @@ button.client-direct-action{font-family:inherit}
 }
 @media(prefers-reduced-motion:reduce){
   .owner-body *{scroll-behavior:auto!important}
-  .dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div,.revenue-dashboard,.tab-content){animation:none;will-change:auto}
+  .dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div){animation:none;will-change:auto}
   .revenue-card,.client-card,.client-timeline-content,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
   .client-photo-grid a,.calendar-today-button,.trend-bar,.financial-status-bar,.whatsapp-action,.client-direct-action,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
 }

@@ -45,7 +45,8 @@
       </a>
 
       <div class="sidebar-tabs" role="tablist" aria-label="Owner dashboard sections">
-        <button data-tab="appointments" class="tab active">Appointments</button>
+        <button data-tab="financial" class="tab active">Financial</button>
+        <button data-tab="appointments" class="tab">Appointments</button>
         <button data-tab="calendar" class="tab">Calendar</button>
         <button data-tab="clients" class="tab">Clients</button>
         <button data-tab="services" class="tab">Services & Prices</button>
@@ -104,7 +105,7 @@
   <div><span>Completed</span><strong id="statCompleted">0</strong></div>
 </div>
 
-      <section class="revenue-dashboard" aria-labelledby="revenueDashboardTitle">
+      <section id="financialTab" class="tab-content revenue-dashboard" aria-labelledby="revenueDashboardTitle">
         <div class="revenue-heading">
           <div>
             <p class="eyebrow dark">Business Performance</p>
@@ -191,7 +192,7 @@
         </div>
       </section>
 
-      <section id="appointmentsTab" class="tab-content">
+      <section id="appointmentsTab" class="tab-content hidden">
         <div class="panel">
           <h2>Appointment Requests</h2>
           <div id="appointmentsList"></div>
