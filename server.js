@@ -210,7 +210,22 @@ function setupDatabase() {
       approved INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      priority TEXT NOT NULL DEFAULT 'info',
+      icon TEXT DEFAULT '',
+      event_key TEXT UNIQUE NOT NULL,
+      is_read INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
+
+  db.prepare("CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC, id DESC)").run();
+  db.prepare("CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read)").run();
 
   const appointmentColumns = db.prepare("PRAGMA table_info(appointments)").all().map(col => col.name);
   if (!appointmentColumns.includes("duration_minutes")) {
@@ -233,6 +248,8 @@ function setupDatabase() {
       VALUES (1, 'PinkSpa', 'Homestead, FL', '7863036126', '9:30 AM - 2:30 PM')
     `).run();
   }
+
+  pruneNotifications();
 
   const count = db.prepare("SELECT COUNT(*) AS total FROM services").get().total;
   if (count === 0) {
@@ -312,6 +329,210 @@ function clientVipLevel(completedVisits) {
   if (completedVisits >= 6) return "Silver";
   if (completedVisits >= 3) return "Bronze";
   return "New Client";
+}
+
+const VIP_THRESHOLDS = [
+  { visits: 21, level: "Platinum" },
+  { visits: 11, level: "Gold" },
+  { visits: 6, level: "Silver" },
+  { visits: 3, level: "Bronze" }
+];
+
+function pruneNotifications() {
+  db.prepare("DELETE FROM notifications WHERE datetime(created_at) < datetime('now', '-90 days')").run();
+  db.prepare(`
+    DELETE FROM notifications
+    WHERE id NOT IN (
+      SELECT id
+      FROM notifications
+      ORDER BY datetime(created_at) DESC, id DESC
+      LIMIT 100
+    )
+  `).run();
+}
+
+function createNotification({
+  type,
+  title,
+  description,
+  priority = "info",
+  icon = "i",
+  eventKey,
+  createdAt
+}) {
+  if (!type || !title || !description || !eventKey) return;
+
+  const allowedPriorities = new Set(["info", "success", "warning", "important"]);
+  const safePriority = allowedPriorities.has(priority) ? priority : "info";
+  const insertSql = createdAt
+    ? `
+      INSERT OR IGNORE INTO notifications
+      (type, title, description, priority, icon, event_key, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `
+    : `
+      INSERT OR IGNORE INTO notifications
+      (type, title, description, priority, icon, event_key)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+  const params = createdAt
+    ? [type, title, description, safePriority, icon, eventKey, createdAt]
+    : [type, title, description, safePriority, icon, eventKey];
+
+  db.prepare(insertSql).run(...params);
+  pruneNotifications();
+}
+
+function appointmentDateTime(appointment) {
+  const dateMatch = String(appointment?.appointment_date || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const minutes = timeToMinutes(appointment?.appointment_time);
+  if (!dateMatch || minutes === null) return null;
+
+  return new Date(
+    Number(dateMatch[1]),
+    Number(dateMatch[2]) - 1,
+    Number(dateMatch[3]),
+    Math.floor(minutes / 60),
+    minutes % 60
+  );
+}
+
+function tomorrowDateKey() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return [
+    tomorrow.getFullYear(),
+    String(tomorrow.getMonth() + 1).padStart(2, "0"),
+    String(tomorrow.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function createStatusNotification(appointment, status) {
+  const statusDetails = {
+    confirmed: {
+      title: "Appointment confirmed",
+      description: `${appointment.client_name}'s ${appointment.service_name} appointment is confirmed.`,
+      priority: "success",
+      icon: "OK"
+    },
+    completed: {
+      title: "Appointment completed",
+      description: `${appointment.client_name}'s ${appointment.service_name} appointment was marked completed.`,
+      priority: "success",
+      icon: "$"
+    },
+    cancelled: {
+      title: "Appointment cancelled",
+      description: `${appointment.client_name}'s ${appointment.service_name} appointment was cancelled.`,
+      priority: "important",
+      icon: "!"
+    },
+    "no-show": {
+      title: "No-show marked",
+      description: `${appointment.client_name}'s ${appointment.service_name} appointment was marked as a no-show.`,
+      priority: "warning",
+      icon: "!"
+    }
+  };
+  const detail = statusDetails[status];
+  if (!detail) return;
+
+  createNotification({
+    type: `appointment-${status}`,
+    title: detail.title,
+    description: detail.description,
+    priority: detail.priority,
+    icon: detail.icon,
+    eventKey: `appointment-${appointment.id}-${status}`
+  });
+}
+
+function contactMatchesSql() {
+  return `
+    (
+      ? != '' AND
+      REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(client_phone, '-', ''), '(', ''), ')', ''), ' ', ''), '.', ''), '+', '') = ?
+    )
+    OR
+    (
+      ? != '' AND lower(trim(client_email)) = ?
+    )
+  `;
+}
+
+function clientContactKey(appointment) {
+  return normalizeClientPhone(appointment.client_phone) ||
+    normalizeClientEmail(appointment.client_email) ||
+    normalizeClientName(appointment.client_name) ||
+    `appointment-${appointment.id}`;
+}
+
+function createVipNotificationIfNeeded(appointment) {
+  const phone = normalizeClientPhone(appointment.client_phone);
+  const email = normalizeClientEmail(appointment.client_email);
+  const completedVisits = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM appointments
+    WHERE status = 'completed'
+      AND (${contactMatchesSql()})
+  `).get(phone, phone, email, email).total;
+  const reached = VIP_THRESHOLDS
+    .slice()
+    .find(threshold => completedVisits >= threshold.visits);
+
+  if (!reached) return;
+
+  createNotification({
+    type: "client-vip",
+    title: `${appointment.client_name} reached ${reached.level}`,
+    description: `${appointment.client_name} now has ${completedVisits} completed visits and is a ${reached.level} VIP client.`,
+    priority: "success",
+    icon: "VIP",
+    eventKey: `client-vip-${clientContactKey(appointment)}-${reached.level.toLowerCase()}`
+  });
+}
+
+function generateScheduledNotifications() {
+  const now = new Date();
+  const soon = new Date(now.getTime() + 60 * 60 * 1000);
+  const activeAppointments = db.prepare(`
+    SELECT id, client_name, service_name, appointment_date, appointment_time
+    FROM appointments
+    WHERE status IN ('pending', 'confirmed')
+  `).all();
+
+  activeAppointments.forEach(appointment => {
+    const startsAt = appointmentDateTime(appointment);
+    if (!startsAt || startsAt < now || startsAt > soon) return;
+
+    createNotification({
+      type: "appointment-starting",
+      title: "Appointment starting soon",
+      description: `${appointment.client_name}'s ${appointment.service_name} appointment starts at ${appointment.appointment_time}.`,
+      priority: "warning",
+      icon: "60",
+      eventKey: `appointment-starting-${appointment.id}-${appointment.appointment_date}-${appointment.appointment_time}`
+    });
+  });
+
+  const tomorrow = tomorrowDateKey();
+  const tomorrowAppointments = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM appointments
+    WHERE appointment_date = ?
+      AND status NOT IN ('cancelled', 'no-show')
+  `).get(tomorrow).total;
+
+  if (tomorrowAppointments === 0) {
+    createNotification({
+      type: "tomorrow-empty",
+      title: "Tomorrow has no appointments",
+      description: "No appointments are scheduled for tomorrow yet.",
+      priority: "info",
+      icon: "i",
+      eventKey: `tomorrow-empty-${tomorrow}`
+    });
+  }
 }
 
 const BOOKING_TIMES = [
@@ -568,6 +789,31 @@ app.get("/api/clients", requireOwner, (req, res) => {
   res.json({ clients });
 });
 
+app.get("/api/notifications", requireOwner, (req, res) => {
+  generateScheduledNotifications();
+  pruneNotifications();
+
+  const notifications = db.prepare(`
+    SELECT id, type, title, description, priority, icon, is_read, created_at
+    FROM notifications
+    ORDER BY datetime(created_at) DESC, id DESC
+    LIMIT 100
+  `).all();
+  const unread = db.prepare("SELECT COUNT(*) AS total FROM notifications WHERE is_read = 0").get().total;
+
+  res.json({ notifications, unread_count: unread });
+});
+
+app.put("/api/notifications/:id/read", requireOwner, (req, res) => {
+  db.prepare("UPDATE notifications SET is_read = 1 WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.put("/api/notifications/read-all", requireOwner, (req, res) => {
+  db.prepare("UPDATE notifications SET is_read = 1 WHERE is_read = 0").run();
+  res.json({ success: true });
+});
+
 app.get("/api/appointments/:id/inspiration", requireOwner, (req, res) => {
   const appointment = db.prepare(`
     SELECT inspiration_image
@@ -812,6 +1058,20 @@ Client Notes:
 ${String(client_notes || "").trim() || "No notes added."}`
     : notes || "";
 
+  const normalizedClientPhone = normalizeClientPhone(client_phone);
+  const normalizedClientEmail = normalizeClientEmail(client_email);
+  const existingClientCount = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM appointments
+    WHERE ${contactMatchesSql()}
+  `).get(
+    normalizedClientPhone,
+    normalizedClientPhone,
+    normalizedClientEmail,
+    normalizedClientEmail
+  ).total;
+  const isNewClient = existingClientCount === 0;
+
   let inspirationImage = "";
 
   if (req.file) {
@@ -869,6 +1129,26 @@ ${String(client_notes || "").trim() || "No notes added."}`
     notes: storedNotes
   };
 
+  createNotification({
+    type: "appointment-new",
+    title: "New appointment received",
+    description: `${client_name} requested ${service.name} on ${appointment_date} at ${cleanAppointmentTime}.`,
+    priority: "info",
+    icon: "+",
+    eventKey: `appointment-new-${result.lastInsertRowid}`
+  });
+
+  if (isNewClient) {
+    createNotification({
+      type: "client-new",
+      title: "New client created",
+      description: `${client_name} was added from a new booking request.`,
+      priority: "success",
+      icon: "+",
+      eventKey: `client-new-${clientContactKey(appointment)}`
+    });
+  }
+
   sendAppointmentEmail(appointment).catch(error => {
     console.error("================================");
     console.error("EMAIL ERROR:");
@@ -886,6 +1166,17 @@ app.put("/api/appointments/:id/status", requireOwner, (req, res) => {
   if (!allowed.includes(status)) return res.status(400).json({ error: "Invalid status." });
 
   db.prepare("UPDATE appointments SET status = ? WHERE id = ?").run(status, req.params.id);
+  const appointment = db.prepare(`
+    SELECT id, client_name, client_phone, client_email, service_name, appointment_date, appointment_time, status
+    FROM appointments
+    WHERE id = ?
+  `).get(req.params.id);
+
+  if (appointment) {
+    createStatusNotification(appointment, status);
+    if (status === "completed") createVipNotificationIfNeeded(appointment);
+  }
+
   res.json({ success: true });
 });
 
@@ -936,6 +1227,15 @@ app.post("/api/reviews", (req, res) => {
     numericRating,
     String(review_text).trim()
   );
+
+  createNotification({
+    type: "review-new",
+    title: "New review waiting approval",
+    description: `${String(client_name).trim()} submitted a ${numericRating}-star review.`,
+    priority: "warning",
+    icon: "*",
+    eventKey: `review-new-${result.lastInsertRowid}`
+  });
 
   res.json({
     success: true,

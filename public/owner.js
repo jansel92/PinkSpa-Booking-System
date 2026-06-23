@@ -11,6 +11,9 @@ async function api(url, options = {}) {
 let editingServiceId = null;
 let allClients = [];
 let allAppointments = [];
+let allNotifications = [];
+let notificationUnreadCount = 0;
+let notificationRefreshTimer = null;
 
 function createEmptyState(title, detail = "") {
   const empty = document.createElement("div");
@@ -159,6 +162,142 @@ async function performAction({ button, busyText, successMessage, action }) {
   }
 }
 
+function parseNotificationDate(value) {
+  const clean = String(value || "").trim();
+  if (!clean) return null;
+
+  const normalized = clean.includes("T") ? clean : clean.replace(" ", "T") + "Z";
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function relativeTime(value) {
+  const date = parseNotificationDate(value);
+  if (!date) return "";
+
+  const seconds = Math.round((Date.now() - date.getTime()) / 1000);
+  const absSeconds = Math.abs(seconds);
+  if (absSeconds < 45) return "Just now";
+
+  const units = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["week", 604800],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60]
+  ];
+  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  const [unit, unitSeconds] = units.find(([, amount]) => absSeconds >= amount) || ["minute", 60];
+
+  return formatter.format(Math.round(-seconds / unitSeconds), unit);
+}
+
+function renderNotifications(notifications = allNotifications) {
+  const list = document.getElementById("notificationsList");
+  const unreadBadge = document.getElementById("notificationUnreadCount");
+  const markAllButton = document.getElementById("markAllNotificationsRead");
+  if (!list || !unreadBadge || !markAllButton) return;
+
+  const unreadCount = notificationUnreadCount;
+  unreadBadge.textContent = `${unreadCount} unread`;
+  unreadBadge.classList.toggle("has-unread", unreadCount > 0);
+  markAllButton.disabled = unreadCount === 0;
+  list.replaceChildren();
+
+  if (!notifications.length) {
+    list.appendChild(createEmptyState("No notifications yet", "Important appointment and client updates will appear here."));
+    return;
+  }
+
+  notifications.forEach(notification => {
+    const item = document.createElement("article");
+    item.className = `notification-item notification-${notification.priority || "info"}`;
+    item.classList.toggle("notification-unread", !notification.is_read);
+
+    const icon = document.createElement("span");
+    icon.className = "notification-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = notification.icon || "i";
+
+    const content = document.createElement("div");
+    content.className = "notification-content";
+
+    const titleRow = document.createElement("div");
+    titleRow.className = "notification-title-row";
+    const title = document.createElement("strong");
+    title.textContent = notification.title;
+    const time = document.createElement("time");
+    time.dateTime = notification.created_at || "";
+    time.textContent = relativeTime(notification.created_at);
+    titleRow.append(title, time);
+
+    const description = document.createElement("p");
+    description.textContent = notification.description;
+
+    content.append(titleRow, description);
+
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "notification-read-button";
+    action.textContent = notification.is_read ? "Read" : "Mark as Read";
+    action.disabled = Boolean(notification.is_read);
+    action.addEventListener("click", () => markNotificationRead(notification.id, action));
+
+    item.append(icon, content, action);
+    list.appendChild(item);
+  });
+}
+
+async function loadNotifications() {
+  const list = document.getElementById("notificationsList");
+  if (!list) return;
+
+  setLoadingState(list, "Loading notifications...");
+  try {
+    const data = await api("/api/notifications");
+    allNotifications = Array.isArray(data.notifications) ? data.notifications : [];
+    notificationUnreadCount = Number(data.unread_count || 0);
+    renderNotifications();
+    finishLoading(list);
+  } catch (error) {
+    console.error("Unable to load notifications:", error);
+    setLoadError(list, "Notifications could not be loaded. Please try again.");
+  }
+}
+
+async function markNotificationRead(id, button) {
+  await performAction({
+    button,
+    busyText: "Saving...",
+    action: async () => {
+      await api(`/api/notifications/${id}/read`, { method: "PUT" });
+      allNotifications = allNotifications.map(notification => {
+        return notification.id === id ? { ...notification, is_read: 1 } : notification;
+      });
+      notificationUnreadCount = Math.max(0, notificationUnreadCount - 1);
+      renderNotifications();
+    }
+  });
+}
+
+const markAllNotificationsReadButton = document.getElementById("markAllNotificationsRead");
+if (markAllNotificationsReadButton) {
+  markAllNotificationsReadButton.addEventListener("click", async event => {
+    await performAction({
+      button: event.currentTarget,
+      busyText: "Saving...",
+      successMessage: "All notifications marked as read.",
+      action: async () => {
+        await api("/api/notifications/read-all", { method: "PUT" });
+        allNotifications = allNotifications.map(notification => ({ ...notification, is_read: 1 }));
+        notificationUnreadCount = 0;
+        renderNotifications();
+      }
+    });
+  });
+}
+
 function serviceImage(service) {
   if (service.image) return service.image;
 
@@ -267,6 +406,10 @@ function showDashboard() {
   document.getElementById("dashboard").classList.remove("hidden");
   setupImageFilePreview();
   loadAll();
+
+  if (!notificationRefreshTimer) {
+    notificationRefreshTimer = window.setInterval(loadNotifications, 5 * 60 * 1000);
+  }
 }
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
@@ -345,6 +488,8 @@ document.querySelectorAll(".tab-content").forEach(panel => {
 });
 
 async function loadAll() {
+  loadNotifications();
+
   const results = await Promise.allSettled([
     loadAppointments(),
     loadServices(),
@@ -1236,6 +1381,7 @@ async function setStatus(id, status, button) {
         body: JSON.stringify({ status })
       });
       await Promise.all([loadAppointments(), loadClients()]);
+      await loadNotifications();
     }
   });
 }
