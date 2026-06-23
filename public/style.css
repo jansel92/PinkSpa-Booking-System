@@ -1249,62 +1249,6 @@ button.client-direct-action{font-family:inherit}
     padding:22px !important;
   }
 }
-.hero::before {
-  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate;
-  transform-origin: center;
-}
-
-@keyframes pinkspaHeroZoom {
-  from {
-    transform: scale(1);
-  }
-
-  to {
-    transform: scale(1.08);
-  }
-}
-.hero {
-  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate;
-  transform-origin: center center;
-}
-
-@keyframes pinkspaHeroZoom {
-  0% {
-    background-size: 100%;
-  }
-
-  100% {
-    background-size: 108%;
-  }
-}
-.hero-content {
-  animation: pinkspaFadeUp 1.2s ease both;
-}
-
-@keyframes pinkspaFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.hero-logo {
-  animation: pinkspaLogoFloat 5s ease-in-out infinite;
-}
-
-@keyframes pinkspaLogoFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
-}
 .hero {
   background-repeat: no-repeat !important;
   background-size: cover !important;
@@ -1316,35 +1260,6 @@ button.client-direct-action{font-family:inherit}
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: 58% center !important;
-  }
-}
-.hero {
-  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate !important;
-}
-
-@keyframes pinkspaHeroZoom {
-  0% {
-    background-size: 100% !important;
-  }
-
-  100% {
-    background-size: 110% !important;
-  }
-}
-
-@media (max-width: 700px) {
-  .hero {
-    animation: pinkspaHeroZoomMobile 18s ease-in-out infinite alternate !important;
-  }
-
-  @keyframes pinkspaHeroZoomMobile {
-    0% {
-      background-size: 120% !important;
-    }
-
-    100% {
-      background-size: 130% !important;
-    }
   }
 }
 .hero {
@@ -1368,7 +1283,6 @@ button.client-direct-action{font-family:inherit}
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
   z-index: 0;
 }
 
@@ -1377,20 +1291,9 @@ button.client-direct-action{font-family:inherit}
   z-index: 1;
 }
 
-@keyframes pinkspaHeroImageZoom {
-  from {
-    transform: scale(1);
-  }
-
-  to {
-    transform: scale(1.08);
-  }
-}
-
 @media (max-width: 700px) {
   .hero::before {
     background-position: center center;
-    animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
   }
 }
 .gallery-lightbox {
