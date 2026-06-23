@@ -18,6 +18,9 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "pinkspa-dev-secret-change-
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "pinkspaadmin@gmail.com";
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
+const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "PinkSpa Booking";
+const APP_BASE_URL = String(process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/+$/, "");
 
 const app = express();
 
@@ -123,10 +126,21 @@ function deleteInspirationFile(storedPath) {
 
 let mailTransporter = null;
 if (EMAIL_USER && EMAIL_PASS) {
-  mailTransporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: EMAIL_USER, pass: EMAIL_PASS }
-  });
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  const smtpSecure = String(process.env.SMTP_SECURE || "").toLowerCase() === "true";
+
+  mailTransporter = nodemailer.createTransport(smtpHost
+    ? {
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure,
+        auth: { user: EMAIL_USER, pass: EMAIL_PASS }
+      }
+    : {
+        service: process.env.EMAIL_SERVICE || "gmail",
+        auth: { user: EMAIL_USER, pass: EMAIL_PASS }
+      });
 }
 
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -549,13 +563,44 @@ const BOOKING_TIMES = [
   "2:30 PM"
 ];
 
-async function sendAppointmentEmail(appointment) {
-  if (!mailTransporter) {
-    console.log("Email not configured yet. Appointment saved without email notification.");
-    return;
-  }
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
-  const emailBody = `
+function publicUrl(pathname) {
+  if (!APP_BASE_URL) return pathname;
+  return `${APP_BASE_URL}${pathname}`;
+}
+
+function appointmentPlainText(appointment, settings, audience) {
+  const statusLink = publicUrl("/#status");
+  const reviewLink = publicUrl(`/review?name=${encodeURIComponent(appointment.client_name || "")}`);
+  const ownerLink = publicUrl("/owner");
+
+  return audience === "client"
+    ? `
+${settings.business_name || "PinkSpa"} received your booking request.
+
+Client: ${appointment.client_name}
+Phone: ${appointment.client_phone}
+Service: ${appointment.service_name}
+Date: ${appointment.appointment_date}
+Time: ${appointment.appointment_time}
+Duration: ${appointment.duration_minutes || 60} minutes
+
+Notes:
+${appointment.notes || "No notes provided."}
+
+Status: Pending owner confirmation
+Check your status: ${statusLink}
+Leave a review after your visit: ${reviewLink}
+`
+    : `
 New PinkSpa Appointment Request
 
 Client Name: ${appointment.client_name}
@@ -571,16 +616,125 @@ Notes:
 ${appointment.notes || "No notes provided."}
 
 Status: Pending
-
-Please log in to the PinkSpa owner dashboard to review this appointment.
+Owner Dashboard: ${ownerLink}
+Status Link: ${statusLink}
+Review Link: ${reviewLink}
 `;
+}
 
-  await mailTransporter.sendMail({
-    from: `"PinkSpa Booking" <${EMAIL_USER}>`,
+function bookingEmailHtml({ appointment, settings, audience }) {
+  const businessName = escapeHtml(settings.business_name || "PinkSpa");
+  const city = escapeHtml(settings.city || "");
+  const phone = escapeHtml(settings.phone || "");
+  const statusLink = publicUrl("/#status");
+  const reviewLink = publicUrl(`/review?name=${encodeURIComponent(appointment.client_name || "")}`);
+  const ownerLink = publicUrl("/owner");
+  const isClient = audience === "client";
+  const title = isClient ? "Your booking request was received" : "New appointment request";
+  const intro = isClient
+    ? "Thank you for choosing PinkSpa. Your request is pending owner confirmation, and we will follow up soon."
+    : "A new client booking request is waiting in the owner dashboard.";
+  const ctaUrl = isClient ? statusLink : ownerLink;
+  const ctaText = isClient ? "Check Appointment Status" : "Open Owner Dashboard";
+
+  const rows = [
+    ["Client", appointment.client_name],
+    ["Phone", appointment.client_phone],
+    ["Email", appointment.client_email || "Not provided"],
+    ["Service", appointment.service_name],
+    ["Date", appointment.appointment_date],
+    ["Time", appointment.appointment_time],
+    ["Duration", `${appointment.duration_minutes || 60} minutes`],
+    ["Status", "Pending confirmation"]
+  ].map(([label, value]) => `
+    <tr>
+      <td style="padding:12px 0;color:#8a6675;font-size:13px;font-weight:700;border-bottom:1px solid #ffe3ee;">${escapeHtml(label)}</td>
+      <td style="padding:12px 0;color:#3b2330;font-size:14px;font-weight:800;text-align:right;border-bottom:1px solid #ffe3ee;">${escapeHtml(value)}</td>
+    </tr>
+  `).join("");
+
+  return `
+<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#fff1f7;font-family:Arial,Helvetica,sans-serif;color:#3b2330;">
+    <div style="display:none;max-height:0;overflow:hidden;">${escapeHtml(title)} for ${businessName}</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#fff1f7;padding:28px 14px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;overflow:hidden;border:1px solid #ffd4e4;border-radius:28px;background:#ffffff;box-shadow:0 18px 50px rgba(151,22,77,.14);">
+            <tr>
+              <td style="padding:34px 32px;background:linear-gradient(135deg,#ffe0eb,#fff8fb);text-align:center;">
+                <div style="margin-bottom:10px;color:#b71956;font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">${businessName}</div>
+                <h1 style="margin:0;color:#4f112c;font-size:30px;line-height:1.1;letter-spacing:-.5px;">${escapeHtml(title)}</h1>
+                <p style="max-width:440px;margin:14px auto 0;color:#7b5b68;font-size:15px;line-height:1.7;">${escapeHtml(intro)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:30px 32px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">${rows}</table>
+
+                <div style="margin-top:22px;padding:18px;border:1px solid #ffe0eb;border-radius:18px;background:#fff8fb;">
+                  <div style="margin-bottom:8px;color:#4f112c;font-size:13px;font-weight:900;">Notes</div>
+                  <div style="color:#6f5360;font-size:14px;line-height:1.65;white-space:pre-wrap;">${escapeHtml(appointment.notes || "No notes provided.")}</div>
+                </div>
+
+                <div style="margin-top:26px;text-align:center;">
+                  <a href="${escapeHtml(ctaUrl)}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:linear-gradient(135deg,#ff5f93,#b71956);color:#ffffff;font-size:14px;font-weight:900;text-decoration:none;">${escapeHtml(ctaText)}</a>
+                </div>
+
+                <p style="margin:20px 0 0;text-align:center;color:#8a6675;font-size:12px;line-height:1.7;">
+                  ${isClient ? `After your visit, you can share your experience here: <a href="${escapeHtml(reviewLink)}" style="color:#b71956;font-weight:800;">Leave a review</a>.` : `Client status link: <a href="${escapeHtml(statusLink)}" style="color:#b71956;font-weight:800;">View status</a> · Review link: <a href="${escapeHtml(reviewLink)}" style="color:#b71956;font-weight:800;">Review page</a>`}
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:18px 32px;background:#fff8fb;text-align:center;color:#8a6675;font-size:12px;line-height:1.6;">
+                ${businessName}${city ? ` · ${city}` : ""}${phone ? ` · ${phone}` : ""}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+async function sendAppointmentEmail(appointment) {
+  if (!mailTransporter) {
+    console.log("Email not configured yet. Appointment saved without email notification.");
+    return;
+  }
+
+  const settings = db.prepare("SELECT * FROM business_settings WHERE id = 1").get() || {};
+  const from = { name: EMAIL_FROM_NAME, address: EMAIL_FROM || EMAIL_USER };
+  const messages = [{
+    from,
     to: NOTIFY_EMAIL,
-    subject: "New PinkSpa Appointment Request",
-    text: emailBody
-  });
+    replyTo: appointment.client_email || undefined,
+    subject: `New PinkSpa booking request: ${appointment.client_name}`,
+    text: appointmentPlainText(appointment, settings, "owner"),
+    html: bookingEmailHtml({ appointment, settings, audience: "owner" })
+  }];
+
+  if (appointment.client_email) {
+    messages.push({
+      from,
+      to: appointment.client_email,
+      replyTo: settings.email || NOTIFY_EMAIL || EMAIL_FROM || EMAIL_USER,
+      subject: `${settings.business_name || "PinkSpa"} received your booking request`,
+      text: appointmentPlainText(appointment, settings, "client"),
+      html: bookingEmailHtml({ appointment, settings, audience: "client" })
+    });
+  }
+
+  const results = await Promise.allSettled(messages.map(message => mailTransporter.sendMail(message)));
+  const failed = results.filter(result => result.status === "rejected");
+
+  if (failed.length) {
+    failed.forEach(result => console.error("EMAIL SEND ERROR:", result.reason));
+    throw new Error(`${failed.length} booking email${failed.length === 1 ? "" : "s"} failed to send.`);
+  }
 }
 
 app.get("/api/settings", (req, res) => {

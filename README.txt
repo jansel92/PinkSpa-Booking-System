@@ -82,9 +82,45 @@ IMPORTANT RENDER NOTES:
 - Data previously written to Render's ephemeral filesystem is not moved automatically. Re-upload any service images that were created before the persistent disk was attached.
 - Local development does not require DATA_DIR. It continues to use data/pinkspa.sqlite, public/uploads, and data/inspiration-uploads.
 
+RENDER EMAIL CONFIRMATION SETUP:
+PinkSpa sends branded booking emails with Nodemailer. Booking still succeeds if email delivery is not configured, but owner/client emails will not send until these environment variables are added.
+
+Required Gmail-style setup:
+1. Use a dedicated Gmail account or Google Workspace mailbox.
+2. Turn on 2-Step Verification for that mailbox.
+3. Create a Google App Password for Mail.
+4. In Render, open the PinkSpa Web Service, then Environment.
+5. Add:
+   EMAIL_SERVICE=gmail
+   EMAIL_USER=<gmail or workspace email address>
+   EMAIL_PASS=<google app password>
+   EMAIL_FROM=<same email address or verified sender>
+   EMAIL_FROM_NAME=PinkSpa Booking
+   NOTIFY_EMAIL=<owner email that receives booking notifications>
+   APP_BASE_URL=https://your-render-service.onrender.com
+6. Redeploy the service.
+7. Submit a test booking with a client email address and confirm:
+   - The owner receives a new booking notification.
+   - The client receives a branded request confirmation.
+
+Optional SMTP setup instead of Gmail service:
+   SMTP_HOST=<smtp provider host>
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   EMAIL_USER=<smtp username>
+   EMAIL_PASS=<smtp password>
+   EMAIL_FROM=<verified from email>
+   EMAIL_FROM_NAME=PinkSpa Booking
+   NOTIFY_EMAIL=<owner email>
+   APP_BASE_URL=https://your-render-service.onrender.com
+
+EMAIL NOTES:
+- For Gmail, EMAIL_PASS must be an App Password, not the normal inbox password.
+- APP_BASE_URL is used for owner dashboard, appointment status, and review links inside emails.
+- If a booking does not include a client email, PinkSpa will still email the owner but cannot email the client.
+
 NEXT UPGRADES:
 - Real SMS reminders using Twilio
-- Email confirmations
 - Client account login
 - Online deposits/payments with Stripe
 - Calendar sync
