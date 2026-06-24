@@ -578,6 +578,10 @@ async function loadSettings() {
   const businessHoursText = document.getElementById("businessHoursText");
   const phoneLink = document.getElementById("phoneLink");
   const ctaPhone = document.getElementById("ctaPhone");
+  const footerPhone = document.getElementById("footerPhone");
+  const footerWhatsapp = document.getElementById("footerWhatsapp");
+  const footerLocation = document.getElementById("footerLocation");
+  const footerHours = document.getElementById("footerHours");
   const message = document.getElementById("bookingMessage");
 
   try {
@@ -591,6 +595,8 @@ async function loadSettings() {
     if (cityText) cityText.textContent = "📍 " + settings.city;
     if (businessPhoneText) businessPhoneText.textContent = "☎ " + settings.phone;
     if (businessHoursText) businessHoursText.textContent = "🕘 " + settings.hours;
+    if (footerLocation) footerLocation.textContent = settings.city;
+    if (footerHours) footerHours.textContent = settings.hours;
 
     if (phoneLink) {
       phoneLink.href = whatsappBookingUrl(settings.phone);
@@ -601,6 +607,15 @@ async function loadSettings() {
 
     if (ctaPhone) {
       ctaPhone.href = "tel:" + settings.phone;
+    }
+
+    if (footerPhone) {
+      footerPhone.href = "tel:" + settings.phone;
+      footerPhone.textContent = settings.phone;
+    }
+
+    if (footerWhatsapp) {
+      footerWhatsapp.href = whatsappBookingUrl(settings.phone);
     }
   } catch (error) {
     console.error("Unable to load business settings:", error);
