@@ -23,6 +23,19 @@ let allServices = [];
 let revealObserver = null;
 let availabilityRequestId = 0;
 let primaryServiceId = null;
+let activeServiceCategory = "all";
+let showAllMobileServices = false;
+let serviceFilterRenderTimer = null;
+
+const serviceCategories = [
+  { key: "all", label: "All" },
+  { key: "nails", label: "Nails" },
+  { key: "lashes", label: "Lashes" },
+  { key: "brows", label: "Brows" },
+  { key: "pedicure", label: "Pedicure" },
+  { key: "waxing", label: "Waxing" },
+  { key: "other", label: "Other" }
+];
 
 if (document.body?.classList.contains("home-page")) {
   document.documentElement.classList.add("home-entrance-prep");
@@ -112,6 +125,128 @@ function categoryImage(service) {
   }
 
   return imageFallbacks.nails;
+}
+
+function serviceCategoryKey(service) {
+  const text = `${service.category || ""} ${service.name || ""}`.toLowerCase();
+  if (text.includes("lash")) return "lashes";
+  if (text.includes("brow")) return "brows";
+  if (text.includes("pedi")) return "pedicure";
+  if (text.includes("wax")) return "waxing";
+  if (text.includes("nail")) return "nails";
+  return "other";
+}
+
+function filteredServices() {
+  if (activeServiceCategory === "all") return allServices;
+  return allServices.filter(service => serviceCategoryKey(service) === activeServiceCategory);
+}
+
+function shouldLimitMobileServices() {
+  return window.matchMedia("(max-width: 700px)").matches;
+}
+
+function createServiceCard(service) {
+  const card = document.createElement("article");
+  card.className = "service-card";
+
+  card.innerHTML = `
+    <div class="service-card-img" style="background-image:url('${categoryImage(service)}')"></div>
+    <div class="service-card-body">
+      <span class="service-category">${service.category}</span>
+      <h3>${service.name}</h3>
+      <strong>${service.price}</strong>
+      <p>${service.duration} minutes</p>
+      <button
+        type="button"
+        class="service-book-btn"
+        data-service-id="${service.id}"
+        data-service-name="${service.name}"
+      >
+        Book This Service
+      </button>
+    </div>
+  `;
+
+  const bookButton = card.querySelector(".service-book-btn");
+
+  if (bookButton) {
+    bookButton.addEventListener("click", () => {
+      selectServiceForBooking(service.id, service.name);
+    });
+  }
+
+  return card;
+}
+
+function renderServiceCards(options = {}) {
+  const grid = document.getElementById("serviceGrid");
+  const showMoreButton = document.getElementById("serviceShowMore");
+  if (!grid) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const render = () => {
+    const services = filteredServices();
+    const isMobile = shouldLimitMobileServices();
+    const visibleServices = isMobile && !showAllMobileServices ? services.slice(0, 6) : services;
+
+    grid.replaceChildren(...visibleServices.map(createServiceCard));
+    grid.classList.remove("is-switching");
+
+    if (showMoreButton) {
+      const shouldShowToggle = isMobile && services.length > 6;
+      showMoreButton.hidden = !shouldShowToggle;
+      showMoreButton.textContent = showAllMobileServices ? "Show Less" : "Show More";
+      showMoreButton.setAttribute("aria-expanded", String(showAllMobileServices));
+    }
+
+    observeRevealElements(grid.querySelectorAll(".service-card"));
+  };
+
+  window.clearTimeout(serviceFilterRenderTimer);
+
+  if (options.animate && !reduceMotion) {
+    grid.classList.add("is-switching");
+    serviceFilterRenderTimer = window.setTimeout(render, 120);
+    return;
+  }
+
+  render();
+}
+
+function renderServiceCategoryFilters() {
+  const filters = document.getElementById("serviceCategoryFilters");
+  const showMoreButton = document.getElementById("serviceShowMore");
+  if (!filters) return;
+
+  filters.replaceChildren(...serviceCategories.map(category => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "service-filter";
+    button.textContent = category.label;
+    button.dataset.category = category.key;
+    button.setAttribute("aria-pressed", String(category.key === activeServiceCategory));
+
+    button.addEventListener("click", () => {
+      activeServiceCategory = category.key;
+      showAllMobileServices = false;
+
+      filters.querySelectorAll(".service-filter").forEach(filterButton => {
+        filterButton.setAttribute("aria-pressed", String(filterButton.dataset.category === activeServiceCategory));
+      });
+
+      renderServiceCards({ animate: true });
+    });
+
+    return button;
+  }));
+
+  if (showMoreButton) {
+    showMoreButton.addEventListener("click", () => {
+      showAllMobileServices = !showAllMobileServices;
+      renderServiceCards({ animate: true });
+    });
+  }
 }
 
 function statusText(status) {
@@ -410,41 +545,11 @@ async function loadServices() {
 
   allServices = services;
   primaryServiceId = null;
-  grid.innerHTML = "";
+  activeServiceCategory = "all";
+  showAllMobileServices = false;
   checkboxList.innerHTML = "";
 
   services.forEach(service => {
-    const card = document.createElement("article");
-    card.className = "service-card";
-
-    card.innerHTML = `
-      <div class="service-card-img" style="background-image:url('${categoryImage(service)}')"></div>
-      <div class="service-card-body">
-        <span class="service-category">${service.category}</span>
-        <h3>${service.name}</h3>
-        <strong>${service.price}</strong>
-        <p>${service.duration} minutes</p>
-        <button
-          type="button"
-          class="service-book-btn"
-          data-service-id="${service.id}"
-          data-service-name="${service.name}"
-        >
-          Book This Service
-        </button>
-      </div>
-    `;
-
-    grid.appendChild(card);
-
-    const bookButton = card.querySelector(".service-book-btn");
-
-    if (bookButton) {
-      bookButton.addEventListener("click", () => {
-        selectServiceForBooking(service.id, service.name);
-      });
-    }
-
     const serviceOption = document.createElement("label");
     serviceOption.className = "service-checkbox-item";
     const checkboxId = `service-choice-${service.id}`;
@@ -479,7 +584,8 @@ async function loadServices() {
     checkboxList.appendChild(serviceOption);
   });
 
-  observeRevealElements(grid.querySelectorAll(".service-card"));
+  renderServiceCategoryFilters();
+  renderServiceCards();
   updateBookingSummary();
 }
 
@@ -642,6 +748,10 @@ if (statusForm) {
 loadSettings();
 loadServices();
 setupBookingDateRules();
+window.addEventListener("resize", () => {
+  if (!allServices.length) return;
+  renderServiceCards();
+}, { passive: true });
 function setupGalleryLightbox() {
   const galleryImages = Array.from(document.querySelectorAll(".gallery-grid img"));
   const lightbox = document.getElementById("galleryLightbox");

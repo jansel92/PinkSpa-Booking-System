@@ -1839,6 +1839,63 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .service-grid {
   gap: clamp(18px, 2.2vw, 28px);
+  transition: opacity .24s ease, transform .24s ease;
+}
+
+.home-page .service-grid.is-switching {
+  opacity: .18;
+  transform: translateY(10px);
+}
+
+.home-page .service-category-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: -8px auto 28px;
+}
+
+.home-page .service-filter,
+.home-page .service-show-more {
+  border: 1px solid rgba(183, 25, 86, .14);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.92), rgba(255,240,246,.88)),
+    #fff;
+  color: var(--deep);
+  box-shadow: 0 12px 28px rgba(151, 22, 77, .08);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  letter-spacing: .02em;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease, color .25s ease;
+}
+
+.home-page .service-filter {
+  min-height: 42px;
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.home-page .service-filter[aria-pressed="true"],
+.home-page .service-filter:hover,
+.home-page .service-show-more:hover {
+  border-color: rgba(212, 151, 77, .42);
+  background: linear-gradient(135deg, var(--pink), var(--deep));
+  color: white;
+  box-shadow: 0 16px 34px rgba(183, 25, 86, .2);
+  transform: translateY(-2px);
+}
+
+.home-page .service-show-more {
+  display: block;
+  min-height: 44px;
+  margin: 18px auto 0;
+  padding: 11px 22px;
+}
+
+.home-page .service-show-more[hidden] {
+  display: none;
 }
 
 .home-page .service-card {
@@ -2273,6 +2330,34 @@ button.client-direct-action{font-family:inherit}
     gap: 14px;
   }
 
+  .home-page .service-category-filters {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 9px;
+    margin: -4px -20px 18px;
+    padding: 0 20px 4px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .home-page .service-category-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-page .service-filter {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 9px 15px;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .home-page .service-show-more {
+    width: min(100%, 260px);
+    margin-top: 14px;
+  }
+
   .home-page .service-card {
     border-radius: 24px;
     box-shadow:
@@ -2432,7 +2517,10 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .service-card,
   .home-page .service-card-img,
-  .home-page .service-book-btn {
+  .home-page .service-book-btn,
+  .home-page .service-grid,
+  .home-page .service-filter,
+  .home-page .service-show-more {
     transition:none;
   }
 
