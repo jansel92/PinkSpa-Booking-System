@@ -1715,10 +1715,15 @@ button.client-direct-action{font-family:inherit}
 }
 
 .home-page .hero p:not(.eyebrow) {
-  max-width: 590px;
+  max-width: 500px;
   margin: 24px 0 0;
   font-size: clamp(16px, 1.5vw, 19px);
-  line-height: 1.75;
+  line-height: 1.78;
+}
+
+.home-page .hero p:not(.eyebrow) span {
+  display: block;
+  margin-top: 9px;
 }
 
 .home-page .actions {
