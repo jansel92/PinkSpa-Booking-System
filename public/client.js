@@ -329,6 +329,13 @@ function selectServiceForBooking(serviceId, serviceName) {
   }
 }
 
+function whatsappBookingUrl(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  const whatsappPhone = digits.length === 10 ? `1${digits}` : digits;
+  const text = "Hi PinkSpa! I would like to ask about booking an appointment.";
+  return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`;
+}
+
 async function loadSettings() {
   const cityText = document.getElementById("cityText");
   const businessPhoneText = document.getElementById("businessPhoneText");
@@ -350,8 +357,10 @@ async function loadSettings() {
     if (businessHoursText) businessHoursText.textContent = "🕘 " + settings.hours;
 
     if (phoneLink) {
-      phoneLink.href = "tel:" + settings.phone;
-      phoneLink.textContent = "Call PinkSpa";
+      phoneLink.href = whatsappBookingUrl(settings.phone);
+      phoneLink.textContent = "WhatsApp";
+      phoneLink.target = "_blank";
+      phoneLink.rel = "noopener noreferrer";
     }
 
     if (ctaPhone) {
