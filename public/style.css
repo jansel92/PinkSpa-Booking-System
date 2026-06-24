@@ -2257,6 +2257,110 @@ button.client-direct-action{font-family:inherit}
   box-shadow: var(--home-shadow);
 }
 
+.home-page .app-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000002;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 184, 212, .28), transparent 34%),
+    rgba(255, 246, 250, .78);
+  backdrop-filter: blur(12px);
+  transition: opacity .36s ease, visibility .36s ease;
+}
+
+.home-page .app-loading-overlay.is-visible {
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
+.home-page .app-loading-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 320px);
+  padding: 34px 28px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 214, 228, .9);
+  border-radius: 32px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,241,247,.94)),
+    #fff;
+  box-shadow:
+    0 28px 80px rgba(98, 30, 60, .18),
+    0 0 60px rgba(255, 184, 212, .22);
+}
+
+.home-page .app-loading-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,.66) 45%, transparent 72%);
+  transform: translateX(-120%);
+  animation: pinkspaLoadingShimmer 1.7s ease-in-out infinite;
+}
+
+.home-page .app-loading-card img {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow:
+    0 18px 44px rgba(98, 30, 60, .14),
+    0 0 0 8px rgba(255, 226, 236, .66);
+  animation: pinkspaLoadingGlow 1.8s ease-in-out infinite;
+}
+
+.home-page .app-loading-card strong {
+  position: relative;
+  margin-top: 18px;
+  color: var(--deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -.04em;
+}
+
+.home-page .app-loading-card p {
+  position: relative;
+  margin: 8px 0 0;
+  color: #7d5365;
+  font-weight: 800;
+  text-align: center;
+}
+
+@keyframes pinkspaLoadingShimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  55%, 100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes pinkspaLoadingGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 18px 44px rgba(98, 30, 60, .14),
+      0 0 0 8px rgba(255, 226, 236, .66);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow:
+      0 20px 50px rgba(98, 30, 60, .18),
+      0 0 0 10px rgba(255, 226, 236, .78),
+      0 0 36px rgba(255, 184, 212, .28);
+  }
+}
+
 .home-page .booking-helper {
   margin: -4px 0 18px;
   color: #7d5365;
@@ -3377,6 +3481,21 @@ button.client-direct-action{font-family:inherit}
     font-size: 14px;
   }
 
+  .home-page .app-loading-overlay {
+    padding: 14px;
+  }
+
+  .home-page .app-loading-card {
+    width: min(100%, 290px);
+    padding: 30px 22px;
+    border-radius: 28px;
+  }
+
+  .home-page .app-loading-card img {
+    width: 82px;
+    height: 82px;
+  }
+
   .home-page .booking-steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 7px;
@@ -3595,6 +3714,12 @@ button.client-direct-action{font-family:inherit}
   .home-page .confirmation-mark i,
   .home-page .confirmation-mark span,
   .home-page .confirmation-confetti span {
+    animation: none;
+  }
+
+  .home-page .app-loading-card,
+  .home-page .app-loading-card::before,
+  .home-page .app-loading-card img {
     animation: none;
   }
 

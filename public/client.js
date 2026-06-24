@@ -39,6 +39,24 @@ const serviceCategories = [
   { key: "other", label: "Other" }
 ];
 
+function setAppLoading(isVisible) {
+  const overlay = document.getElementById("appLoadingOverlay");
+  if (!overlay) return;
+
+  overlay.classList.toggle("is-visible", isVisible);
+  overlay.setAttribute("aria-hidden", isVisible ? "false" : "true");
+}
+
+function setupAppLoadingOverlay() {
+  const overlay = document.getElementById("appLoadingOverlay");
+  if (!overlay) return;
+
+  window.setTimeout(() => setAppLoading(false), 850);
+  window.addEventListener("load", () => {
+    window.setTimeout(() => setAppLoading(false), 250);
+  }, { once: true });
+}
+
 if (document.body?.classList.contains("home-page")) {
   document.documentElement.classList.add("home-entrance-prep");
   window.requestAnimationFrame(() => {
@@ -990,6 +1008,8 @@ ${payload.notes || "No notes added."}
       return;
     }
 
+    setAppLoading(true);
+
     try {
       const response = await fetch("/api/appointments", {
         method: "POST",
@@ -1021,6 +1041,8 @@ ${payload.notes || "No notes added."}
     } catch (error) {
       console.error("Unable to submit appointment:", error);
       message.textContent = "We couldn't send your appointment request. Please check your connection and try again. Your information is still in the form.";
+    } finally {
+      setAppLoading(false);
     }
   });
 }
@@ -1256,6 +1278,7 @@ async function loadApprovedReviews() {
   }
 }
 
+setupAppLoadingOverlay();
 setupScrollReveal();
 setupStatsCounters();
 setupGlassNavigation();
