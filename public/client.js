@@ -24,8 +24,9 @@ let revealObserver = null;
 let availabilityRequestId = 0;
 let primaryServiceId = null;
 let activeServiceCategory = "all";
-let showAllMobileServices = false;
+let servicePageIndex = 0;
 let serviceFilterRenderTimer = null;
+const mobileServicesPerPage = 3;
 
 const serviceCategories = [
   { key: "all", label: "All" },
@@ -181,23 +182,43 @@ function createServiceCard(service) {
 
 function renderServiceCards(options = {}) {
   const grid = document.getElementById("serviceGrid");
-  const showMoreButton = document.getElementById("serviceShowMore");
+  const pager = document.getElementById("servicePager");
+  const prevButton = document.getElementById("servicePrev");
+  const nextButton = document.getElementById("serviceNext");
+  const pageInfo = document.getElementById("servicePageInfo");
   if (!grid) return;
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const render = () => {
     const services = filteredServices();
     const isMobile = shouldLimitMobileServices();
-    const visibleServices = isMobile && !showAllMobileServices ? services.slice(0, 6) : services;
+    const totalPages = Math.max(1, Math.ceil(services.length / mobileServicesPerPage));
+    servicePageIndex = Math.min(servicePageIndex, totalPages - 1);
+
+    const startIndex = isMobile ? servicePageIndex * mobileServicesPerPage : 0;
+    const endIndex = isMobile ? Math.min(startIndex + mobileServicesPerPage, services.length) : services.length;
+    const visibleServices = isMobile ? services.slice(startIndex, endIndex) : services;
 
     grid.replaceChildren(...visibleServices.map(createServiceCard));
     grid.classList.remove("is-switching");
 
-    if (showMoreButton) {
-      const shouldShowToggle = isMobile && services.length > 6;
-      showMoreButton.hidden = !shouldShowToggle;
-      showMoreButton.textContent = showAllMobileServices ? "Show Less" : "Show More";
-      showMoreButton.setAttribute("aria-expanded", String(showAllMobileServices));
+    if (pager) {
+      const shouldShowPager = isMobile && services.length > mobileServicesPerPage;
+      pager.hidden = !shouldShowPager;
+    }
+
+    if (pageInfo) {
+      pageInfo.textContent = services.length ? `${startIndex + 1}-${endIndex} of ${services.length}` : "0 of 0";
+    }
+
+    if (prevButton) {
+      prevButton.disabled = servicePageIndex === 0;
+      prevButton.setAttribute("aria-disabled", String(prevButton.disabled));
+    }
+
+    if (nextButton) {
+      nextButton.disabled = servicePageIndex >= totalPages - 1;
+      nextButton.setAttribute("aria-disabled", String(nextButton.disabled));
     }
 
     observeRevealElements(grid.querySelectorAll(".service-card"));
@@ -216,7 +237,8 @@ function renderServiceCards(options = {}) {
 
 function renderServiceCategoryFilters() {
   const filters = document.getElementById("serviceCategoryFilters");
-  const showMoreButton = document.getElementById("serviceShowMore");
+  const prevButton = document.getElementById("servicePrev");
+  const nextButton = document.getElementById("serviceNext");
   if (!filters) return;
 
   filters.replaceChildren(...serviceCategories.map(category => {
@@ -229,7 +251,7 @@ function renderServiceCategoryFilters() {
 
     button.addEventListener("click", () => {
       activeServiceCategory = category.key;
-      showAllMobileServices = false;
+      servicePageIndex = 0;
 
       filters.querySelectorAll(".service-filter").forEach(filterButton => {
         filterButton.setAttribute("aria-pressed", String(filterButton.dataset.category === activeServiceCategory));
@@ -241,9 +263,19 @@ function renderServiceCategoryFilters() {
     return button;
   }));
 
-  if (showMoreButton) {
-    showMoreButton.addEventListener("click", () => {
-      showAllMobileServices = !showAllMobileServices;
+  if (prevButton) {
+    prevButton.addEventListener("click", () => {
+      if (servicePageIndex === 0) return;
+      servicePageIndex -= 1;
+      renderServiceCards({ animate: true });
+    });
+  }
+
+  if (nextButton) {
+    nextButton.addEventListener("click", () => {
+      const totalPages = Math.max(1, Math.ceil(filteredServices().length / mobileServicesPerPage));
+      if (servicePageIndex >= totalPages - 1) return;
+      servicePageIndex += 1;
       renderServiceCards({ animate: true });
     });
   }
@@ -546,7 +578,7 @@ async function loadServices() {
   allServices = services;
   primaryServiceId = null;
   activeServiceCategory = "all";
-  showAllMobileServices = false;
+  servicePageIndex = 0;
   checkboxList.innerHTML = "";
 
   services.forEach(service => {

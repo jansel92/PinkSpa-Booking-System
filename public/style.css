@@ -1856,7 +1856,7 @@ button.client-direct-action{font-family:inherit}
 }
 
 .home-page .service-filter,
-.home-page .service-show-more {
+.home-page .service-page-button {
   border: 1px solid rgba(183, 25, 86, .14);
   border-radius: 999px;
   background:
@@ -1879,7 +1879,7 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .service-filter[aria-pressed="true"],
 .home-page .service-filter:hover,
-.home-page .service-show-more:hover {
+.home-page .service-page-button:hover:not(:disabled) {
   border-color: rgba(212, 151, 77, .42);
   background: linear-gradient(135deg, var(--pink), var(--deep));
   color: white;
@@ -1887,15 +1887,35 @@ button.client-direct-action{font-family:inherit}
   transform: translateY(-2px);
 }
 
-.home-page .service-show-more {
-  display: block;
-  min-height: 44px;
+.home-page .service-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   margin: 18px auto 0;
+}
+
+.home-page .service-pager[hidden] {
+  display: none;
+}
+
+.home-page .service-page-button {
+  min-height: 44px;
   padding: 11px 22px;
 }
 
-.home-page .service-show-more[hidden] {
-  display: none;
+.home-page .service-page-button:disabled {
+  cursor: not-allowed;
+  opacity: .46;
+}
+
+.home-page .service-page-info {
+  color: #8d6072;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  min-width: 82px;
+  text-align: center;
 }
 
 .home-page .service-card {
@@ -2327,7 +2347,7 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .service-grid {
-    gap: 14px;
+    gap: 10px;
   }
 
   .home-page .service-category-filters {
@@ -2353,16 +2373,31 @@ button.client-direct-action{font-family:inherit}
     white-space: nowrap;
   }
 
-  .home-page .service-show-more {
-    width: min(100%, 260px);
+  .home-page .service-pager {
+    width: 100%;
     margin-top: 14px;
+    gap: 8px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .home-page .service-page-button {
+    flex: 1 1 0;
+    min-height: 40px;
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .home-page .service-page-info {
+    flex: 0 0 auto;
+    min-width: 78px;
+    font-size: 12px;
   }
 
   .home-page .service-card {
     display: grid;
-    grid-template-columns: clamp(110px, 32vw, 130px) minmax(0, 1fr);
-    min-height: 132px;
-    border-radius: 24px;
+    grid-template-columns: clamp(96px, 29vw, 116px) minmax(0, 1fr);
+    min-height: 112px;
+    border-radius: 20px;
     box-shadow:
       0 12px 34px rgba(98, 30, 60, .09),
       0 0 0 1px rgba(255, 236, 199, .36);
@@ -2371,45 +2406,45 @@ button.client-direct-action{font-family:inherit}
   .home-page .service-card-img {
     width: 100%;
     height: 100%;
-    min-height: 132px;
-    border-radius: 22px 0 0 22px;
+    min-height: 112px;
+    border-radius: 19px 0 0 19px;
   }
 
   .home-page .service-card-body {
     min-width: 0;
-    padding: 13px 13px 13px 14px !important;
+    padding: 10px 11px !important;
   }
 
   .home-page .service-category {
-    margin-bottom: 5px;
-    padding: 4px 8px;
-    font-size: 10px;
+    margin-bottom: 4px;
+    padding: 3px 7px;
+    font-size: 9px;
     letter-spacing: .12em;
   }
 
   .home-page .service-card-body h3 {
-    margin: 3px 0 6px;
-    font-size: 18px;
-    line-height: 1.08;
+    margin: 2px 0 5px;
+    font-size: 16px;
+    line-height: 1.06;
   }
 
   .home-page .service-card-body strong {
-    margin-right: 6px;
-    font-size: 19px !important;
+    margin-right: 5px;
+    font-size: 17px !important;
   }
 
   .home-page .service-card-body p {
-    margin: 0 0 9px;
-    padding: 4px 8px;
-    font-size: 11px;
+    margin: 0 0 7px;
+    padding: 3px 7px;
+    font-size: 10.5px;
     line-height: 1.15;
   }
 
   .home-page .service-book-btn {
-    min-height: 40px;
+    min-height: 38px;
     margin-top: 0;
-    padding: 9px 12px;
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 12.5px;
   }
 
   .home-page .section,
@@ -2501,15 +2536,15 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .service-card {
-    grid-template-columns: 104px minmax(0, 1fr);
+    grid-template-columns: 92px minmax(0, 1fr);
   }
 
   .home-page .service-card-img {
-    min-height: 126px;
+    min-height: 108px;
   }
 
   .home-page .service-card-body {
-    padding: 12px !important;
+    padding: 10px !important;
   }
 }
 
@@ -2539,7 +2574,7 @@ button.client-direct-action{font-family:inherit}
   .home-page .service-book-btn,
   .home-page .service-grid,
   .home-page .service-filter,
-  .home-page .service-show-more {
+  .home-page .service-page-button {
     transition:none;
   }
 
