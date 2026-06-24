@@ -26,6 +26,7 @@ let primaryServiceId = null;
 let activeServiceCategory = "all";
 let servicePageIndex = 0;
 let serviceFilterRenderTimer = null;
+let statsObserver = null;
 const mobileServicesPerPage = 3;
 
 const serviceCategories = [
@@ -95,12 +96,75 @@ function setupScrollReveal() {
 
   observeRevealElements(document.querySelectorAll(
     ".home-page #services .heading, .home-page .service-category-filters, " +
+    ".home-page #stats .heading, .home-page .home-stat-card, " +
     ".home-page #gallery .heading, .home-page .gallery-grid img, " +
     ".home-page #reviews .heading, .home-page .review-card, " +
     ".home-page #status .heading, .home-page #status .form-card, " +
     ".home-page .booking-copy, .home-page #bookingForm, " +
     ".home-page .cta, .home-page footer"
   ));
+}
+
+function formatStatValue(value, decimals, suffix) {
+  return `${value.toFixed(decimals)}${suffix}`;
+}
+
+function animateStatNumber(element) {
+  if (element.dataset.statAnimated === "true") return;
+
+  const target = Number(element.dataset.statTarget || "0");
+  const decimals = Number(element.dataset.statDecimals || "0");
+  const suffix = element.dataset.statSuffix || "";
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  element.dataset.statAnimated = "true";
+
+  if (reduceMotion || !Number.isFinite(target)) {
+    element.textContent = formatStatValue(target, decimals, suffix);
+    return;
+  }
+
+  const duration = 1300;
+  const startTime = performance.now();
+
+  const step = currentTime => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const currentValue = target * eased;
+
+    element.textContent = formatStatValue(currentValue, decimals, suffix);
+
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  };
+
+  window.requestAnimationFrame(step);
+}
+
+function setupStatsCounters() {
+  const statsSection = document.getElementById("stats");
+  const statNumbers = document.querySelectorAll(".home-page .stat-number");
+  if (!statsSection || !statNumbers.length) return;
+
+  if (!("IntersectionObserver" in window)) {
+    statNumbers.forEach(animateStatNumber);
+    return;
+  }
+
+  statsObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      statNumbers.forEach(animateStatNumber);
+      statsObserver.unobserve(entry.target);
+    });
+  }, {
+    rootMargin: "0px 0px -12%",
+    threshold: 0.28
+  });
+
+  statsObserver.observe(statsSection);
 }
 
 function categoryImage(service) {
@@ -914,5 +978,6 @@ async function loadApprovedReviews() {
 }
 
 setupScrollReveal();
+setupStatsCounters();
 setupGlassNavigation();
 loadApprovedReviews().finally(setupReviewSlider);
