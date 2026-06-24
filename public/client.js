@@ -572,6 +572,65 @@ function whatsappBookingUrl(phone) {
   return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`;
 }
 
+function setupBookingConfirmation() {
+  const modal = document.getElementById("bookingConfirmation");
+  if (!modal) return null;
+
+  const closeButton = document.getElementById("bookingConfirmationClose");
+  const statusButton = document.getElementById("confirmationStatus");
+  const bookAnotherButton = document.getElementById("confirmationBookAnother");
+  const fields = {
+    service: document.getElementById("confirmationService"),
+    date: document.getElementById("confirmationDate"),
+    time: document.getElementById("confirmationTime"),
+    duration: document.getElementById("confirmationDuration"),
+    client: document.getElementById("confirmationClient")
+  };
+
+  const close = () => {
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  const open = details => {
+    if (fields.service) fields.service.textContent = details.service || "PinkSpa Service";
+    if (fields.date) fields.date.textContent = details.date || "Selected date";
+    if (fields.time) fields.time.textContent = details.time || "Selected time";
+    if (fields.duration) fields.duration.textContent = details.duration || "Estimated duration";
+    if (fields.client) fields.client.textContent = details.client || "Client";
+
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    closeButton?.focus();
+  };
+
+  closeButton?.addEventListener("click", close);
+
+  modal.addEventListener("click", event => {
+    if (event.target === modal) close();
+  });
+
+  statusButton?.addEventListener("click", close);
+
+  bookAnotherButton?.addEventListener("click", () => {
+    close();
+    document.getElementById("book")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && modal.classList.contains("active")) close();
+  });
+
+  return { open, close };
+}
+
+const bookingConfirmation = setupBookingConfirmation();
+
 async function loadSettings() {
   const cityText = document.getElementById("cityText");
   const businessPhoneText = document.getElementById("businessPhoneText");
@@ -582,6 +641,7 @@ async function loadSettings() {
   const footerWhatsapp = document.getElementById("footerWhatsapp");
   const footerLocation = document.getElementById("footerLocation");
   const footerHours = document.getElementById("footerHours");
+  const confirmationWhatsapp = document.getElementById("confirmationWhatsapp");
   const message = document.getElementById("bookingMessage");
 
   try {
@@ -616,6 +676,10 @@ async function loadSettings() {
 
     if (footerWhatsapp) {
       footerWhatsapp.href = whatsappBookingUrl(settings.phone);
+    }
+
+    if (confirmationWhatsapp) {
+      confirmationWhatsapp.href = whatsappBookingUrl(settings.phone);
     }
   } catch (error) {
     console.error("Unable to load business settings:", error);
@@ -752,6 +816,13 @@ if (bookingForm) {
       return sum + Number(service.duration || 0);
     }, 0);
 payload.duration_minutes = totalMinutes;
+    const confirmationDetails = {
+      service: selectedServiceText,
+      date: payload.appointment_date,
+      time: payload.appointment_time,
+      duration: `${totalMinutes} minutes`,
+      client: payload.client_name
+    };
     
     payload.notes = `
 Selected Services: ${selectedServiceText}
@@ -808,6 +879,7 @@ ${payload.notes || "No notes added."}
       renderTimeOptions(allTimes);
 
       message.textContent = "Your appointment request was sent to PinkSpa. You can check your appointment status using your phone number.";
+      bookingConfirmation?.open(confirmationDetails);
     } catch (error) {
       console.error("Unable to submit appointment:", error);
       message.textContent = "We couldn't send your appointment request. Please check your connection and try again. Your information is still in the form.";
