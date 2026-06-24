@@ -70,7 +70,7 @@ function observeRevealElements(elements) {
 
   Array.from(elements).forEach((element, index) => {
     element.classList.add("scroll-reveal");
-    element.style.setProperty("--reveal-delay", `${Math.min(index * 55, 220)}ms`);
+    element.style.setProperty("--reveal-delay", `${Math.min(index * 65, 325)}ms`);
     revealObserver.observe(element);
   });
 }
@@ -94,9 +94,12 @@ function setupScrollReveal() {
   });
 
   observeRevealElements(document.querySelectorAll(
-    ".home-page > .section, .home-page > .booking-section, .home-page > .cta, " +
-    ".home-page .heading, .home-page .gallery-grid img, .home-page .review-card, " +
-    ".home-page .booking-copy, .home-page .form-card"
+    ".home-page #services .heading, .home-page .service-category-filters, " +
+    ".home-page #gallery .heading, .home-page .gallery-grid img, " +
+    ".home-page #reviews .heading, .home-page .review-card, " +
+    ".home-page #status .heading, .home-page #status .form-card, " +
+    ".home-page .booking-copy, .home-page #bookingForm, " +
+    ".home-page .cta, .home-page footer"
   ));
 }
 
@@ -262,6 +265,8 @@ function renderServiceCategoryFilters() {
 
     return button;
   }));
+
+  observeRevealElements(filters.querySelectorAll(".service-filter"));
 
   if (prevButton) {
     prevButton.addEventListener("click", () => {

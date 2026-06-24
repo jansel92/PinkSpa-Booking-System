@@ -2223,16 +2223,27 @@ button.client-direct-action{font-family:inherit}
 
 .reveal-enabled .home-page .scroll-reveal {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity .78s cubic-bezier(.22, 1, .36, 1), transform .78s cubic-bezier(.22, 1, .36, 1);
+  filter: blur(7px);
+  transform: translateY(28px);
+  transition:
+    opacity .72s cubic-bezier(.22, 1, .36, 1),
+    filter .72s cubic-bezier(.22, 1, .36, 1),
+    transform .72s cubic-bezier(.22, 1, .36, 1);
   transition-delay: var(--reveal-delay, 0ms);
-  will-change:opacity,transform;
+  will-change: opacity, filter, transform;
 }
 
 .reveal-enabled .home-page .scroll-reveal.is-visible {
   opacity: 1;
+  filter: blur(0);
   transform: translateY(0);
-  will-change:auto;
+  will-change: auto;
+}
+
+.reveal-enabled .home-page .service-card.scroll-reveal,
+.reveal-enabled .home-page .gallery-grid img.scroll-reveal,
+.reveal-enabled .home-page .review-card.scroll-reveal {
+  transform: translateY(22px);
 }
 
 @media (max-width: 1050px) {
@@ -2565,8 +2576,9 @@ button.client-direct-action{font-family:inherit}
 
   .reveal-enabled .home-page .scroll-reveal {
     opacity: 1;
+    filter: none;
     transform: none;
-    will-change:auto;
+    will-change: auto;
   }
 
   .home-page .service-card,
