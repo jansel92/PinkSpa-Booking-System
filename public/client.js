@@ -589,30 +589,34 @@ function ensureBookingConfirmationModal() {
       <div class="confirmation-mark">
         <img src="/images/PinkSpa.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" />
         <span>✓</span>
+        <i></i>
+        <i></i>
+        <i></i>
       </div>
       <p class="eyebrow dark">PinkSpa Booking</p>
       <h2 id="bookingConfirmationTitle">Your booking request was received</h2>
       <p class="confirmation-message">Thank you for choosing PinkSpa. We’ll review your request and follow up shortly.</p>
+      <p class="confirmation-welcome">We’re excited to welcome you to PinkSpa!</p>
 
       <div class="confirmation-summary" aria-label="Appointment details summary">
         <div>
-          <span>Service</span>
+          <span><b>💅</b> Service</span>
           <strong id="confirmationService">PinkSpa Service</strong>
         </div>
         <div>
-          <span>Date</span>
+          <span><b>📅</b> Date</span>
           <strong id="confirmationDate">Selected date</strong>
         </div>
         <div>
-          <span>Time</span>
+          <span><b>⏰</b> Time</span>
           <strong id="confirmationTime">Selected time</strong>
         </div>
         <div>
-          <span>Duration</span>
+          <span><b>⏳</b> Duration</span>
           <strong id="confirmationDuration">Estimated duration</strong>
         </div>
         <div>
-          <span>Client</span>
+          <span><b>👤</b> Client</span>
           <strong id="confirmationClient">Client name</strong>
         </div>
       </div>
@@ -626,6 +630,27 @@ function ensureBookingConfirmationModal() {
   `;
   document.body.appendChild(modal);
   return modal;
+}
+
+function runBookingConfetti(modal) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion || !modal) return;
+
+  const burst = document.createElement("div");
+  burst.className = "confirmation-confetti";
+  const colors = ["#ff5f93", "#b71956", "#d4974d", "#58b887", "#ffd5e3"];
+
+  for (let index = 0; index < 18; index += 1) {
+    const piece = document.createElement("span");
+    piece.style.setProperty("--confetti-x", `${Math.cos(index) * (70 + (index % 4) * 18)}px`);
+    piece.style.setProperty("--confetti-y", `${Math.sin(index * 1.7) * 74 - 38}px`);
+    piece.style.setProperty("--confetti-color", colors[index % colors.length]);
+    piece.style.setProperty("--confetti-delay", `${index * 18}ms`);
+    burst.appendChild(piece);
+  }
+
+  modal.appendChild(burst);
+  window.setTimeout(() => burst.remove(), 1100);
 }
 
 function setupBookingConfirmation() {
@@ -659,6 +684,7 @@ function setupBookingConfirmation() {
     modal.classList.add("active");
     modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    runBookingConfetti(modal);
     closeButton?.focus();
   };
 

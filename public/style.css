@@ -2324,42 +2324,90 @@ button.client-direct-action{font-family:inherit}
   position: relative;
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 104px;
-  margin: 0 auto 18px;
+  width: 132px;
+  height: 132px;
+  margin: 0 auto 20px;
 }
 
 .home-page .confirmation-mark::before {
   content: "✦";
   position: absolute;
-  top: -4px;
-  right: -2px;
+  top: 2px;
+  right: 6px;
   color: #d4974d;
-  font-size: 22px;
+  font-size: 24px;
   text-shadow: 0 0 22px rgba(212, 151, 77, .46);
+  animation: confirmationSparkle 1.8s ease-in-out infinite;
+}
+
+.home-page .confirmation-mark::after {
+  content: "✧";
+  position: absolute;
+  left: 10px;
+  bottom: 18px;
+  color: rgba(183, 25, 86, .62);
+  font-size: 20px;
+  animation: confirmationSparkle 2.1s ease-in-out .35s infinite;
+}
+
+.home-page .confirmation-mark i {
+  position: absolute;
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #d4974d;
+  box-shadow: 0 0 18px rgba(212, 151, 77, .5);
+  animation: confirmationTwinkle 1.9s ease-in-out infinite;
+}
+
+.home-page .confirmation-mark i:nth-of-type(1) {
+  top: 18px;
+  left: 24px;
+}
+
+.home-page .confirmation-mark i:nth-of-type(2) {
+  right: 22px;
+  bottom: 22px;
+  background: #ff5f93;
+  animation-delay: .28s;
+}
+
+.home-page .confirmation-mark i:nth-of-type(3) {
+  left: 14px;
+  top: 70px;
+  background: #58b887;
+  animation-delay: .54s;
 }
 
 .home-page .confirmation-mark img {
-  width: 92px;
-  height: 92px;
+  width: 104px;
+  height: 104px;
   object-fit: cover;
   border-radius: 50%;
-  box-shadow: 0 18px 44px rgba(98, 30, 60, .16);
+  box-shadow:
+    0 18px 44px rgba(98, 30, 60, .16),
+    0 0 0 8px rgba(255, 226, 236, .66);
 }
 
 .home-page .confirmation-mark span {
   position: absolute;
-  right: 2px;
-  bottom: 7px;
+  right: -2px;
+  bottom: 6px;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--pink), var(--deep));
+  border: 3px solid rgba(255,255,255,.94);
+  background: linear-gradient(135deg, #58b887, var(--pink) 72%, var(--deep));
   color: white;
-  box-shadow: 0 12px 28px rgba(183, 25, 86, .24);
+  box-shadow:
+    0 14px 34px rgba(88, 184, 135, .28),
+    0 0 28px rgba(255, 95, 147, .34);
+  font-size: 28px;
   font-weight: 900;
+  animation: confirmationCheckPop .82s cubic-bezier(.22, 1, .36, 1) .18s both;
 }
 
 .home-page .booking-confirmation-card h2 {
@@ -2380,6 +2428,14 @@ button.client-direct-action{font-family:inherit}
   line-height: 1.7;
 }
 
+.home-page .confirmation-welcome {
+  margin: 8px auto 0;
+  color: var(--deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(18px, 2.4vw, 24px);
+  font-weight: 600;
+}
+
 .home-page .confirmation-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2396,12 +2452,24 @@ button.client-direct-action{font-family:inherit}
 }
 
 .home-page .confirmation-summary span {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   color: #9a6e80;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: .14em;
   text-transform: uppercase;
+}
+
+.home-page .confirmation-summary span b {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 230, 238, .86);
+  font-size: 13px;
 }
 
 .home-page .confirmation-summary strong {
@@ -2419,6 +2487,27 @@ button.client-direct-action{font-family:inherit}
   margin-top: 28px;
 }
 
+.home-page .confirmation-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.home-page .confirmation-confetti span {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  width: 8px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--confetti-color);
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: confirmationConfetti 1s cubic-bezier(.22, 1, .36, 1) var(--confetti-delay) both;
+}
+
 @keyframes bookingConfirmationIn {
   from {
     opacity: 0;
@@ -2427,6 +2516,53 @@ button.client-direct-action{font-family:inherit}
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes confirmationCheckPop {
+  from {
+    opacity: 0;
+    transform: scale(.62) rotate(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes confirmationSparkle {
+  0%, 100% {
+    opacity: .45;
+    transform: scale(.86) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.14) rotate(14deg);
+  }
+}
+
+@keyframes confirmationTwinkle {
+  0%, 100% {
+    opacity: .25;
+    transform: scale(.72);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes confirmationConfetti {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.8) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--confetti-x)), calc(-50% + var(--confetti-y))) scale(.88) rotate(160deg);
   }
 }
 
@@ -3099,13 +3235,20 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .confirmation-mark {
-    width: 88px;
-    height: 88px;
+    width: 104px;
+    height: 104px;
+    margin-bottom: 14px;
   }
 
   .home-page .confirmation-mark img {
-    width: 78px;
-    height: 78px;
+    width: 84px;
+    height: 84px;
+  }
+
+  .home-page .confirmation-mark span {
+    width: 42px;
+    height: 42px;
+    font-size: 23px;
   }
 
   .home-page .confirmation-summary {
@@ -3208,6 +3351,14 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .booking-confirmation-card {
+    animation: none;
+  }
+
+  .home-page .confirmation-mark::before,
+  .home-page .confirmation-mark::after,
+  .home-page .confirmation-mark i,
+  .home-page .confirmation-mark span,
+  .home-page .confirmation-confetti span {
     animation: none;
   }
 
