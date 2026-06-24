@@ -2342,15 +2342,6 @@ button.client-direct-action{font-family:inherit}
     scroll-behavior: auto;
   }
 
-  .home-page *,
-  .home-page *::before,
-  .home-page *::after {
-    scroll-behavior: auto !important;
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-  }
-
   .reveal-enabled .home-page .scroll-reveal {
     opacity: 1;
     transform: none;
