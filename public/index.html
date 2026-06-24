@@ -198,6 +198,22 @@
         <strong>Appointment Request</strong>
       </div>
 
+      <p class="booking-helper">Choose your service, then select a date and time that works best for you.</p>
+
+      <div class="booking-steps" aria-label="Booking progress">
+        <span class="booking-step is-active" data-step="service"><b>1</b> Service</span>
+        <span class="booking-step" data-step="details"><b>2</b> Details</span>
+        <span class="booking-step" data-step="datetime"><b>3</b> Date &amp; Time</span>
+        <span class="booking-step" data-step="confirm"><b>4</b> Confirm</span>
+      </div>
+
+      <div id="bookingMiniSummary" class="booking-mini-summary" aria-live="polite">
+        <span><b>Services</b> Select one or more services</span>
+        <span><b>Duration</b> Not selected yet</span>
+        <span><b>Date</b> Choose a date</span>
+        <span><b>Time</b> Choose a time</span>
+      </div>
+
       <label>Full Name
         <input name="client_name" required placeholder="Your full name" />
       </label>

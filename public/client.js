@@ -389,6 +389,42 @@ function getSelectedDuration() {
   }, 0);
 }
 
+function updateBookingProgress() {
+  const selected = getSelectedServices();
+  const serviceNames = selected.map(service => service.name).join(", ");
+  const totalMinutes = getSelectedDuration();
+  const nameInput = document.querySelector('input[name="client_name"]');
+  const phoneInput = document.querySelector('input[name="client_phone"]');
+  const dateInput = document.querySelector('input[name="appointment_date"]');
+  const timeSelect = document.querySelector('select[name="appointment_time"]');
+  const miniSummary = document.getElementById("bookingMiniSummary");
+  const steps = Array.from(document.querySelectorAll(".booking-step"));
+
+  const hasService = selected.length > 0;
+  const hasDetails = Boolean(nameInput?.value.trim() && phoneInput?.value.trim());
+  const hasDateTime = Boolean(dateInput?.value && timeSelect?.value && !timeSelect.disabled);
+  const currentStep = hasService ? (hasDetails ? (hasDateTime ? "confirm" : "datetime") : "details") : "service";
+  const stepOrder = ["service", "details", "datetime", "confirm"];
+  const currentIndex = stepOrder.indexOf(currentStep);
+
+  steps.forEach(step => {
+    const stepIndex = stepOrder.indexOf(step.dataset.step);
+    const isActive = step.dataset.step === currentStep;
+    step.classList.toggle("is-active", isActive);
+    step.classList.toggle("is-complete", stepIndex > -1 && stepIndex < currentIndex);
+    step.setAttribute("aria-current", isActive ? "step" : "false");
+  });
+
+  if (miniSummary) {
+    miniSummary.innerHTML = `
+      <span><b>Services</b> ${serviceNames || "Select one or more services"}</span>
+      <span><b>Duration</b> ${totalMinutes ? `${totalMinutes} minutes` : "Not selected yet"}</span>
+      <span><b>Date</b> ${dateInput?.value || "Choose a date"}</span>
+      <span><b>Time</b> ${timeSelect?.value || "Choose a time"}</span>
+    `;
+  }
+}
+
 function updateBookingSummary() {
   const selected = getSelectedServices();
   const hiddenServiceInput = document.getElementById("serviceSelect");
@@ -400,6 +436,7 @@ function updateBookingSummary() {
     primaryServiceId = null;
     hiddenServiceInput.value = "";
     summary.textContent = "Select one or more services.";
+    updateBookingProgress();
     updateAvailableTimes();
     return;
   }
@@ -428,6 +465,7 @@ function updateBookingSummary() {
   durationLine.append(durationLabel, `${totalMinutes} minutes`);
 
   summary.replaceChildren(primaryLine, selectedLine, durationLine);
+  updateBookingProgress();
 
   updateAvailableTimes();
 }
@@ -444,6 +482,7 @@ function renderTimeOptions(availableTimes) {
     option.textContent = "No times available";
     timeSelect.appendChild(option);
     timeSelect.disabled = true;
+    updateBookingProgress();
     return;
   }
 
@@ -455,6 +494,8 @@ function renderTimeOptions(availableTimes) {
     option.textContent = time;
     timeSelect.appendChild(option);
   });
+
+  updateBookingProgress();
 }
 
 function isWeekend(dateValue) {
@@ -537,7 +578,10 @@ function setupBookingDateRules() {
   const dd = String(today.getDate()).padStart(2, "0");
   dateInput.min = `${yyyy}-${mm}-${dd}`;
 
-  dateInput.addEventListener("change", updateAvailableTimes);
+  dateInput.addEventListener("change", () => {
+    updateBookingProgress();
+    updateAvailableTimes();
+  });
   renderTimeOptions(allTimes);
 }
 
@@ -854,6 +898,18 @@ async function loadServices() {
 const bookingForm = document.getElementById("bookingForm");
 
 if (bookingForm) {
+  bookingForm.addEventListener("input", event => {
+    if (event.target.matches('input[name="client_name"], input[name="client_phone"], input[name="appointment_date"], select[name="appointment_time"]')) {
+      updateBookingProgress();
+    }
+  });
+
+  bookingForm.addEventListener("change", event => {
+    if (event.target.matches('input[name="client_name"], input[name="client_phone"], input[name="appointment_date"], select[name="appointment_time"]')) {
+      updateBookingProgress();
+    }
+  });
+
   bookingForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 

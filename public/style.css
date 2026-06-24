@@ -2257,6 +2257,103 @@ button.client-direct-action{font-family:inherit}
   box-shadow: var(--home-shadow);
 }
 
+.home-page .booking-helper {
+  margin: -4px 0 18px;
+  color: #7d5365;
+  line-height: 1.65;
+}
+
+.home-page .booking-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.home-page .booking-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid rgba(183, 25, 86, .12);
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  color: #9a6e80;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+  transition: border-color .3s ease, background .3s ease, box-shadow .3s ease, color .3s ease, transform .3s ease;
+}
+
+.home-page .booking-step b {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 230, 238, .9);
+  color: var(--deep);
+  font-size: 12px;
+}
+
+.home-page .booking-step.is-active {
+  border-color: rgba(183, 25, 86, .34);
+  background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(255,234,242,.96));
+  box-shadow: 0 12px 28px rgba(183, 25, 86, .12);
+  color: var(--deep);
+  transform: translateY(-1px);
+}
+
+.home-page .booking-step.is-complete {
+  border-color: rgba(88, 184, 135, .32);
+  background: rgba(244, 255, 248, .9);
+  color: #145c35;
+}
+
+.home-page .booking-step.is-complete b {
+  background: #58b887;
+  color: white;
+}
+
+.home-page .booking-mini-summary {
+  position: sticky;
+  top: 96px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0 0 20px;
+  padding: 13px;
+  border: 1px solid rgba(255, 210, 226, .82);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,247,250,.92)),
+    #fff;
+  box-shadow: 0 16px 42px rgba(98, 30, 60, .1);
+  backdrop-filter: blur(10px);
+}
+
+.home-page .booking-mini-summary span {
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 16px;
+  background: rgba(255, 244, 248, .7);
+  color: #6f4a5a;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.home-page .booking-mini-summary b {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--deep);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
 .home-page .booking-confirmation {
   position: fixed;
   inset: 0;
@@ -2622,6 +2719,31 @@ button.client-direct-action{font-family:inherit}
   border: 0;
 }
 
+.home-page #bookingForm > label,
+.home-page #bookingForm .service-picker,
+.home-page #bookingForm .booking-summary,
+.home-page #bookingForm .two {
+  animation: bookingFieldIn .6s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.home-page #bookingForm > label:nth-of-type(1) { animation-delay: .04s; }
+.home-page #bookingForm > label:nth-of-type(2) { animation-delay: .08s; }
+.home-page #bookingForm > label:nth-of-type(3) { animation-delay: .12s; }
+.home-page #bookingForm .service-picker { animation-delay: .16s; }
+.home-page #bookingForm .booking-summary { animation-delay: .2s; }
+.home-page #bookingForm .two { animation-delay: .24s; }
+
+@keyframes bookingFieldIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .home-page .service-picker legend {
   margin-bottom: 8px;
   padding: 0;
@@ -2636,6 +2758,7 @@ button.client-direct-action{font-family:inherit}
 }
 
 .home-page .service-checkbox-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2649,13 +2772,36 @@ button.client-direct-action{font-family:inherit}
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
-  transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+  transition: border-color .28s ease, background-color .28s ease, box-shadow .28s ease, transform .28s ease;
 }
 
 .home-page .service-checkbox-item:hover,
 .home-page .service-checkbox-item.is-selected {
-  border-color: var(--pink);
-  background: #fff4f8;
+  border-color: rgba(183, 25, 86, .42);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.98), rgba(255,239,246,.96)),
+    #fff4f8;
+  box-shadow:
+    0 14px 34px rgba(183, 25, 86, .12),
+    0 0 28px rgba(255, 184, 212, .18);
+}
+
+.home-page .service-checkbox-item.is-selected::after {
+  content: "✓";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink), var(--deep));
+  color: white;
+  box-shadow: 0 10px 24px rgba(183, 25, 86, .22);
+  font-size: 16px;
+  font-weight: 900;
+  transform: translateY(-50%);
 }
 
 .home-page .service-checkbox-item:focus-within {
@@ -2675,6 +2821,7 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .service-checkbox-item span {
   min-width: 0;
+  padding-right: 28px;
   pointer-events: none;
 }
 
@@ -3225,6 +3372,41 @@ button.client-direct-action{font-family:inherit}
     border-radius: 26px;
   }
 
+  .home-page .booking-helper {
+    margin-bottom: 14px;
+    font-size: 14px;
+  }
+
+  .home-page .booking-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .home-page .booking-step {
+    justify-content: flex-start;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .home-page .booking-step b {
+    width: 22px;
+    height: 22px;
+  }
+
+  .home-page .booking-mini-summary {
+    position: static;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    margin-bottom: 16px;
+    padding: 11px;
+    border-radius: 20px;
+  }
+
+  .home-page .booking-mini-summary span {
+    padding: 9px 10px;
+  }
+
   .home-page .booking-section {
     gap: 44px;
   }
@@ -3398,7 +3580,9 @@ button.client-direct-action{font-family:inherit}
   .home-page .review-nav-button,
   .home-page .review-dot,
   .home-page .footer-column a,
-  .home-page .booking-confirmation-close {
+  .home-page .booking-confirmation-close,
+  .home-page .booking-step,
+  .home-page .service-checkbox-item {
     transition:none;
   }
 
@@ -3411,6 +3595,13 @@ button.client-direct-action{font-family:inherit}
   .home-page .confirmation-mark i,
   .home-page .confirmation-mark span,
   .home-page .confirmation-confetti span {
+    animation: none;
+  }
+
+  .home-page #bookingForm > label,
+  .home-page #bookingForm .service-picker,
+  .home-page #bookingForm .booking-summary,
+  .home-page #bookingForm .two {
     animation: none;
   }
 
