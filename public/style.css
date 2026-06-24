@@ -2050,6 +2050,12 @@ button.client-direct-action{font-family:inherit}
   line-height: 1;
 }
 
+.home-page .home-stat-card .text-stat-value {
+  font-size: clamp(26px, 2.7vw, 40px);
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+
 .home-page .home-stat-card p {
   margin: 14px 0 0;
   color: #8d6072;
@@ -2451,9 +2457,11 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .service-pager {
     width: 100%;
-    margin-top: 14px;
+    margin: 24px auto max(92px, calc(78px + env(safe-area-inset-bottom)));
     gap: 8px;
-    padding-bottom: env(safe-area-inset-bottom);
+    clear: both;
+    position: relative;
+    z-index: 1;
   }
 
   .home-page .service-page-button {
@@ -2536,6 +2544,12 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .home-stat-card strong {
     font-size: clamp(30px, 10vw, 42px);
+  }
+
+  .home-page .home-stat-card .text-stat-value {
+    font-size: clamp(22px, 6.4vw, 30px);
+    letter-spacing: -.025em;
+    line-height: 1.08;
   }
 
   .home-page .home-stat-card p {
