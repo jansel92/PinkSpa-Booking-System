@@ -572,8 +572,64 @@ function whatsappBookingUrl(phone) {
   return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`;
 }
 
+function ensureBookingConfirmationModal() {
+  let modal = document.getElementById("bookingConfirmation");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "bookingConfirmation";
+  modal.className = "booking-confirmation";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "bookingConfirmationTitle");
+  modal.setAttribute("aria-hidden", "true");
+  modal.innerHTML = `
+    <div class="booking-confirmation-card">
+      <button id="bookingConfirmationClose" class="booking-confirmation-close" type="button" aria-label="Close confirmation">×</button>
+      <div class="confirmation-mark">
+        <img src="/images/PinkSpa.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" />
+        <span>✓</span>
+      </div>
+      <p class="eyebrow dark">PinkSpa Booking</p>
+      <h2 id="bookingConfirmationTitle">Your booking request was received</h2>
+      <p class="confirmation-message">Thank you for choosing PinkSpa. We’ll review your request and follow up shortly.</p>
+
+      <div class="confirmation-summary" aria-label="Appointment details summary">
+        <div>
+          <span>Service</span>
+          <strong id="confirmationService">PinkSpa Service</strong>
+        </div>
+        <div>
+          <span>Date</span>
+          <strong id="confirmationDate">Selected date</strong>
+        </div>
+        <div>
+          <span>Time</span>
+          <strong id="confirmationTime">Selected time</strong>
+        </div>
+        <div>
+          <span>Duration</span>
+          <strong id="confirmationDuration">Estimated duration</strong>
+        </div>
+        <div>
+          <span>Client</span>
+          <strong id="confirmationClient">Client name</strong>
+        </div>
+      </div>
+
+      <div class="confirmation-actions">
+        <a class="btn primary" href="#status" id="confirmationStatus">Check Booking Status</a>
+        <button class="btn ghost" id="confirmationBookAnother" type="button">Book Another Appointment</button>
+        <a class="btn ghost" id="confirmationWhatsapp" href="https://wa.me/17863036126?text=Hi%20PinkSpa%21%20I%20would%20like%20to%20ask%20about%20booking%20an%20appointment." target="_blank" rel="noopener noreferrer">WhatsApp PinkSpa</a>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
 function setupBookingConfirmation() {
-  const modal = document.getElementById("bookingConfirmation");
+  const modal = ensureBookingConfirmationModal();
   if (!modal) return null;
 
   const closeButton = document.getElementById("bookingConfirmationClose");
