@@ -634,6 +634,32 @@ function whatsappBookingUrl(phone) {
   return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`;
 }
 
+function whatsappHelpUrl(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  const whatsappPhone = digits.length === 10 ? `1${digits}` : digits;
+  const text = "Hi PinkSpa! I need help choosing a service.";
+  return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`;
+}
+
+function setupWhatsappConcierge() {
+  const concierge = document.getElementById("whatsappConcierge");
+  const closeButton = document.getElementById("whatsappConciergeClose");
+  if (!concierge || !closeButton) return;
+
+  if (sessionStorage.getItem("pinkspaConciergeHidden") === "true") {
+    concierge.hidden = true;
+    return;
+  }
+
+  closeButton.addEventListener("click", () => {
+    concierge.classList.add("is-hidden");
+    sessionStorage.setItem("pinkspaConciergeHidden", "true");
+    window.setTimeout(() => {
+      concierge.hidden = true;
+    }, 240);
+  });
+}
+
 function ensureBookingConfirmationModal() {
   let modal = document.getElementById("bookingConfirmation");
   if (modal) return modal;
@@ -786,6 +812,7 @@ async function loadSettings() {
   const footerLocation = document.getElementById("footerLocation");
   const footerHours = document.getElementById("footerHours");
   const confirmationWhatsapp = document.getElementById("confirmationWhatsapp");
+  const conciergeWhatsapp = document.getElementById("whatsappConciergeLink");
   const message = document.getElementById("bookingMessage");
 
   try {
@@ -824,6 +851,10 @@ async function loadSettings() {
 
     if (confirmationWhatsapp) {
       confirmationWhatsapp.href = whatsappBookingUrl(settings.phone);
+    }
+
+    if (conciergeWhatsapp) {
+      conciergeWhatsapp.href = whatsappHelpUrl(settings.phone);
     }
   } catch (error) {
     console.error("Unable to load business settings:", error);
@@ -1279,6 +1310,7 @@ async function loadApprovedReviews() {
 }
 
 setupAppLoadingOverlay();
+setupWhatsappConcierge();
 setupScrollReveal();
 setupStatsCounters();
 setupGlassNavigation();

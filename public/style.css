@@ -2266,6 +2266,101 @@ button.client-direct-action{font-family:inherit}
   background: linear-gradient(135deg, var(--pink), var(--deep));
 }
 
+.home-page .whatsapp-concierge {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(22px, env(safe-area-inset-bottom));
+  z-index: 99990;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: min(342px, calc(100vw - 32px));
+  padding: 16px 16px 16px 18px;
+  border: 1px solid rgba(255, 210, 226, .9);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 226, 236, .92), transparent 42%),
+    linear-gradient(135deg, rgba(255,255,255,.98), rgba(255,246,250,.96));
+  box-shadow:
+    0 22px 62px rgba(98, 30, 60, .17),
+    0 0 34px rgba(255, 184, 212, .2);
+  transition: opacity .24s ease, transform .24s ease, box-shadow .24s ease;
+  animation: conciergeGlow 18s ease-in-out 2s infinite;
+}
+
+.home-page .whatsapp-concierge.is-hidden {
+  opacity: 0;
+  transform: translateY(12px) scale(.96);
+}
+
+.home-page .whatsapp-concierge-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.home-page .whatsapp-concierge-copy strong {
+  color: var(--deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -.03em;
+}
+
+.home-page .whatsapp-concierge-copy span {
+  color: #7d5365;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.home-page .whatsapp-concierge a {
+  min-height: 42px;
+  padding: 11px 14px;
+  border: 1px solid rgba(52, 168, 83, .36);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(247,255,250,.98), rgba(226,250,236,.94));
+  color: #145c35;
+  font-size: 13px;
+  font-weight: 950;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(52, 168, 83, .14);
+}
+
+.home-page .whatsapp-concierge-close {
+  position: absolute;
+  top: -10px;
+  right: -8px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(183, 25, 86, .14);
+  border-radius: 50%;
+  background: white;
+  color: var(--deep);
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 10px 24px rgba(98, 30, 60, .12);
+}
+
+@keyframes conciergeGlow {
+  0%, 88%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow:
+      0 22px 62px rgba(98, 30, 60, .17),
+      0 0 34px rgba(255, 184, 212, .2);
+  }
+  92% {
+    transform: translateY(-2px) scale(1.015);
+    box-shadow:
+      0 26px 70px rgba(98, 30, 60, .2),
+      0 0 46px rgba(255, 184, 212, .34);
+  }
+}
+
 .home-page .form-card {
   border: 1px solid var(--home-border);
   background: rgba(255, 255, 255, .93);
@@ -3642,6 +3737,29 @@ button.client-direct-action{font-family:inherit}
     transform: none !important;
   }
 
+  .home-page .whatsapp-concierge {
+    right: 12px;
+    bottom: max(82px, calc(76px + env(safe-area-inset-bottom)));
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: min(286px, calc(100vw - 24px));
+    padding: 12px 12px 12px 14px;
+    border-radius: 22px;
+  }
+
+  .home-page .whatsapp-concierge-copy strong {
+    font-size: 16px;
+  }
+
+  .home-page .whatsapp-concierge-copy span {
+    font-size: 12px;
+  }
+
+  .home-page .whatsapp-concierge a {
+    min-height: 38px;
+    padding: 9px 11px;
+    font-size: 12px;
+  }
+
   .home-page .mobile-floating-actions a {
     width: 100% !important;
     min-width: 0 !important;
@@ -3716,7 +3834,8 @@ button.client-direct-action{font-family:inherit}
   .home-page .footer-column a,
   .home-page .booking-confirmation-close,
   .home-page .booking-step,
-  .home-page .service-checkbox-item {
+  .home-page .service-checkbox-item,
+  .home-page .whatsapp-concierge {
     transition:none;
   }
 
@@ -3734,7 +3853,8 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .app-loading-card,
   .home-page .app-loading-card::before,
-  .home-page .app-loading-card img {
+  .home-page .app-loading-card img,
+  .home-page .whatsapp-concierge {
     animation: none;
   }
 
