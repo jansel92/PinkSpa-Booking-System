@@ -363,6 +363,7 @@ function setNotificationPanelOpen(open) {
   bell.setAttribute("aria-expanded", String(open));
 
   if (open) {
+    positionNotificationPanel();
     panel.hidden = false;
     requestAnimationFrame(() => panel.classList.add("is-open"));
     return;
@@ -376,6 +377,54 @@ function setNotificationPanelOpen(open) {
 
 function isNotificationPanelOpen() {
   return document.getElementById("notificationPanel")?.classList.contains("is-open") || false;
+}
+
+function mountNotificationPanelOverlay() {
+  const panel = document.getElementById("notificationPanel");
+  if (!panel || panel.parentElement === document.body) return;
+  document.body.appendChild(panel);
+}
+
+function positionNotificationPanel() {
+  const panel = document.getElementById("notificationPanel");
+  const bell = document.getElementById("notificationBell");
+  if (!panel || !bell) return;
+
+  mountNotificationPanelOverlay();
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const bellRect = bell.getBoundingClientRect();
+  const isMobile = window.matchMedia("(max-width: 650px)").matches;
+
+  panel.style.position = "fixed";
+  panel.style.zIndex = "999999";
+
+  if (isMobile) {
+    const sideGap = viewportWidth <= 380 ? 10 : 16;
+    const top = Math.max(76, Math.round(bellRect.bottom + 12));
+    panel.style.top = `${top}px`;
+    panel.style.right = `${sideGap}px`;
+    panel.style.left = `${sideGap}px`;
+    panel.style.width = "auto";
+    panel.style.maxWidth = `calc(100vw - ${sideGap * 2}px)`;
+    panel.style.maxHeight = `${Math.max(260, viewportHeight - top - sideGap)}px`;
+    return;
+  }
+
+  const panelWidth = Math.min(430, viewportWidth - 32);
+  const top = Math.max(16, Math.round(bellRect.bottom + 12));
+  const left = Math.min(
+    Math.max(16, Math.round(bellRect.right - panelWidth)),
+    viewportWidth - panelWidth - 16
+  );
+
+  panel.style.top = `${top}px`;
+  panel.style.left = `${left}px`;
+  panel.style.right = "auto";
+  panel.style.width = `${panelWidth}px`;
+  panel.style.maxWidth = `${panelWidth}px`;
+  panel.style.maxHeight = `${Math.max(300, viewportHeight - top - 16)}px`;
 }
 
 async function loadNotifications() {
@@ -438,10 +487,20 @@ if (notificationBell) {
   });
 }
 
+mountNotificationPanelOverlay();
+
 const notificationPanel = document.getElementById("notificationPanel");
 if (notificationPanel) {
   notificationPanel.addEventListener("click", event => event.stopPropagation());
 }
+
+window.addEventListener("resize", () => {
+  if (isNotificationPanelOpen()) positionNotificationPanel();
+}, { passive: true });
+
+window.addEventListener("scroll", () => {
+  if (isNotificationPanelOpen()) positionNotificationPanel();
+}, { passive: true });
 
 document.addEventListener("click", () => {
   if (isNotificationPanelOpen()) setNotificationPanelOpen(false);

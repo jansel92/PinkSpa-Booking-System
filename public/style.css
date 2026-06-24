@@ -316,10 +316,10 @@ footer{text-align:center;color:var(--muted);padding:28px}
   box-shadow:0 8px 18px rgba(217,45,76,.3);
 }
 .notification-panel{
-  position:absolute;
-  top:calc(100% + 12px);
-  right:0;
-  z-index:12010;
+  position:fixed;
+  top:84px;
+  right:24px;
+  z-index:999999;
   display:grid;
   width:min(430px,calc(100vw - 32px));
   max-height:min(610px,calc(100vh - 130px));
@@ -728,7 +728,7 @@ button.client-direct-action{font-family:inherit}
     top:92px;
     right:16px;
     left:16px;
-    z-index:12010;
+    z-index:999999;
     width:auto;
     max-width:calc(100vw - 32px);
     max-height:calc(100vh - 116px);
