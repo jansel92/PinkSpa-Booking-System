@@ -2487,6 +2487,55 @@ button.client-direct-action{font-family:inherit}
   margin-top: 28px;
 }
 
+.home-page .confirmation-actions .btn {
+  min-width: 190px;
+  justify-content: center;
+}
+
+.home-page .confirmation-actions .ghost {
+  border: 1px solid rgba(183, 25, 86, .32);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,239,246,.94)),
+    #fff7fa;
+  color: var(--deep);
+  box-shadow:
+    0 12px 30px rgba(183, 25, 86, .12),
+    inset 0 1px 0 rgba(255,255,255,.94);
+}
+
+.home-page .confirmation-actions .ghost:hover {
+  border-color: rgba(183, 25, 86, .5);
+  background:
+    linear-gradient(135deg, rgba(255,248,251,.98), rgba(255,226,238,.96)),
+    #fff;
+  box-shadow:
+    0 16px 36px rgba(183, 25, 86, .18),
+    0 0 24px rgba(255, 184, 212, .18);
+  color: var(--deep);
+}
+
+.home-page #confirmationWhatsapp {
+  border-color: rgba(52, 168, 83, .34);
+  background:
+    linear-gradient(135deg, rgba(247,255,250,.98), rgba(226, 250, 236, .94)),
+    #f4fff8;
+  color: #145c35;
+  box-shadow:
+    0 12px 30px rgba(52, 168, 83, .14),
+    inset 0 1px 0 rgba(255,255,255,.94);
+}
+
+.home-page #confirmationWhatsapp:hover {
+  border-color: rgba(52, 168, 83, .52);
+  background:
+    linear-gradient(135deg, rgba(240,255,246,.98), rgba(211, 244, 225, .96)),
+    #f4fff8;
+  box-shadow:
+    0 16px 36px rgba(52, 168, 83, .2),
+    0 0 24px rgba(88, 184, 135, .18);
+  color: #145c35;
+}
+
 .home-page .confirmation-confetti {
   position: absolute;
   inset: 0;
@@ -3258,9 +3307,12 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .confirmation-actions {
     display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
   }
 
   .home-page .confirmation-actions .btn {
+    min-width: 0;
     width: 100%;
   }
 
