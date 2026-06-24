@@ -1249,11 +1249,6 @@ button.client-direct-action{font-family:inherit}
     padding:22px !important;
   }
 }
-.hero::before {
-  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate;
-  transform-origin: center;
-}
-
 @keyframes pinkspaHeroZoom {
   from {
     transform: scale(1);
@@ -1263,11 +1258,6 @@ button.client-direct-action{font-family:inherit}
     transform: scale(1.08);
   }
 }
-.hero {
-  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate;
-  transform-origin: center center;
-}
-
 @keyframes pinkspaHeroZoom {
   0% {
     background-size: 100%;
@@ -1277,10 +1267,6 @@ button.client-direct-action{font-family:inherit}
     background-size: 108%;
   }
 }
-.hero-content {
-  animation: pinkspaFadeUp 1.2s ease both;
-}
-
 @keyframes pinkspaFadeUp {
   from {
     opacity: 0;
@@ -1292,10 +1278,6 @@ button.client-direct-action{font-family:inherit}
     transform: translateY(0);
   }
 }
-.hero-logo {
-  animation: pinkspaLogoFloat 5s ease-in-out infinite;
-}
-
 @keyframes pinkspaLogoFloat {
   0%, 100% {
     transform: translateY(0);
@@ -1318,10 +1300,6 @@ button.client-direct-action{font-family:inherit}
     background-position: 58% center !important;
   }
 }
-.hero {
-  animation: pinkspaHeroZoom 18s ease-in-out infinite alternate !important;
-}
-
 @keyframes pinkspaHeroZoom {
   0% {
     background-size: 100% !important;
@@ -1333,10 +1311,6 @@ button.client-direct-action{font-family:inherit}
 }
 
 @media (max-width: 700px) {
-  .hero {
-    animation: pinkspaHeroZoomMobile 18s ease-in-out infinite alternate !important;
-  }
-
   @keyframes pinkspaHeroZoomMobile {
     0% {
       background-size: 120% !important;
@@ -1368,7 +1342,6 @@ button.client-direct-action{font-family:inherit}
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
   z-index: 0;
 }
 
@@ -1390,7 +1363,6 @@ button.client-direct-action{font-family:inherit}
 @media (max-width: 700px) {
   .hero::before {
     background-position: center center;
-    animation: pinkspaHeroImageZoom 18s ease-in-out infinite alternate;
   }
 }
 .gallery-lightbox {
