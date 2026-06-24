@@ -1689,9 +1689,9 @@ button.client-direct-action{font-family:inherit}
 }
 
 .home-page .hero-logo {
-  width: clamp(170px, 19vw, 245px);
+  width: clamp(150px, 16.8vw, 216px);
   height: auto;
-  margin: 0 0 26px;
+  margin: 0 0 18px;
   border: 1px solid rgba(255, 255, 255, .42);
   border-radius: 50%;
   box-shadow: 0 26px 65px rgba(16, 5, 10, .27);
@@ -2202,8 +2202,8 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .hero-logo {
-    width: 150px;
-    margin-bottom: 20px;
+    width: 132px;
+    margin-bottom: 14px;
   }
 
   .home-page .hero h1 {
