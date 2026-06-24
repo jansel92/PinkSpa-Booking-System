@@ -127,23 +127,33 @@
       <p>Real beauty, care, and confidence in every appointment.</p>
     </div>
 
-    <div class="reviews-grid">
-      <div class="review-card">
-        <div class="stars">★★★★★</div>
-        <p>"Beautiful work and very professional. My nails came out exactly how I wanted."</p>
-        <strong>- PinkSpa Client</strong>
+    <div class="reviews-carousel" aria-label="Client testimonials">
+      <div class="reviews-viewport">
+        <div class="reviews-grid">
+          <div class="review-card">
+            <div class="stars">★★★★★</div>
+            <p>"Beautiful work and very professional. My nails came out exactly how I wanted."</p>
+            <strong>- PinkSpa Client</strong>
+          </div>
+
+          <div class="review-card">
+            <div class="stars">★★★★★</div>
+            <p>"Amazing service, very clean, and relaxing. I loved my lashes."</p>
+            <strong>- PinkSpa Client</strong>
+          </div>
+
+          <div class="review-card">
+            <div class="stars">★★★★★</div>
+            <p>"Great attention to detail and a very comfortable experience."</p>
+            <strong>- PinkSpa Client</strong>
+          </div>
+        </div>
       </div>
 
-      <div class="review-card">
-        <div class="stars">★★★★★</div>
-        <p>"Amazing service, very clean, and relaxing. I loved my lashes."</p>
-        <strong>- PinkSpa Client</strong>
-      </div>
-
-      <div class="review-card">
-        <div class="stars">★★★★★</div>
-        <p>"Great attention to detail and a very comfortable experience."</p>
-        <strong>- PinkSpa Client</strong>
+      <div class="reviews-carousel-controls">
+        <button id="reviewPrev" class="review-nav-button" type="button" aria-label="Previous testimonial">Previous</button>
+        <div id="reviewDots" class="review-dots" aria-label="Testimonial navigation"></div>
+        <button id="reviewNext" class="review-nav-button" type="button" aria-label="Next testimonial">Next</button>
       </div>
     </div>
   </section>

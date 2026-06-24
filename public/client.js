@@ -933,23 +933,77 @@ function setupGalleryLightbox() {
 setupGalleryLightbox();
 function setupReviewSlider() {
   const reviewGrid = document.querySelector(".reviews-grid");
-  const reviewCards = document.querySelectorAll(".review-card");
+  const reviewCards = Array.from(document.querySelectorAll(".reviews-grid .review-card"));
+  const prevButton = document.getElementById("reviewPrev");
+  const nextButton = document.getElementById("reviewNext");
+  const dotsContainer = document.getElementById("reviewDots");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  if (!reviewGrid || reviewCards.length === 0 || reduceMotion) return;
+  if (!reviewGrid || reviewCards.length === 0) return;
 
   let index = 0;
+  let autoRotateTimer = null;
+  let interactionPaused = false;
 
-  setInterval(() => {
-    if (document.hidden) return;
+  const updateCarousel = () => {
+    reviewGrid.style.transform = `translateX(-${index * 100}%)`;
 
-    index = (index + 1) % reviewCards.length;
+    if (dotsContainer) {
+      Array.from(dotsContainer.children).forEach((dot, dotIndex) => {
+        const isActive = dotIndex === index;
+        dot.classList.toggle("is-active", isActive);
+        dot.setAttribute("aria-current", isActive ? "true" : "false");
+      });
+    }
+  };
 
-    reviewGrid.scrollTo({
-      left: reviewCards[index].offsetLeft - reviewGrid.offsetLeft,
-      behavior: "smooth"
+  const goToReview = nextIndex => {
+    index = (nextIndex + reviewCards.length) % reviewCards.length;
+    updateCarousel();
+  };
+
+  const pauseAutoRotate = () => {
+    interactionPaused = true;
+    window.clearInterval(autoRotateTimer);
+  };
+
+  if (dotsContainer) {
+    dotsContainer.replaceChildren(...reviewCards.map((_, dotIndex) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "review-dot";
+      dot.setAttribute("aria-label", `Show testimonial ${dotIndex + 1}`);
+      dot.addEventListener("click", () => {
+        pauseAutoRotate();
+        goToReview(dotIndex);
+      });
+      return dot;
+    }));
+  }
+
+  if (prevButton) {
+    prevButton.addEventListener("click", () => {
+      pauseAutoRotate();
+      goToReview(index - 1);
     });
-  }, 4000);
+  }
+
+  if (nextButton) {
+    nextButton.addEventListener("click", () => {
+      pauseAutoRotate();
+      goToReview(index + 1);
+    });
+  }
+
+  updateCarousel();
+
+  if (reduceMotion || reviewCards.length < 2) return;
+
+  autoRotateTimer = window.setInterval(() => {
+    if (document.hidden || interactionPaused) return;
+
+    goToReview(index + 1);
+  }, 7000);
 }
 
 async function loadApprovedReviews() {
