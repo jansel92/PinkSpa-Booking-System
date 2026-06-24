@@ -278,9 +278,10 @@ footer{text-align:center;color:var(--muted);padding:28px}
   background:rgba(255,255,255,.82);
   box-shadow:0 18px 50px rgba(151,22,77,.08);
 }
-.notification-bell-wrap{position:relative}
+.notification-bell-wrap{position:relative;z-index:12000}
 .notification-bell{
   position:relative;
+  z-index:12020;
   display:grid;
   width:48px;
   height:48px;
@@ -318,13 +319,15 @@ footer{text-align:center;color:var(--muted);padding:28px}
   position:absolute;
   top:calc(100% + 12px);
   right:0;
-  z-index:1500;
+  z-index:12010;
   display:grid;
   width:min(430px,calc(100vw - 32px));
   max-height:min(610px,calc(100vh - 130px));
+  box-sizing:border-box;
   gap:14px;
   padding:18px;
   overflow:hidden;
+  overscroll-behavior:contain;
   border:1px solid #ffd7e5;
   border-radius:24px;
   background:radial-gradient(circle at top left,rgba(255,214,230,.95),transparent 36%),linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,248,251,.96));
@@ -351,7 +354,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .notification-mark-all{min-height:36px;padding:8px 13px}
 .notification-read-button{align-self:center;padding:8px 11px;white-space:nowrap}
 .notification-mark-all:disabled,.notification-read-button:disabled{cursor:default;opacity:.58}
-.notifications-list{display:grid;gap:10px;max-height:470px;overflow:auto;padding-right:2px}
+.notifications-list{display:grid;gap:10px;max-height:470px;overflow:auto;padding-right:2px;overscroll-behavior:contain}
 .notification-item{
   --notification-accent:#5d8dee;
   --notification-soft:#eaf1ff;
@@ -718,10 +721,22 @@ button.client-direct-action{font-family:inherit}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .stats div{padding:16px;border-radius:18px}
   .stats strong{font-size:28px}
+  .notification-bell-wrap{z-index:12000}
   .notification-bell{width:46px;height:46px}
-  .notification-panel{position:fixed;top:92px;right:16px;left:16px;width:auto;max-height:calc(100vh - 116px);transform-origin:top center}
+  .notification-panel{
+    position:fixed;
+    top:92px;
+    right:16px;
+    left:16px;
+    z-index:12010;
+    width:auto;
+    max-width:calc(100vw - 32px);
+    max-height:calc(100vh - 116px);
+    max-height:calc(100dvh - 116px);
+    transform-origin:top center;
+  }
   .notification-panel-heading{align-items:flex-start;flex-direction:column}
-  .notifications-list{max-height:calc(100vh - 230px)}
+  .notifications-list{max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px)}
   .notification-item{grid-template-columns:34px minmax(0,1fr);align-items:start}
   .notification-icon{width:34px;height:34px;border-radius:12px}
   .notification-title-row{align-items:flex-start;flex-direction:column;gap:4px}
@@ -767,7 +782,7 @@ button.client-direct-action{font-family:inherit}
   .owner-body .whatsapp-actions,.owner-body .client-direct-actions{grid-template-columns:1fr}
   .owner-body .client-metrics,.owner-body .client-loyalty-summary{grid-template-columns:1fr}
   .owner-body .client-metric-wide{grid-column:auto}
-  .notification-panel{right:10px;left:10px;padding:15px}
+  .notification-panel{right:10px;left:10px;max-width:calc(100vw - 20px);padding:15px}
   .notification-panel-heading .notification-mark-all{width:100%}
   .dash-header h1{font-size:35px}
 }
