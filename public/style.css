@@ -1332,18 +1332,16 @@ button.client-direct-action{font-family:inherit}
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(rgba(35, 14, 25, .52), rgba(35, 14, 25, .52)),
-    url("/images/hero-luxury.png"),
     linear-gradient(
       90deg,
-      rgba(25,15,20,.78),
-      rgba(25,15,20,.33),
-      rgba(25,15,20,.05)
+      rgba(25,15,20,.84),
+      rgba(78,24,51,.44),
+      rgba(25,15,20,.1)
     ),
     url("/images/hero-luxury.png");
   background-color: #24101a;
-  background-size: cover, cover, auto, contain;
-  background-position: center center, center center, center center, center center;
+  background-size: auto, cover;
+  background-position: center center, center center;
   background-repeat: no-repeat;
   filter: saturate(1.03);
   z-index: 0;
@@ -1661,19 +1659,18 @@ button.client-direct-action{font-family:inherit}
 }
 
 .home-page .hero {
-  min-height: min(920px, 100svh);
+  min-height: 100vh;
+  min-height: 100svh;
   padding: 150px max(7%, calc((100vw - 1180px) / 2)) 90px;
   isolation: isolate;
 }
 
 .home-page .hero::before {
   background:
-    linear-gradient(rgba(34, 18, 27, .56), rgba(34, 18, 27, .56)),
-    url("/images/hero-luxury.png"),
-    linear-gradient(90deg, rgba(34, 18, 27, .83) 0%, rgba(57, 25, 40, .57) 48%, rgba(53, 24, 38, .14) 100%),
+    linear-gradient(90deg, rgba(25, 11, 19, .9) 0%, rgba(73, 24, 48, .6) 48%, rgba(53, 24, 38, .18) 100%),
     url("/images/hero-luxury.png");
-  background-size: cover, cover, auto, min(86vw, 1180px) auto;
-  background-position: center, center, center, 72% center;
+  background-size: auto, cover;
+  background-position: center, 68% center;
   background-repeat: no-repeat;
 }
 
@@ -1683,7 +1680,7 @@ button.client-direct-action{font-family:inherit}
   z-index: 0;
   height: 18%;
   content: "";
-  background: linear-gradient(to top, rgba(19, 9, 14, .18), transparent);
+  background: linear-gradient(to top, rgba(255, 247, 250, .96) 0%, rgba(255, 247, 250, .62) 34%, rgba(255, 247, 250, 0) 100%);
   pointer-events: none;
 }
 
@@ -2197,12 +2194,10 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .hero::before {
     background:
-      linear-gradient(rgba(28, 12, 21, .5), rgba(28, 12, 21, .5)),
-      url("/images/hero-luxury.png"),
-      linear-gradient(180deg, rgba(28, 12, 21, .18) 0%, rgba(28, 12, 21, .47) 42%, rgba(28, 12, 21, .88) 100%),
+      linear-gradient(180deg, rgba(28, 12, 21, .2) 0%, rgba(38, 13, 28, .5) 42%, rgba(28, 12, 21, .9) 100%),
       url("/images/hero-luxury.png");
-    background-size: cover, cover, auto, contain;
-    background-position: center, 58% center, center, center 42%;
+    background-size: auto, cover;
+    background-position: center, 58% center;
     background-repeat: no-repeat;
   }
 
