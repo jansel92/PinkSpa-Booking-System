@@ -114,6 +114,7 @@ function setupScrollReveal() {
 
   observeRevealElements(document.querySelectorAll(
     ".home-page #services .heading, .home-page .service-category-filters, " +
+    ".home-page #recentlyBooked .heading, .home-page .recent-booking-card, " +
     ".home-page #stats .heading, .home-page .home-stat-card, " +
     ".home-page #gallery .heading, .home-page .gallery-grid img, " +
     ".home-page #reviews .heading, .home-page .review-card, " +
