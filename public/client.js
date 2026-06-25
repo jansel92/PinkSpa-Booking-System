@@ -753,6 +753,18 @@ function whatsappHelpUrl(phone) {
   return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`;
 }
 
+function whatsappStatusUrl(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  const whatsappPhone = digits.length === 10 ? `1${digits}` : digits;
+  const text = "Hi PinkSpa! I have a question about my appointment status.";
+  return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(text)}`;
+}
+
+function getPinkSpaPhone() {
+  const phoneText = document.getElementById("businessPhoneText")?.textContent || "786-303-6126";
+  return phoneText.replace(/[^\d+]/g, "");
+}
+
 function setupWhatsappConcierge() {
   const concierge = document.getElementById("whatsappConcierge");
   const closeButton = document.getElementById("whatsappConciergeClose");
@@ -1192,6 +1204,146 @@ ${payload.notes || "No notes added."}
 
 const statusForm = document.getElementById("statusForm");
 
+function statusMessage(status) {
+  const messages = {
+    pending: "Your request is waiting for owner review.",
+    confirmed: "Your appointment is confirmed. We can't wait to see you.",
+    completed: "Thank you for visiting PinkSpa.",
+    cancelled: "This appointment was cancelled.",
+    "no-show": "This appointment was marked as no-show."
+  };
+
+  return messages[status] || "Your appointment status is being reviewed.";
+}
+
+function statusTimelineIndex(status) {
+  const indexes = {
+    pending: 1,
+    confirmed: 2,
+    completed: 3,
+    cancelled: 1,
+    "no-show": 2
+  };
+
+  return indexes[status] ?? 0;
+}
+
+function createStatusTimeline(status) {
+  const steps = [
+    { key: "received", label: "Request Received" },
+    { key: "pending", label: "Pending Review" },
+    { key: "confirmed", label: "Confirmed" },
+    { key: "completed", label: "Completed" }
+  ];
+  const currentIndex = statusTimelineIndex(status);
+  const timeline = document.createElement("ol");
+  timeline.className = `client-status-timeline status-${status || "pending"}`;
+  timeline.setAttribute("aria-label", "Appointment progress");
+
+  steps.forEach((step, index) => {
+    const item = document.createElement("li");
+    item.className = "client-status-step";
+    item.classList.toggle("is-complete", index < currentIndex);
+    item.classList.toggle("is-current", index === currentIndex);
+
+    const marker = document.createElement("span");
+    marker.className = "client-status-marker";
+    marker.textContent = index < currentIndex ? "✓" : String(index + 1);
+
+    const label = document.createElement("span");
+    label.textContent = step.label;
+
+    item.append(marker, label);
+    timeline.appendChild(item);
+  });
+
+  return timeline;
+}
+
+function appointmentDetail(label, value, icon) {
+  const detail = document.createElement("div");
+  detail.className = "client-status-detail";
+
+  const iconElement = document.createElement("span");
+  iconElement.className = "client-status-detail-icon";
+  iconElement.setAttribute("aria-hidden", "true");
+  iconElement.textContent = icon;
+
+  const copy = document.createElement("span");
+  const labelElement = document.createElement("b");
+  labelElement.textContent = label;
+  const valueElement = document.createElement("em");
+  valueElement.textContent = value || "Not available";
+
+  copy.append(labelElement, valueElement);
+  detail.append(iconElement, copy);
+
+  return detail;
+}
+
+function renderAppointmentStatusCard(appt) {
+  const status = appt.status || "pending";
+  const card = document.createElement("article");
+  card.className = `client-status-card status-${status}`;
+
+  const header = document.createElement("div");
+  header.className = "client-status-card-header";
+
+  const titleWrap = document.createElement("div");
+  const eyebrow = document.createElement("p");
+  eyebrow.className = "client-status-eyebrow";
+  eyebrow.textContent = "PinkSpa appointment";
+  const title = document.createElement("h3");
+  title.textContent = appt.service_name || "Appointment";
+  titleWrap.append(eyebrow, title);
+
+  const badge = document.createElement("span");
+  badge.className = "client-status-badge";
+  badge.textContent = statusText(status);
+
+  header.append(titleWrap, badge);
+
+  const message = document.createElement("p");
+  message.className = "client-status-message";
+  message.textContent = statusMessage(status);
+
+  const details = document.createElement("div");
+  details.className = "client-status-details";
+  details.append(
+    appointmentDetail("Service", appt.service_name, "💅"),
+    appointmentDetail("Date", appt.appointment_date, "📅"),
+    appointmentDetail("Time", appt.appointment_time, "⏰"),
+    appointmentDetail("Duration", `${appt.duration_minutes || 60} minutes`, "⏳"),
+    appointmentDetail("Client", appt.client_name, "👤")
+  );
+
+  const actions = document.createElement("div");
+  actions.className = "client-status-actions";
+
+  const whatsappButton = document.createElement("a");
+  whatsappButton.className = "client-status-whatsapp";
+  whatsappButton.href = whatsappStatusUrl(getPinkSpaPhone());
+  whatsappButton.target = "_blank";
+  whatsappButton.rel = "noopener noreferrer";
+  whatsappButton.textContent = "WhatsApp PinkSpa";
+
+  actions.appendChild(whatsappButton);
+  card.append(header, message, createStatusTimeline(status), details, actions);
+
+  return card;
+}
+
+function renderStatusResults(resultBox, appointments) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "client-status-results";
+
+  appointments.forEach(appt => {
+    wrapper.appendChild(renderAppointmentStatusCard(appt));
+  });
+
+  resultBox.replaceChildren(wrapper);
+}
+
 if (statusForm) {
   statusForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -1220,15 +1372,7 @@ if (statusForm) {
         return;
       }
 
-      resultBox.innerHTML = data.appointments.map(appt => `
-        <div class="status-result-card">
-          <h3>${appt.service_name}</h3>
-          <p><b>Name:</b> ${appt.client_name}</p>
-          <p><b>Date:</b> ${appt.appointment_date}</p>
-          <p><b>Time:</b> ${appt.appointment_time}</p>
-          <p><b>Status:</b> ${statusText(appt.status)}</p>
-        </div>
-      `).join("");
+      renderStatusResults(resultBox, data.appointments);
     } catch (error) {
       console.error("Unable to check appointment status:", error);
       resultBox.textContent = "We couldn't check your appointment status. Please check your connection and try again.";

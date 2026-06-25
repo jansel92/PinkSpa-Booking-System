@@ -3284,6 +3284,268 @@ button.client-direct-action{font-family:inherit}
   max-width: 700px !important;
 }
 
+.home-page #statusResult {
+  color: #5b4650;
+}
+
+.home-page .client-status-results {
+  display: grid;
+  gap: 18px;
+  text-align: left;
+}
+
+.home-page .client-status-card {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid rgba(255, 202, 221, .92);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255, 224, 180, .34), transparent 28%),
+    linear-gradient(145deg, rgba(255, 255, 255, .98), rgba(255, 246, 250, .94));
+  box-shadow:
+    0 22px 54px rgba(98, 30, 60, .1),
+    0 0 0 1px rgba(255, 236, 199, .36);
+  animation: statusCardIn .62s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.home-page .client-status-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.48), transparent 42%);
+}
+
+.home-page .client-status-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-page .client-status-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.home-page .client-status-eyebrow {
+  margin: 0 0 5px;
+  color: #b71956;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.home-page .client-status-card h3 {
+  margin: 0;
+  color: var(--deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.home-page .client-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 13px;
+  border: 1px solid rgba(183, 25, 86, .16);
+  border-radius: 999px;
+  background: #fff3f8;
+  color: var(--deep);
+  box-shadow: 0 10px 24px rgba(183, 25, 86, .08);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.home-page .client-status-card.status-confirmed .client-status-badge,
+.home-page .client-status-card.status-completed .client-status-badge {
+  border-color: rgba(34, 132, 81, .22);
+  background: #effbf3;
+  color: #126c37;
+}
+
+.home-page .client-status-card.status-cancelled .client-status-badge,
+.home-page .client-status-card.status-no-show .client-status-badge {
+  border-color: rgba(177, 58, 58, .22);
+  background: #fff1f1;
+  color: #9a2f2f;
+}
+
+.home-page .client-status-message {
+  margin: 0 0 20px;
+  color: #7a5a68;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.home-page .client-status-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.home-page .client-status-step {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #a06d80;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.home-page .client-status-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: calc(50% + 22px);
+  width: calc(100% - 44px);
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(183, 25, 86, .14);
+}
+
+.home-page .client-status-step.is-complete:not(:last-child)::after {
+  background: linear-gradient(90deg, var(--pink), #f4c16e);
+}
+
+.home-page .client-status-marker {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(183, 25, 86, .16);
+  border-radius: 999px;
+  background: rgba(255,255,255,.94);
+  color: #b47a8d;
+  box-shadow: 0 10px 22px rgba(98, 30, 60, .06);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.home-page .client-status-step.is-complete .client-status-marker,
+.home-page .client-status-step.is-current .client-status-marker {
+  border-color: rgba(183, 25, 86, .38);
+  background: linear-gradient(135deg, var(--pink), var(--deep));
+  color: white;
+  box-shadow: 0 12px 26px rgba(183, 25, 86, .2);
+}
+
+.home-page .client-status-step.is-current {
+  color: var(--deep);
+}
+
+.home-page .client-status-card.status-cancelled .client-status-step.is-current .client-status-marker,
+.home-page .client-status-card.status-no-show .client-status-step.is-current .client-status-marker {
+  border-color: rgba(177, 58, 58, .3);
+  background: linear-gradient(135deg, #d86666, #9a2f2f);
+}
+
+.home-page .client-status-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.home-page .client-status-detail {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(183, 25, 86, .1);
+  border-radius: 18px;
+  background: rgba(255,255,255,.78);
+}
+
+.home-page .client-status-detail-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff7fa, #ffe4ef);
+  box-shadow: 0 9px 20px rgba(183, 25, 86, .08);
+}
+
+.home-page .client-status-detail b,
+.home-page .client-status-detail em {
+  display: block;
+  min-width: 0;
+}
+
+.home-page .client-status-detail b {
+  color: #9c687a;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.home-page .client-status-detail em {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #493940;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-page .client-status-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.home-page .client-status-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 12px 18px;
+  border: 1px solid rgba(18, 108, 55, .2);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #effbf3, #dcf8e7);
+  color: #126c37;
+  box-shadow: 0 14px 28px rgba(18, 108, 55, .1);
+  font-weight: 900;
+  text-decoration: none;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.home-page .client-status-whatsapp:hover,
+.home-page .client-status-whatsapp:focus-visible {
+  border-color: rgba(18, 108, 55, .38);
+  box-shadow: 0 18px 34px rgba(18, 108, 55, .15);
+  transform: translateY(-2px);
+}
+
+@keyframes statusCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .home-page input,
 .home-page select,
 .home-page textarea {
@@ -3956,6 +4218,47 @@ button.client-direct-action{font-family:inherit}
     padding: 8px 12px;
   }
 
+  .home-page .client-status-card {
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .home-page .client-status-card-header {
+    display: grid;
+    gap: 10px;
+  }
+
+  .home-page .client-status-badge {
+    width: fit-content;
+  }
+
+  .home-page .client-status-timeline {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .home-page .client-status-step {
+    grid-template-columns: 34px 1fr;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .home-page .client-status-step:not(:last-child)::after {
+    top: 38px;
+    left: 16px;
+    width: 2px;
+    height: calc(100% - 24px);
+  }
+
+  .home-page .client-status-details {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .client-status-actions,
+  .home-page .client-status-whatsapp {
+    width: 100%;
+  }
+
   .home-page .booking-section {
     gap: 44px;
   }
@@ -4146,6 +4449,7 @@ button.client-direct-action{font-family:inherit}
   .home-page .service-book-btn,
   .home-page .recommendation-card,
   .home-page .recommendation-add,
+  .home-page .client-status-whatsapp,
   .home-page .service-grid,
   .home-page .service-filter,
   .home-page .service-page-button,
@@ -4177,6 +4481,7 @@ button.client-direct-action{font-family:inherit}
   .home-page .app-loading-card,
   .home-page .app-loading-card::before,
   .home-page .app-loading-card img,
+  .home-page .client-status-card,
   .home-page .recent-bookings-track,
   .home-page .whatsapp-concierge {
     animation: none;
