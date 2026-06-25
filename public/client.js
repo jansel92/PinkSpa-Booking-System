@@ -39,6 +39,13 @@ const serviceCategories = [
   { key: "other", label: "Other" }
 ];
 
+const serviceRecommendationKeywords = {
+  nails: ["nail art", "pedicure", "gel manicure", "acrylic full set"],
+  lashes: ["brow wax", "brow tint", "lash fill"],
+  brows: ["lash", "wax"],
+  pedicure: ["gel manicure", "nail art"]
+};
+
 function setAppLoading(isVisible) {
   const overlay = document.getElementById("appLoadingOverlay");
   if (!overlay) return;
@@ -397,6 +404,40 @@ function getPrimaryService(selectedServices = getSelectedServices()) {
   }) || selectedServices[0];
 }
 
+function serviceMatchesRecommendation(service, keyword) {
+  const text = `${service.category || ""} ${service.name || ""}`.toLowerCase();
+  const category = serviceCategoryKey(service);
+
+  if (keyword === "lash") return category === "lashes" || text.includes("lash");
+  if (keyword === "wax") return category === "waxing" || text.includes("wax");
+
+  return text.includes(keyword);
+}
+
+function getRecommendedServices(selectedServices = getSelectedServices()) {
+  const primaryService = getPrimaryService(selectedServices);
+  if (!primaryService) return [];
+
+  const selectedIds = new Set(selectedServices.map(service => String(service.id)));
+  const recommendedIds = new Set();
+  const keywords = serviceRecommendationKeywords[serviceCategoryKey(primaryService)] || [];
+  const recommendations = [];
+
+  keywords.forEach(keyword => {
+    allServices.forEach(service => {
+      const serviceId = String(service.id);
+
+      if (selectedIds.has(serviceId) || recommendedIds.has(serviceId)) return;
+      if (!serviceMatchesRecommendation(service, keyword)) return;
+
+      recommendedIds.add(serviceId);
+      recommendations.push(service);
+    });
+  });
+
+  return recommendations.slice(0, 3);
+}
+
 function syncServiceChoiceCard(checkbox) {
   const card = checkbox?.closest(".service-checkbox-item");
   if (card) card.classList.toggle("is-selected", checkbox.checked);
@@ -444,6 +485,74 @@ function updateBookingProgress() {
   }
 }
 
+function addRecommendedService(service) {
+  const checkbox = document.querySelector(`.service-choice[value="${service.id}"]`);
+  const message = document.getElementById("bookingMessage");
+
+  if (!checkbox || checkbox.checked) return;
+
+  const currentPrimary = getPrimaryService();
+  if (!currentPrimary) {
+    primaryServiceId = String(service.id);
+  }
+
+  checkbox.checked = true;
+  syncServiceChoiceCard(checkbox);
+  updateBookingSummary();
+
+  if (message) {
+    message.textContent = `${service.name} added to your appointment request.`;
+  }
+}
+
+function renderServiceRecommendations(selectedServices = getSelectedServices()) {
+  const container = document.getElementById("serviceRecommendations");
+  if (!container) return;
+
+  const recommendations = getRecommendedServices(selectedServices);
+
+  if (!recommendations.length) {
+    container.hidden = true;
+    container.replaceChildren();
+    return;
+  }
+
+  const heading = document.createElement("div");
+  heading.className = "recommendations-heading";
+  heading.innerHTML = `
+    <span>Recommended Add-ons</span>
+    <p>Pair your service with a little extra polish.</p>
+  `;
+
+  const list = document.createElement("div");
+  list.className = "recommendation-list";
+
+  recommendations.forEach(service => {
+    const card = document.createElement("article");
+    card.className = "recommendation-card";
+
+    const details = document.createElement("div");
+    details.className = "recommendation-details";
+    details.innerHTML = `
+      <strong>${service.name}</strong>
+      <span>${service.duration || "Custom"} min${service.price ? ` • ${service.price}` : ""}</span>
+    `;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "recommendation-add";
+    button.textContent = "Add";
+    button.setAttribute("aria-label", `Add ${service.name} to this appointment`);
+    button.addEventListener("click", () => addRecommendedService(service));
+
+    card.append(details, button);
+    list.appendChild(card);
+  });
+
+  container.hidden = false;
+  container.replaceChildren(heading, list);
+}
+
 function updateBookingSummary() {
   const selected = getSelectedServices();
   const hiddenServiceInput = document.getElementById("serviceSelect");
@@ -455,6 +564,7 @@ function updateBookingSummary() {
     primaryServiceId = null;
     hiddenServiceInput.value = "";
     summary.textContent = "Select one or more services.";
+    renderServiceRecommendations(selected);
     updateBookingProgress();
     updateAvailableTimes();
     return;
@@ -484,6 +594,7 @@ function updateBookingSummary() {
   durationLine.append(durationLabel, `${totalMinutes} minutes`);
 
   summary.replaceChildren(primaryLine, selectedLine, durationLine);
+  renderServiceRecommendations(selected);
   updateBookingProgress();
 
   updateAvailableTimes();
