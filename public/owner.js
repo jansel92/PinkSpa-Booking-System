@@ -2160,18 +2160,28 @@ async function loadReviews() {
   }
 
   container.innerHTML = reviews.map(review => `
-    <div class="appointment-card">
-      <h3>${review.client_name}</h3>
-      <p>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</p>
-      <p>${review.review_text}</p>
-      <p><b>Status:</b> ${review.approved ? "Approved" : "Pending Approval"}</p>
+    <article class="appointment-card owner-review-card ${review.approved ? "owner-review-approved" : "owner-review-pending"}">
+      <div class="owner-review-header">
+        <div>
+          <p class="owner-review-eyebrow">Client Feedback</p>
+          <h3>${review.client_name || "PinkSpa Client"}</h3>
+        </div>
+        <span class="owner-review-status ${review.approved ? "is-approved" : "is-pending"}">
+          ${review.approved ? "Approved" : "Pending Approval"}
+        </span>
+      </div>
+      <div class="owner-review-meta">
+        <span class="owner-review-stars" aria-label="${review.rating} out of 5 stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span>
+        <span>${review.created_at ? formatClientDate(String(review.created_at).slice(0, 10)) : "Date unavailable"}</span>
+      </div>
+      <p class="owner-review-text">${review.review_text || "No review text provided."}</p>
 
       <div class="status-row">
-        <button onclick="approveReview(${review.id}, this)">Approve</button>
-        <button onclick="unapproveReview(${review.id}, this)">Hide</button>
-        <button onclick="deleteReview(${review.id}, this)">Delete</button>
+        <button class="review-action-approve" onclick="approveReview(${review.id}, this)">Approve</button>
+        <button class="review-action-hide" onclick="unapproveReview(${review.id}, this)">Hide</button>
+        <button class="review-action-delete" onclick="deleteReview(${review.id}, this)">Delete</button>
       </div>
-    </div>
+    </article>
   `).join("");
 }
 

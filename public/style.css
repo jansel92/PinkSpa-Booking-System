@@ -542,6 +542,122 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .owner-body :is(.appointment-card,.service-row){margin-top:0;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 .owner-body :is(.financial-panel,.calendar-day,.client-card){transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 .appointment-card strong,.service-row strong{color:var(--deep)}
+.reviews-panel .message{
+  margin:8px 0 20px;
+  color:#8a6374;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.6;
+}
+.owner-review-card{
+  position:relative;
+  gap:16px;
+  overflow:hidden;
+  padding:22px;
+  border-radius:28px;
+  background:
+    radial-gradient(circle at 96% 0%,rgba(255,227,188,.36),transparent 28%),
+    linear-gradient(145deg,#fff,#fff8fb);
+  box-shadow:0 16px 40px rgba(151,22,77,.08);
+  animation:ownerReviewIn .48s cubic-bezier(.22,1,.36,1) both;
+}
+.owner-review-card::before{
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  content:"";
+  background:linear-gradient(180deg,#ff8eb5,var(--deep));
+  box-shadow:0 0 24px rgba(255,95,147,.26);
+}
+.owner-review-card.owner-review-pending::before{
+  background:linear-gradient(180deg,#ffd86b,#d59a00);
+}
+.owner-review-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+}
+.owner-review-eyebrow{
+  margin:0 0 5px;
+  color:#9a5f77;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.owner-review-card h3{
+  margin:0;
+  color:#25161d;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(24px,2.3vw,32px);
+  font-weight:700;
+  letter-spacing:-.055em;
+  line-height:1;
+}
+.owner-review-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:8px 12px;
+  border:1px solid rgba(255,211,225,.82);
+  border-radius:999px;
+  background:#fff;
+  color:var(--deep);
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+  box-shadow:0 10px 22px rgba(79,17,44,.07);
+}
+.owner-review-status.is-approved{border-color:#ccefd9;background:#ecfbf1;color:#126c37}
+.owner-review-status.is-pending{border-color:#ffe6a5;background:#fff7d8;color:#8a6200}
+.owner-review-meta{
+  display:flex;
+  align-items:center;
+  gap:10px 14px;
+  flex-wrap:wrap;
+  color:#8a6374;
+  font-size:12px;
+  font-weight:900;
+}
+.owner-review-stars{
+  display:inline-flex;
+  align-items:center;
+  min-height:34px;
+  padding:7px 11px;
+  border:1px solid rgba(227,189,86,.44);
+  border-radius:999px;
+  background:linear-gradient(135deg,#fff8d9,#fff1bc);
+  color:#b77724;
+  font-size:14px;
+  letter-spacing:2px;
+  box-shadow:0 8px 18px rgba(184,137,16,.1);
+}
+.owner-review-text{
+  margin:0;
+  padding:16px;
+  border:1px solid rgba(255,211,225,.72);
+  border-radius:20px;
+  background:rgba(255,255,255,.68);
+  color:#4c2b39;
+  line-height:1.65;
+  white-space:pre-wrap;
+}
+.owner-review-card .status-row{
+  padding:14px;
+  border:1px solid rgba(255,211,225,.72);
+  border-radius:20px;
+  background:rgba(255,255,255,.58);
+}
+.owner-review-card .status-row button{
+  border:1px solid rgba(255,211,225,.72);
+  background:#fff;
+  color:var(--deep);
+}
+.owner-review-card .status-row .review-action-approve{border-color:#ccefd9;background:#effbf3;color:#126c37}
+.owner-review-card .status-row .review-action-hide{border-color:#ffe6a5;background:#fff7d8;color:#8a6200}
+.owner-review-card .status-row .review-action-delete{border-color:#ffd0db;background:#fff0f3;color:#a60d35}
 .appointment-quick-actions{
   display:grid;
   gap:10px;
@@ -809,6 +925,7 @@ button.client-direct-action{font-family:inherit}
 @keyframes appointmentTimelineIn{from{opacity:0;transform:translateY(12px) scale(.992)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes calendarDayIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes financialPanelIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes ownerReviewIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes dashboardFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
 /* Owner Calendar */
@@ -1172,6 +1289,10 @@ button.client-direct-action{font-family:inherit}
   .client-timeline-service{grid-column:1/-1}
   .client-timeline-price{grid-column:1/-1}
   .client-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .owner-review-card{padding:18px;border-radius:24px}
+  .owner-review-header{align-items:flex-start;flex-direction:column}
+  .owner-review-status{align-self:flex-start}
+  .owner-review-card .status-row{grid-template-columns:1fr}
   .service-row{align-items:stretch;flex-direction:column}
   .whatsapp-actions,.client-direct-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .whatsapp-action,.client-direct-action{width:100%;min-height:44px}
@@ -1193,7 +1314,7 @@ button.client-direct-action{font-family:inherit}
 @media(prefers-reduced-motion:reduce){
   .owner-body *{scroll-behavior:auto!important}
   .dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div){animation:none;will-change:auto}
-  .revenue-card,.financial-panel,.calendar-day,.client-card,.client-timeline-content,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
+  .revenue-card,.financial-panel,.calendar-day,.client-card,.client-timeline-content,.owner-review-card,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
   .financial-ranked-item,.recent-completed-item,.client-timeline-item,.client-photo-grid a,.calendar-today-button,.calendar-appointment,.trend-bar,.financial-status-bar,.whatsapp-action,.client-direct-action,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
 }
 
@@ -1841,12 +1962,13 @@ button.client-direct-action{font-family:inherit}
 }
 
 @media(prefers-reduced-motion:reduce) {
-  .owner-body :is(.stats div,.revenue-card,.appointment-card,.service-row,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.tab,.logout) {
+  .owner-body :is(.stats div,.revenue-card,.appointment-card,.service-row,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.owner-review-card,.tab,.logout) {
     transition: none;
   }
 
   .owner-body .appointment-timeline-card,
   .owner-body .financial-panel,
+  .owner-body .owner-review-card,
   .owner-body .calendar-day {
     animation: none;
   }
