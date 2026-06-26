@@ -1142,6 +1142,15 @@ function createClientMetric(label, value) {
   return metric;
 }
 
+function clientInitials(name) {
+  const parts = String(name || "PinkSpa Client")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const initials = parts.slice(0, 2).map(part => part[0]).join("");
+  return (initials || "PC").toUpperCase();
+}
+
 function clientAppointmentDateTime(appointment) {
   const date = new Date(`${appointment.appointment_date}T00:00:00`);
   const timeMatch = String(appointment.appointment_time || "")
@@ -1251,7 +1260,16 @@ function renderClientCard(client) {
   const header = document.createElement("div");
   header.className = "client-card-header";
 
+  const profile = document.createElement("div");
+  profile.className = "client-profile";
+
+  const avatar = document.createElement("div");
+  avatar.className = "client-avatar";
+  avatar.textContent = clientInitials(client.name);
+  avatar.setAttribute("aria-hidden", "true");
+
   const identity = document.createElement("div");
+  identity.className = "client-identity";
   const name = document.createElement("h3");
   name.textContent = client.name || "PinkSpa Client";
   const contact = document.createElement("div");
@@ -1276,6 +1294,7 @@ function renderClientCard(client) {
   }
 
   identity.append(name, contact);
+  profile.append(avatar, identity);
 
   const badges = document.createElement("div");
   badges.className = "client-badges";
@@ -1289,7 +1308,7 @@ function renderClientCard(client) {
   appointmentBadge.className = "client-appointment-badge";
   appointmentBadge.textContent = `${client.total_appointments} appointment${client.total_appointments === 1 ? "" : "s"}`;
   badges.append(vipBadge, appointmentBadge);
-  header.append(identity, badges);
+  header.append(profile, badges);
 
   const currency = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -1298,11 +1317,10 @@ function renderClientCard(client) {
   const metrics = document.createElement("div");
   metrics.className = "client-metrics";
   metrics.append(
-    createClientMetric("Total Appointments", String(client.total_appointments)),
-    createClientMetric("Total Money Spent", currency.format(Number(client.total_spent || 0))),
+    createClientMetric("Total Spent", currency.format(Number(client.total_spent || 0))),
+    createClientMetric("Visits", String(client.completed_visits || 0)),
     createClientMetric("Favorite Service", client.favorite_service || "-"),
-    createClientMetric("Last Visit", formatClientDate(client.last_visit_date)),
-    createClientMetric("Reviews Submitted", String(client.reviews?.length || 0))
+    createClientMetric("Last Visit", formatClientDate(client.last_visit_date))
   );
 
   card.append(header, metrics);
@@ -1310,11 +1328,14 @@ function renderClientCard(client) {
   const timelineDetails = document.createElement("details");
   timelineDetails.className = "client-timeline-details";
   const timelineSummary = document.createElement("summary");
+  const timelineSummaryMain = document.createElement("span");
+  timelineSummaryMain.className = "client-timeline-summary-main";
   const timelineLabel = document.createElement("span");
   timelineLabel.textContent = "View Timeline";
   const timelineCount = document.createElement("small");
   timelineCount.textContent = `${client.total_appointments || 0} appointment${client.total_appointments === 1 ? "" : "s"}`;
-  timelineSummary.append(timelineLabel, timelineCount);
+  timelineSummaryMain.append(timelineLabel, timelineCount);
+  timelineSummary.appendChild(timelineSummaryMain);
   const timelineContent = document.createElement("div");
   timelineContent.className = "client-timeline-content";
   timelineDetails.append(timelineSummary, timelineContent);
