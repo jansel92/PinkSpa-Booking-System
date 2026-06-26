@@ -881,9 +881,12 @@ function localDateKey(date) {
 }
 
 function createFinancialEmpty(message) {
-  const empty = document.createElement("p");
+  const empty = document.createElement("div");
   empty.className = "financial-empty";
-  empty.textContent = message;
+  empty.innerHTML = `
+    <span aria-hidden="true">✦</span>
+    <p>${message}</p>
+  `;
   return empty;
 }
 
@@ -967,6 +970,7 @@ function renderRevenueDashboard(appointments, clients = allClients) {
       topClients.forEach((client, index) => {
         const item = document.createElement("div");
         item.className = "financial-ranked-item";
+        item.dataset.rankType = "client";
         const rank = document.createElement("span");
         rank.className = "financial-rank";
         rank.textContent = String(index + 1);
@@ -995,6 +999,7 @@ function renderRevenueDashboard(appointments, clients = allClients) {
       topServices.forEach(([serviceName, metrics], index) => {
         const item = document.createElement("div");
         item.className = "financial-ranked-item";
+        item.dataset.rankType = "service";
         const rank = document.createElement("span");
         rank.className = "financial-rank";
         rank.textContent = String(index + 1);
@@ -1058,6 +1063,7 @@ function renderRevenueDashboard(appointments, clients = allClients) {
       const percentage = appointments.length ? (count / appointments.length) * 100 : 0;
       const row = document.createElement("div");
       row.className = "status-breakdown-row";
+      row.dataset.status = status;
       const heading = document.createElement("div");
       const label = document.createElement("span");
       label.textContent = calendarStatusName(status);
@@ -1101,6 +1107,7 @@ function renderRevenueDashboard(appointments, clients = allClients) {
         time.textContent = appt.appointment_time || "Time unavailable";
         date.append(dateText, time);
         const details = document.createElement("div");
+        details.className = "recent-completed-details";
         const client = document.createElement("strong");
         client.textContent = appt.client_name || "PinkSpa Client";
         const service = document.createElement("span");

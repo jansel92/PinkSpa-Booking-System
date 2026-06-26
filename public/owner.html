@@ -115,42 +115,42 @@
         </div>
 
         <div class="revenue-grid">
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="today">
             <span>Today's Revenue</span>
             <strong id="revenueToday">$0.00</strong>
           </div>
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="week">
             <span>This Week Revenue</span>
             <strong id="revenueWeek">$0.00</strong>
           </div>
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="month">
             <span>This Month Revenue</span>
             <strong id="revenueMonth">$0.00</strong>
           </div>
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="lifetime">
             <span>Total Lifetime Revenue</span>
             <strong id="revenueTotal">$0.00</strong>
           </div>
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="average">
             <span>Average Appointment Value</span>
             <strong id="revenueAverage">$0.00</strong>
           </div>
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="completed">
             <span>Completed Appointments</span>
             <strong id="revenueCompleted">0</strong>
           </div>
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="pending">
             <span>Pending Revenue</span>
             <strong id="revenuePending">$0.00</strong>
           </div>
-          <div class="revenue-card">
+          <div class="revenue-card" data-revenue-card="popular">
             <span>Most Popular Service</span>
             <strong id="revenuePopular" class="revenue-service-name">-</strong>
           </div>
         </div>
 
         <div class="financial-analytics">
-          <section class="financial-panel" aria-labelledby="topClientsTitle">
+          <section class="financial-panel financial-panel-clients" aria-labelledby="topClientsTitle">
             <div class="financial-panel-heading">
               <h3 id="topClientsTitle">Top 5 Clients by Money Spent</h3>
               <span>Completed visits</span>
@@ -158,7 +158,7 @@
             <div id="topClientsList" class="financial-ranked-list"></div>
           </section>
 
-          <section class="financial-panel" aria-labelledby="topServicesTitle">
+          <section class="financial-panel financial-panel-services" aria-labelledby="topServicesTitle">
             <div class="financial-panel-heading">
               <h3 id="topServicesTitle">Top 5 Most Popular Services</h3>
               <span>Completed appointments</span>
@@ -174,7 +174,7 @@
             <div id="revenueTrend" class="revenue-trend" aria-label="Daily revenue for the current week"></div>
           </section>
 
-          <section class="financial-panel" aria-labelledby="statusBreakdownTitle">
+          <section class="financial-panel financial-panel-status" aria-labelledby="statusBreakdownTitle">
             <div class="financial-panel-heading">
               <h3 id="statusBreakdownTitle">Appointment Status Breakdown</h3>
               <span>All appointments</span>
@@ -182,7 +182,7 @@
             <div id="statusBreakdown" class="status-breakdown"></div>
           </section>
 
-          <section class="financial-panel" aria-labelledby="recentCompletedTitle">
+          <section class="financial-panel financial-panel-recent" aria-labelledby="recentCompletedTitle">
             <div class="financial-panel-heading">
               <h3 id="recentCompletedTitle">Recent Completed Appointments</h3>
               <span>Latest five</span>
