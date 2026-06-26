@@ -790,46 +790,74 @@ function setupFaqAccordion() {
   if (!faqItems.length) return;
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let lastToggleTime = 0;
+
+  const setOpen = (item, isOpen) => {
+    const button = item.querySelector(".faq-question");
+    const answer = item.querySelector(".faq-answer");
+    if (!button || !answer) return;
+
+    item.classList.toggle("is-open", isOpen);
+    button.setAttribute("aria-expanded", String(isOpen));
+
+    if (reduceMotion) {
+      answer.hidden = !isOpen;
+      answer.style.maxHeight = isOpen ? "none" : "";
+      return;
+    }
+
+    if (isOpen) {
+      answer.hidden = false;
+      answer.style.maxHeight = "0px";
+      window.requestAnimationFrame(() => {
+        answer.style.maxHeight = `${answer.scrollHeight}px`;
+      });
+      return;
+    }
+
+    if (answer.hidden) {
+      answer.style.maxHeight = "0px";
+      return;
+    }
+
+    if (answer.style.maxHeight === "none" || !answer.style.maxHeight) {
+      answer.style.maxHeight = `${answer.scrollHeight}px`;
+    }
+
+    window.requestAnimationFrame(() => {
+      answer.style.maxHeight = "0px";
+    });
+  };
 
   faqItems.forEach(item => {
     const button = item.querySelector(".faq-question");
     const answer = item.querySelector(".faq-answer");
     if (!button || !answer) return;
 
-    const setOpen = isOpen => {
-      item.classList.toggle("is-open", isOpen);
-      button.setAttribute("aria-expanded", String(isOpen));
-
-      if (reduceMotion) {
-        answer.hidden = !isOpen;
-        answer.style.maxHeight = "";
-        return;
-      }
-
-      if (isOpen) {
-        answer.hidden = false;
-        answer.style.maxHeight = `${answer.scrollHeight}px`;
-        return;
-      }
-
-      answer.style.maxHeight = `${answer.scrollHeight}px`;
-      window.requestAnimationFrame(() => {
-        answer.style.maxHeight = "0px";
-      });
-    };
-
     answer.addEventListener("transitionend", event => {
       if (event.propertyName !== "max-height") return;
       const isOpen = button.getAttribute("aria-expanded") === "true";
       if (!isOpen) answer.hidden = true;
-      if (isOpen) answer.style.maxHeight = "";
+      if (isOpen) answer.style.maxHeight = "none";
     });
 
-    setOpen(button.getAttribute("aria-expanded") === "true");
+    setOpen(item, button.getAttribute("aria-expanded") === "true");
 
-    button.addEventListener("click", () => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const now = Date.now();
+      if (now - lastToggleTime < 220) return;
+      lastToggleTime = now;
+
       const shouldOpen = button.getAttribute("aria-expanded") !== "true";
-      setOpen(shouldOpen);
+
+      faqItems.forEach(otherItem => {
+        if (otherItem !== item) setOpen(otherItem, false);
+      });
+
+      setOpen(item, shouldOpen);
     });
   });
 }

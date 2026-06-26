@@ -3959,7 +3959,7 @@ button.client-direct-action{font-family:inherit}
 .home-page .faq-answer {
   max-height: 0;
   overflow: hidden;
-  transition: max-height .42s cubic-bezier(.22, 1, .36, 1);
+  transition: max-height .32s cubic-bezier(.22, 1, .36, 1);
 }
 
 .home-page .faq-answer p {
