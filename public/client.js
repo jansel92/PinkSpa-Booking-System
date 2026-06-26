@@ -127,6 +127,7 @@ function setupScrollReveal() {
     ".home-page #reviews .heading, .home-page .review-card, " +
     ".home-page #status .heading, .home-page #status .form-card, " +
     ".home-page .booking-copy, .home-page #bookingForm, " +
+    ".home-page #faq .heading, .home-page .faq-item, " +
     ".home-page .cta, .home-page footer"
   ));
 }
@@ -781,6 +782,55 @@ function setupWhatsappConcierge() {
     window.setTimeout(() => {
       concierge.hidden = true;
     }, 240);
+  });
+}
+
+function setupFaqAccordion() {
+  const faqItems = Array.from(document.querySelectorAll(".faq-item"));
+  if (!faqItems.length) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  faqItems.forEach(item => {
+    const button = item.querySelector(".faq-question");
+    const answer = item.querySelector(".faq-answer");
+    if (!button || !answer) return;
+
+    const setOpen = isOpen => {
+      item.classList.toggle("is-open", isOpen);
+      button.setAttribute("aria-expanded", String(isOpen));
+
+      if (reduceMotion) {
+        answer.hidden = !isOpen;
+        answer.style.maxHeight = "";
+        return;
+      }
+
+      if (isOpen) {
+        answer.hidden = false;
+        answer.style.maxHeight = `${answer.scrollHeight}px`;
+        return;
+      }
+
+      answer.style.maxHeight = `${answer.scrollHeight}px`;
+      window.requestAnimationFrame(() => {
+        answer.style.maxHeight = "0px";
+      });
+    };
+
+    answer.addEventListener("transitionend", event => {
+      if (event.propertyName !== "max-height") return;
+      const isOpen = button.getAttribute("aria-expanded") === "true";
+      if (!isOpen) answer.hidden = true;
+      if (isOpen) answer.style.maxHeight = "";
+    });
+
+    setOpen(button.getAttribute("aria-expanded") === "true");
+
+    button.addEventListener("click", () => {
+      const shouldOpen = button.getAttribute("aria-expanded") !== "true";
+      setOpen(shouldOpen);
+    });
   });
 }
 
@@ -1567,6 +1617,7 @@ async function loadApprovedReviews() {
 
 setupAppLoadingOverlay();
 setupWhatsappConcierge();
+setupFaqAccordion();
 setupScrollReveal();
 setupStatsCounters();
 setupGlassNavigation();
