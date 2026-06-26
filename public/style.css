@@ -506,6 +506,200 @@ footer{text-align:center;color:var(--muted);padding:28px}
   letter-spacing:.4px;
   text-transform:uppercase;
 }
+.owner-body #appointmentsList{gap:16px}
+.owner-body .appointment-timeline-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:150px minmax(0,1fr);
+  gap:18px;
+  overflow:hidden;
+  padding:0;
+  isolation:isolate;
+  animation:appointmentTimelineIn .48s cubic-bezier(.22,1,.36,1) both;
+}
+.owner-body .appointment-timeline-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  background:
+    radial-gradient(circle at 12% 18%,rgba(255,214,230,.72),transparent 34%),
+    linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,247,251,.82));
+}
+.owner-body .appointment-timeline-card > :not(.appointment-timeline-rail){
+  position:relative;
+  z-index:1;
+}
+.owner-body .appointment-timeline-rail{
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:74px;
+  width:2px;
+  background:linear-gradient(180deg,rgba(255,142,181,.18),rgba(183,25,86,.58),rgba(255,215,235,.12));
+  pointer-events:none;
+}
+.owner-body .appointment-time-badge{
+  position:relative;
+  z-index:1;
+  display:grid;
+  align-content:start;
+  gap:7px;
+  padding:22px 18px;
+  border-right:1px solid rgba(255,211,225,.68);
+  background:linear-gradient(180deg,rgba(255,246,250,.9),rgba(255,255,255,.44));
+}
+.owner-body .appointment-time-badge::before{
+  content:"";
+  width:14px;
+  height:14px;
+  margin:0 0 8px 49px;
+  border:3px solid #fff;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff8eb5,var(--deep));
+  box-shadow:0 0 0 6px rgba(255,142,181,.18),0 12px 26px rgba(183,25,86,.18);
+}
+.owner-body .appointment-time-badge span,
+.owner-body .appointment-time-badge em{
+  color:#8a6374;
+  font-size:12px;
+  font-style:normal;
+  font-weight:900;
+  letter-spacing:.04em;
+}
+.owner-body .appointment-time-badge strong{
+  color:#2a1720;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(28px,3vw,36px);
+  font-weight:700;
+  letter-spacing:-.06em;
+  line-height:1;
+}
+.owner-body .appointment-main{
+  display:grid;
+  min-width:0;
+  gap:16px;
+  padding:22px 22px 22px 0;
+}
+.owner-body .appointment-card-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+}
+.owner-body .appointment-eyebrow{
+  margin:0 0 5px;
+  color:#9a5f77;
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.owner-body .appointment-card-header h3{
+  margin:0;
+  color:#25161d;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(22px,2.4vw,31px);
+  font-weight:700;
+  letter-spacing:-.045em;
+  line-height:1.05;
+}
+.owner-body .appointment-status-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:8px 12px;
+  border:1px solid rgba(255,211,225,.8);
+  border-radius:999px;
+  background:#fff;
+  color:var(--deep);
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+  box-shadow:0 10px 24px rgba(79,17,44,.07);
+}
+.owner-body .appointment-status-pending .appointment-status-badge{background:#fff7d8;color:#8a6200;border-color:#ffe6a5}
+.owner-body .appointment-status-confirmed .appointment-status-badge{background:#ecfbf1;color:#126c37;border-color:#ccefd9}
+.owner-body .appointment-status-completed .appointment-status-badge{background:#eeeeff;color:#4035a8;border-color:#d9d7ff}
+.owner-body .appointment-status-cancelled .appointment-status-badge{background:#fff0f3;color:#a60d35;border-color:#ffd0db}
+.owner-body .appointment-status-no-show .appointment-status-badge{background:#f1f1f1;color:#333;border-color:#dedede}
+.owner-body .appointment-detail-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:10px;
+}
+.owner-body .appointment-detail-grid span{
+  min-width:0;
+  padding:12px;
+  border:1px solid rgba(255,211,225,.7);
+  border-radius:18px;
+  background:rgba(255,255,255,.68);
+  color:#4c2b39;
+  font-size:14px;
+  line-height:1.4;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.82);
+}
+.owner-body .appointment-detail-grid b,
+.owner-body .appointment-notes b,
+.owner-body .appointment-inspiration b{
+  display:block;
+  margin-bottom:4px;
+  color:#936174;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.owner-body .appointment-notes{
+  padding:14px;
+  border:1px solid rgba(255,211,225,.72);
+  border-radius:20px;
+  background:rgba(255,255,255,.58);
+}
+.owner-body .appointment-notes p{
+  margin:0;
+  color:#4c2b39;
+  line-height:1.6;
+  white-space:pre-wrap;
+}
+.owner-body .appointment-inspiration{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 116px;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  border:1px solid rgba(255,211,225,.72);
+  border-radius:22px;
+  background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,246,250,.7));
+}
+.owner-body .appointment-inspiration span{
+  color:#8a6374;
+  font-size:13px;
+  font-weight:800;
+}
+.owner-body .appointment-inspiration img{
+  display:block;
+  width:116px;
+  height:96px;
+  object-fit:cover;
+  border:1px solid #ffd3e4;
+  border-radius:18px;
+  box-shadow:0 14px 30px rgba(79,17,44,.12);
+}
+.owner-body .appointment-action-group{
+  display:grid;
+  gap:12px;
+}
+.owner-body .appointment-timeline-card .appointment-quick-actions{
+  margin-top:0;
+}
+.owner-body .appointment-timeline-card .status-row{
+  padding:14px;
+  border:1px solid rgba(255,211,225,.72);
+  border-radius:20px;
+  background:rgba(255,255,255,.58);
+}
 .whatsapp-actions,.client-direct-actions{display:flex;gap:8px;flex-wrap:wrap}
 .whatsapp-action,.client-direct-action{
   display:inline-flex;
@@ -558,6 +752,7 @@ button.client-direct-action{font-family:inherit}
 @keyframes ownerToastProgress{to{transform:scaleX(0)}}
 @keyframes ownerContentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes notificationIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes appointmentTimelineIn{from{opacity:0;transform:translateY(12px) scale(.992)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes dashboardFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
 /* Owner Calendar */
@@ -1365,6 +1560,68 @@ button.client-direct-action{font-family:inherit}
     border-radius: 28px;
   }
 
+  .owner-body .appointment-timeline-card {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .owner-body .appointment-timeline-rail {
+    left: 22px;
+    opacity: .28;
+  }
+
+  .owner-body .appointment-time-badge {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 16px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,211,225,.68);
+  }
+
+  .owner-body .appointment-time-badge::before {
+    flex: 0 0 auto;
+    width: 12px;
+    height: 12px;
+    margin: 0 2px 0 0;
+  }
+
+  .owner-body .appointment-time-badge strong {
+    font-size: 28px;
+  }
+
+  .owner-body .appointment-main {
+    padding: 16px;
+  }
+
+  .owner-body .appointment-card-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .owner-body .appointment-status-badge {
+    align-self: flex-start;
+  }
+
+  .owner-body .appointment-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-body .appointment-inspiration {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-body .appointment-inspiration img {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+  }
+
+  .owner-body .appointment-timeline-card .status-row {
+    padding: 12px;
+  }
+
   .owner-body .notification-panel {
     top: 88px;
     right: 12px;
@@ -1377,6 +1634,10 @@ button.client-direct-action{font-family:inherit}
 @media(prefers-reduced-motion:reduce) {
   .owner-body :is(.stats div,.revenue-card,.appointment-card,.service-row,.financial-panel,.calendar-day,.client-card,.tab,.logout) {
     transition: none;
+  }
+
+  .owner-body .appointment-timeline-card {
+    animation: none;
   }
 
   .owner-body .stats strong.is-counting {

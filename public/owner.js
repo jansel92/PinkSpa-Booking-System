@@ -1660,20 +1660,48 @@ async function loadAppointments() {
 
   appointments.forEach(appt => {
     const card = document.createElement("div");
-    card.className = "appointment-card";
+    const supportedStatuses = ["pending", "confirmed", "completed", "cancelled", "no-show"];
+    const status = supportedStatuses.includes(appt.status) ? appt.status : "pending";
+    const duration = Number(appt.duration_minutes) || 60;
+    const appointmentDate = appt.appointment_date || "Date unavailable";
+    const appointmentTime = appt.appointment_time || "Time unavailable";
+    const appointmentDateLabel = appt.appointment_date ? formatCalendarDate(appt.appointment_date) : appointmentDate;
+
+    card.className = `appointment-card appointment-timeline-card appointment-status-${status}`;
 
     card.innerHTML = `
-      <strong>${appt.service_name}</strong>
-      <span><b>Client:</b> ${appt.client_name}</span>
-      <span><b>Phone:</b> ${appt.client_phone}</span>
-      <span><b>Date:</b> ${appt.appointment_date}</span>
-      <span><b>Time:</b> ${appt.appointment_time}</span>
-      <span><b>Duration:</b> ${appt.duration_minutes || 60} minutes</span>
-      <span><b>Status:</b> ${statusLabel(appt.status)}</span>
-      <p><b>Notes:</b> ${appt.notes || "No notes added."}</p>
+      <div class="appointment-timeline-rail" aria-hidden="true"></div>
+      <div class="appointment-time-badge">
+        <span>${appointmentDate}</span>
+        <strong>${appointmentTime}</strong>
+        <em>${duration} min</em>
+      </div>
+      <div class="appointment-main">
+        <div class="appointment-card-header">
+          <div>
+            <p class="appointment-eyebrow">${appointmentDateLabel}</p>
+            <h3>${appt.service_name || "PinkSpa Service"}</h3>
+          </div>
+          <span class="appointment-status-badge appointment-status-${status}">${calendarStatusName(status)}</span>
+        </div>
+        <div class="appointment-detail-grid">
+          <span><b>Client</b>${appt.client_name || "PinkSpa Client"}</span>
+          <span><b>Phone</b>${appt.client_phone || "No phone added"}</span>
+          <span><b>Date</b>${appointmentDate}</span>
+          <span><b>Time</b>${appointmentTime}</span>
+          <span><b>Duration</b>${duration} minutes</span>
+          <span><b>Status</b>${statusLabel(status)}</span>
+        </div>
+        <div class="appointment-notes">
+          <b>Notes</b>
+          <p>${appt.notes || "No notes added."}</p>
+        </div>
       ${appt.inspiration_image ? `
-        <div>
-          <b>Inspiration Photo:</b><br>
+        <div class="appointment-inspiration">
+          <div>
+            <b>Inspiration Photo</b>
+            <span>Client reference image</span>
+          </div>
           <a
             href="/api/appointments/${appt.id}/inspiration"
             target="_blank"
@@ -1683,14 +1711,16 @@ async function loadAppointments() {
               src="/api/appointments/${appt.id}/inspiration"
               alt="Client inspiration photo"
               loading="lazy"
-              style="display:block;width:min(240px,100%);max-height:240px;margin-top:8px;object-fit:cover;border-radius:16px;border:1px solid #ffd3e4;"
             />
           </a>
        </div>
       ` : ""}
+      </div>
     `;
 
-    card.appendChild(createAppointmentQuickActions(appt));
+    const actionGroup = document.createElement("div");
+    actionGroup.className = "appointment-action-group";
+    actionGroup.appendChild(createAppointmentQuickActions(appt));
 
     const statusRow = document.createElement("div");
     statusRow.className = "status-row";
@@ -1710,7 +1740,8 @@ async function loadAppointments() {
       button.addEventListener("click", () => handler(button));
       statusRow.appendChild(button);
     });
-    card.appendChild(statusRow);
+    actionGroup.appendChild(statusRow);
+    card.querySelector(".appointment-main").appendChild(actionGroup);
 
     list.appendChild(card);
   });
