@@ -8,43 +8,64 @@
   <link rel="icon" type="image/png" href="/images/favicon.png?v=300" />
 </head>
 
-<body>
-  <section class="login-screen">
-    <form id="reviewForm" class="login-card">
-      <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="login-logo" />
+<body class="review-page">
+  <section class="review-screen">
+    <form id="reviewForm" class="review-card">
+      <div class="review-brand">
+        <img src="/images/PinkSpa.png" alt="PinkSpa Logo" class="review-logo" />
+        <span>PinkSpa</span>
+      </div>
 
-      <h1>Leave a Review</h1>
-      <p>Thank you for visiting PinkSpa. We would love to hear about your experience.</p>
+      <div class="review-heading">
+        <p class="review-eyebrow">Share Your Experience</p>
+        <h1>Leave a Review</h1>
+        <p>Your feedback helps PinkSpa grow and helps other clients feel confident booking.</p>
+      </div>
+
+      <fieldset class="review-stars" aria-label="Rating">
+        <legend>Your Rating</legend>
+        <div class="review-star-options">
+          <input id="rating5" name="rating" type="radio" value="5" required checked />
+          <label for="rating5" aria-label="5 stars">★</label>
+          <input id="rating4" name="rating" type="radio" value="4" />
+          <label for="rating4" aria-label="4 stars">★</label>
+          <input id="rating3" name="rating" type="radio" value="3" />
+          <label for="rating3" aria-label="3 stars">★</label>
+          <input id="rating2" name="rating" type="radio" value="2" />
+          <label for="rating2" aria-label="2 stars">★</label>
+          <input id="rating1" name="rating" type="radio" value="1" />
+          <label for="rating1" aria-label="1 star">★</label>
+        </div>
+      </fieldset>
 
       <label>Your Name
-        <input name="client_name" required placeholder="Your name" />
-      </label>
-
-      <label>Rating
-        <select name="rating" required>
-          <option value="5">★★★★★ 5 Stars</option>
-          <option value="4">★★★★ 4 Stars</option>
-          <option value="3">★★★ 3 Stars</option>
-          <option value="2">★★ 2 Stars</option>
-          <option value="1">★ 1 Star</option>
-        </select>
+        <input name="client_name" required placeholder="Your name" autocomplete="name" />
       </label>
 
       <label>Your Review
-        <textarea name="review_text" required placeholder="Write your review here..."></textarea>
+        <textarea name="review_text" required placeholder="Tell us what you loved about your visit..."></textarea>
       </label>
 
-      <button class="btn primary full" type="submit">Submit Review</button>
-      <p id="reviewMessage" class="message"></p>
+      <button class="btn primary full review-submit" type="submit">Submit Review</button>
+      <div id="reviewMessage" class="review-message" aria-live="polite"></div>
     </form>
   </section>
 
   <script>
-    document.getElementById("reviewForm").addEventListener("submit", async (e) => {
+    const reviewForm = document.getElementById("reviewForm");
+    const reviewMessage = document.getElementById("reviewMessage");
+    const nameFromUrl = new URLSearchParams(window.location.search).get("name");
+
+    if (nameFromUrl) {
+      reviewForm.elements.client_name.value = nameFromUrl;
+    }
+
+    reviewForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const payload = Object.fromEntries(new FormData(e.target).entries());
-      const message = document.getElementById("reviewMessage");
+      reviewMessage.className = "review-message";
+      reviewMessage.textContent = "Submitting your review...";
 
       try {
         const response = await fetch("/api/reviews", {
@@ -56,15 +77,21 @@
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-          message.textContent = data.error || "We couldn't submit your review. Please check your information and try again.";
+          reviewMessage.className = "review-message is-error";
+          reviewMessage.textContent = data.error || "We couldn't submit your review. Please check your information and try again.";
           return;
         }
 
         e.target.reset();
-        message.textContent = "Thank you! Your review was submitted to PinkSpa.";
+        reviewMessage.className = "review-message is-success";
+        reviewMessage.innerHTML = `
+          <strong>Thank you for sharing your experience.</strong>
+          <span>Your review was sent to PinkSpa and will be reviewed shortly.</span>
+        `;
       } catch (error) {
         console.error("Unable to submit review:", error);
-        message.textContent = "We couldn't submit your review. Please check your connection and try again. Your review is still in the form.";
+        reviewMessage.className = "review-message is-error";
+        reviewMessage.textContent = "We couldn't submit your review. Please check your connection and try again. Your review is still in the form.";
       }
     });
   </script>

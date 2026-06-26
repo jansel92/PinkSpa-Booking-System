@@ -852,7 +852,250 @@ button.client-direct-action{font-family:inherit}
   margin:0 auto 20px;
    border-radius:50%;
     overflow:hidden;
-} /* Reviews Section */
+}
+
+.review-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 198, 220, .48), transparent 30%),
+    radial-gradient(circle at 86% 20%, rgba(255, 224, 180, .42), transparent 28%),
+    linear-gradient(135deg, #fffafb 0%, #fff0f6 100%);
+}
+
+.review-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: clamp(24px, 5vw, 56px);
+}
+
+.review-card {
+  position: relative;
+  overflow: hidden;
+  width: min(560px, 100%);
+  padding: clamp(28px, 5vw, 44px);
+  border: 1px solid rgba(255, 211, 225, .92);
+  border-radius: 38px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255, 224, 180, .26), transparent 30%),
+    linear-gradient(145deg, rgba(255,255,255,.98), rgba(255,247,250,.93));
+  box-shadow:
+    0 28px 80px rgba(98, 30, 60, .14),
+    0 0 0 1px rgba(255, 236, 199, .36);
+  animation: reviewCardIn .72s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.review-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.54), transparent 44%);
+}
+
+.review-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.review-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  color: var(--deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.review-logo {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 12px 28px rgba(183, 25, 86, .14);
+}
+
+.review-heading {
+  margin-bottom: 24px;
+}
+
+.review-eyebrow {
+  margin: 0 0 8px;
+  color: var(--deep);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.review-heading h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 8vw, 64px);
+  font-weight: 500;
+  line-height: .95;
+  letter-spacing: -2px;
+}
+
+.review-heading p:not(.review-eyebrow) {
+  max-width: 460px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.review-stars {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+
+.review-stars legend {
+  margin-bottom: 10px;
+  color: #493940;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.review-star-options {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 5px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 211, 225, .9);
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 12px 30px rgba(98, 30, 60, .08);
+}
+
+.review-star-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.review-star-options label {
+  margin: 0;
+  color: #e9c7d4;
+  cursor: pointer;
+  font-size: clamp(30px, 7vw, 40px);
+  line-height: 1;
+  text-shadow: 0 8px 18px rgba(183, 25, 86, .08);
+  transition: color .22s ease, transform .22s ease, text-shadow .22s ease;
+}
+
+.review-star-options input:checked ~ label,
+.review-star-options label:hover,
+.review-star-options label:hover ~ label {
+  color: #d4974d;
+  text-shadow: 0 10px 22px rgba(212, 151, 77, .18);
+}
+
+.review-star-options input:focus-visible + label {
+  outline: 3px solid rgba(255,95,147,.28);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.review-star-options label:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.review-page label {
+  color: #493940;
+}
+
+.review-page input,
+.review-page textarea {
+  border-color: rgba(183, 25, 86, .16);
+  background: rgba(255,255,255,.96);
+  transition: border-color .25s ease, box-shadow .25s ease, background-color .25s ease;
+}
+
+.review-page input:hover,
+.review-page textarea:hover {
+  border-color: rgba(183, 25, 86, .3);
+}
+
+.review-page input:focus,
+.review-page textarea:focus {
+  border-color: var(--pink);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(255, 95, 147, .1);
+}
+
+.review-page textarea {
+  min-height: 140px;
+  line-height: 1.65;
+}
+
+.review-submit {
+  min-height: 52px;
+  margin-top: 4px;
+  box-shadow: 0 18px 40px rgba(183, 25, 86, .22);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.review-submit:hover,
+.review-submit:focus-visible {
+  box-shadow: 0 22px 48px rgba(183, 25, 86, .28);
+  transform: translateY(-2px);
+}
+
+.review-message {
+  min-height: 20px;
+  margin: 16px 0 0;
+  color: var(--deep);
+  font-weight: 900;
+  line-height: 1.55;
+}
+
+.review-message.is-success,
+.review-message.is-error {
+  padding: 15px;
+  border-radius: 20px;
+}
+
+.review-message.is-success {
+  border: 1px solid rgba(34, 132, 81, .2);
+  background: #effbf3;
+  color: #126c37;
+  box-shadow: 0 14px 28px rgba(18, 108, 55, .08);
+}
+
+.review-message.is-error {
+  border: 1px solid rgba(177, 58, 58, .18);
+  background: #fff1f1;
+  color: #9a2f2f;
+}
+
+.review-message strong,
+.review-message span {
+  display: block;
+}
+
+.review-message span {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@keyframes reviewCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Reviews Section */
 .reviews-section{
   background:#fff9fb;
 }
@@ -4259,6 +4502,37 @@ button.client-direct-action{font-family:inherit}
     width: 100%;
   }
 
+  .review-screen {
+    padding: 18px;
+  }
+
+  .review-card {
+    padding: 24px 18px;
+    border-radius: 28px;
+  }
+
+  .review-brand {
+    margin-bottom: 18px;
+  }
+
+  .review-heading {
+    margin-bottom: 20px;
+  }
+
+  .review-star-options {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 8px;
+  }
+
+  .review-star-options label {
+    font-size: clamp(28px, 10vw, 38px);
+  }
+
+  .review-page textarea {
+    min-height: 128px;
+  }
+
   .home-page .booking-section {
     gap: 44px;
   }
@@ -4450,6 +4724,8 @@ button.client-direct-action{font-family:inherit}
   .home-page .recommendation-card,
   .home-page .recommendation-add,
   .home-page .client-status-whatsapp,
+  .review-submit,
+  .review-star-options label,
   .home-page .service-grid,
   .home-page .service-filter,
   .home-page .service-page-button,
@@ -4482,6 +4758,7 @@ button.client-direct-action{font-family:inherit}
   .home-page .app-loading-card::before,
   .home-page .app-loading-card img,
   .home-page .client-status-card,
+  .review-card,
   .home-page .recent-bookings-track,
   .home-page .whatsapp-concierge {
     animation: none;
