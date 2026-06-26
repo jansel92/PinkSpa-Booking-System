@@ -1485,9 +1485,15 @@ function createCalendarAppointment(appointment) {
   const status = supportedStatuses.includes(appointment.status) ? appointment.status : "pending";
   item.className = `calendar-appointment calendar-status-${status}`;
 
+  const timeBlock = document.createElement("div");
+  timeBlock.className = "calendar-time-block";
   const time = document.createElement("time");
   time.className = "calendar-time";
   time.textContent = appointment.appointment_time || "Time unavailable";
+  const duration = document.createElement("span");
+  duration.className = "calendar-duration";
+  duration.textContent = `${Number(appointment.duration_minutes) || 60} min`;
+  timeBlock.append(time, duration);
 
   const details = document.createElement("div");
   details.className = "calendar-appointment-details";
@@ -1497,15 +1503,11 @@ function createCalendarAppointment(appointment) {
   service.textContent = appointment.service_name || "Service unavailable";
   details.append(client, service);
 
-  const duration = document.createElement("span");
-  duration.className = "calendar-duration";
-  duration.textContent = `${Number(appointment.duration_minutes) || 60} min`;
-
   const statusBadge = document.createElement("span");
   statusBadge.className = `calendar-status-badge calendar-status-${status}`;
   statusBadge.textContent = calendarStatusName(appointment.status);
 
-  item.append(time, details, duration, statusBadge);
+  item.append(timeBlock, details, statusBadge);
   return item;
 }
 
@@ -1532,9 +1534,13 @@ function renderCalendar(appointments) {
   list.replaceChildren();
 
   if (!appointments.length) {
-    const empty = document.createElement("p");
+    const empty = document.createElement("div");
     empty.className = "calendar-empty";
-    empty.textContent = "No appointments are scheduled yet.";
+    empty.innerHTML = `
+      <span aria-hidden="true">📅</span>
+      <strong>No appointments are scheduled yet.</strong>
+      <p>New bookings will appear here in your salon schedule.</p>
+    `;
     list.appendChild(empty);
     return;
   }
@@ -1551,6 +1557,7 @@ function renderCalendar(appointments) {
     const heading = document.createElement("h3");
     heading.textContent = formatCalendarDate(date);
     const count = document.createElement("span");
+    count.className = "calendar-day-count";
     count.textContent = `${groups.get(date).length} appointment${groups.get(date).length === 1 ? "" : "s"}`;
     dayHeader.append(heading, count);
 
