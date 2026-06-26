@@ -768,6 +768,8 @@ function whatsappTemplateMessage(type, appointment) {
     received: `Hi ${clientName}! This is ${businessName}. We received your booking request for ${service} on ${date} at ${time}. We will confirm your appointment shortly. Thank you!`,
     confirmed: `Hi ${clientName}! This is ${businessName}. Your ${service} appointment is confirmed for ${date} at ${time}. We look forward to seeing you!`,
     reminder: `Hi ${clientName}! This is a friendly reminder from ${businessName} for your ${service} appointment on ${date} at ${time}. Please reply if you have any questions.`,
+    reminderTomorrow: `Hi ${clientName}! This is ${businessName}. Friendly reminder that your ${service} appointment is tomorrow, ${date}, at ${time}. We are excited to welcome you to PinkSpa! Please reply if you have any questions.`,
+    reminderSameDay: `Hi ${clientName}! This is ${businessName}. Your ${service} appointment is today, ${date}, at ${time}. We look forward to seeing you soon! Please reply if you have any questions.`,
     thankYou: `Hi ${clientName}! Thank you for visiting ${businessName} for your ${service} appointment on ${date}. We loved having you and hope to see you again soon!`,
     review: `Hi ${clientName}! Thank you for choosing ${businessName} for ${service}. We would love your feedback when you have a moment: https://rachelpinkspa.com/review`,
     cancellation: `Hi ${clientName}. This is ${businessName}. Your ${service} appointment on ${date} at ${time} has been cancelled. Please contact us if you would like to reschedule.`
@@ -806,6 +808,32 @@ function createWhatsAppButton(label, type, appointment) {
   return link;
 }
 
+function isReminderAvailable(appointment) {
+  if (!["pending", "confirmed"].includes(appointment.status)) return false;
+  const dateTime = clientAppointmentDateTime(appointment);
+  return Boolean(dateTime && dateTime >= new Date());
+}
+
+function reminderOverviewCount(appointments) {
+  const now = new Date();
+  const todayKey = localDateKey(now);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const tomorrowKey = localDateKey(tomorrow);
+
+  return appointments.filter(appointment => {
+    if (!isReminderAvailable(appointment)) return false;
+    const dateKey = appointment.appointment_date;
+    return dateKey === todayKey || dateKey === tomorrowKey;
+  }).length;
+}
+
+function updateReminderOverview(appointments) {
+  const element = document.getElementById("remindersNeeded");
+  if (!element) return;
+  element.textContent = String(reminderOverviewCount(appointments));
+}
+
 async function copyAppointmentPhone(phone, button) {
   const cleanPhone = String(phone || "").trim();
   if (!cleanPhone) {
@@ -842,6 +870,19 @@ function createAppointmentQuickActions(appointment) {
     whatsappActions.appendChild(createWhatsAppButton(label, type, appointment));
   });
 
+  const reminderActions = document.createElement("div");
+  reminderActions.className = "reminder-actions";
+
+  if (isReminderAvailable(appointment)) {
+    [
+      ["Send Reminder", "reminder"],
+      ["Send Tomorrow Reminder", "reminderTomorrow"],
+      ["Send Same-Day Reminder", "reminderSameDay"]
+    ].forEach(([label, type]) => {
+      reminderActions.appendChild(createWhatsAppButton(label, type, appointment));
+    });
+  }
+
   const directActions = document.createElement("div");
   directActions.className = "client-direct-actions";
 
@@ -867,7 +908,14 @@ function createAppointmentQuickActions(appointment) {
   copyButton.addEventListener("click", () => copyAppointmentPhone(appointment.client_phone, copyButton));
 
   directActions.append(callLink, copyButton);
-  wrap.append(title, whatsappActions, directActions);
+  wrap.append(title, whatsappActions);
+  if (reminderActions.children.length) {
+    const reminderTitle = document.createElement("div");
+    reminderTitle.className = "appointment-quick-actions-title reminder-title";
+    reminderTitle.textContent = "Reminder Workflow";
+    wrap.append(reminderTitle, reminderActions);
+  }
+  wrap.appendChild(directActions);
 
   return wrap;
 }
@@ -1686,6 +1734,7 @@ async function loadAppointments() {
   setCounterValue("statCompleted", completed);
 
   renderRevenueDashboard(appointments, allClients);
+  updateReminderOverview(appointments);
 
   if (!appointments.length) {
     list.appendChild(createEmptyState("No appointment requests yet", "New bookings will appear here automatically."));
@@ -1700,6 +1749,7 @@ async function loadAppointments() {
     const appointmentDate = appt.appointment_date || "Date unavailable";
     const appointmentTime = appt.appointment_time || "Time unavailable";
     const appointmentDateLabel = appt.appointment_date ? formatCalendarDate(appt.appointment_date) : appointmentDate;
+    const reminderAvailable = isReminderAvailable(appt);
 
     card.className = `appointment-card appointment-timeline-card appointment-status-${status}`;
 
@@ -1716,7 +1766,10 @@ async function loadAppointments() {
             <p class="appointment-eyebrow">${appointmentDateLabel}</p>
             <h3>${appt.service_name || "PinkSpa Service"}</h3>
           </div>
-          <span class="appointment-status-badge appointment-status-${status}">${calendarStatusName(status)}</span>
+          <div class="appointment-header-badges">
+            ${reminderAvailable ? `<span class="appointment-reminder-badge">Reminder ready</span>` : ""}
+            <span class="appointment-status-badge appointment-status-${status}">${calendarStatusName(status)}</span>
+          </div>
         </div>
         <div class="appointment-detail-grid">
           <span><b>Client</b>${appt.client_name || "PinkSpa Client"}</span>

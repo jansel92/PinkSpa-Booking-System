@@ -471,6 +471,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .revenue-card[data-revenue-card="completed"]::before{content:"✓"}
 .revenue-card[data-revenue-card="pending"]::before{content:"⏳";font-size:17px}
 .revenue-card[data-revenue-card="popular"]::before{content:"★"}
+.revenue-card[data-revenue-card="reminders"]::before{content:"✉";font-size:19px}
 .revenue-card:nth-child(2){animation-delay:.04s}
 .revenue-card:nth-child(3){animation-delay:.08s}
 .revenue-card:nth-child(4){animation-delay:.12s}
@@ -478,6 +479,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
 .revenue-card:nth-child(6){animation-delay:.2s}
 .revenue-card:nth-child(7){animation-delay:.24s}
 .revenue-card:nth-child(8){animation-delay:.28s}
+.revenue-card:nth-child(9){animation-delay:.32s}
 .revenue-card span{grid-area:label;display:block;margin-bottom:0;color:var(--muted);font-size:12px;font-weight:950;letter-spacing:.08em;line-height:1.35;text-transform:uppercase}
 .revenue-card strong{grid-area:value;display:block;color:var(--deep);font-family:Georgia,"Times New Roman",serif;font-size:clamp(29px,3vw,40px);font-weight:700;letter-spacing:-.055em;line-height:1.02;overflow-wrap:anywhere}
 .revenue-card .revenue-service-name{font-size:clamp(21px,2.4vw,30px)}
@@ -760,6 +762,13 @@ footer{text-align:center;color:var(--muted);padding:28px}
   justify-content:space-between;
   gap:14px;
 }
+.owner-body .appointment-header-badges{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
 .owner-body .appointment-eyebrow{
   margin:0 0 5px;
   color:#9a5f77;
@@ -791,6 +800,21 @@ footer{text-align:center;color:var(--muted);padding:28px}
   font-weight:950;
   white-space:nowrap;
   box-shadow:0 10px 24px rgba(79,17,44,.07);
+}
+.owner-body .appointment-reminder-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:8px 12px;
+  border:1px solid #ccefd9;
+  border-radius:999px;
+  background:#effbf3;
+  color:#126c37;
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+  box-shadow:0 10px 24px rgba(18,108,55,.08);
 }
 .owner-body .appointment-status-pending .appointment-status-badge{background:#fff7d8;color:#8a6200;border-color:#ffe6a5}
 .owner-body .appointment-status-confirmed .appointment-status-badge{background:#ecfbf1;color:#126c37;border-color:#ccefd9}
@@ -873,7 +897,7 @@ footer{text-align:center;color:var(--muted);padding:28px}
   border-radius:20px;
   background:rgba(255,255,255,.58);
 }
-.whatsapp-actions,.client-direct-actions{display:flex;gap:8px;flex-wrap:wrap}
+.whatsapp-actions,.client-direct-actions,.reminder-actions{display:flex;gap:8px;flex-wrap:wrap}
 .whatsapp-action,.client-direct-action{
   display:inline-flex;
   align-items:center;
@@ -891,7 +915,13 @@ footer{text-align:center;color:var(--muted);padding:28px}
   transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
 }
 .whatsapp-action{border-color:#ccefd9;background:#effbf3;color:#126c37}
+.reminder-actions .whatsapp-action{
+  border-color:#ffd1e2;
+  background:linear-gradient(135deg,#fff,#fff0f6);
+  color:var(--deep);
+}
 .whatsapp-action[aria-disabled="true"]{cursor:not-allowed;opacity:.58}
+.reminder-title{margin-top:2px}
 .client-direct-action{border-color:#ffd7e5;background:#fff;color:var(--deep)}
 button.client-direct-action{font-family:inherit}
 .status-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -1690,7 +1720,7 @@ button.client-direct-action{font-family:inherit}
   .business-settings-panel .settings-grid label:first-child,
   .business-settings-panel .settings-grid label:nth-child(7),
   .business-settings-panel .settings-grid button{grid-column:auto}
-  .whatsapp-actions,.client-direct-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .whatsapp-actions,.client-direct-actions,.reminder-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .whatsapp-action,.client-direct-action{width:100%;min-height:44px}
   .status-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .status-row button{width:100%;min-height:44px}
@@ -1700,7 +1730,7 @@ button.client-direct-action{font-family:inherit}
   .owner-body .stats,.owner-body .status-row{grid-template-columns:1fr}
   .owner-body .revenue-grid{grid-template-columns:1fr}
   .owner-body .owner-service-actions{grid-template-columns:1fr}
-  .owner-body .whatsapp-actions,.owner-body .client-direct-actions{grid-template-columns:1fr}
+  .owner-body .whatsapp-actions,.owner-body .client-direct-actions,.owner-body .reminder-actions{grid-template-columns:1fr}
   .owner-body .client-metrics,.owner-body .client-loyalty-summary{grid-template-columns:1fr}
   .owner-body .client-metric-wide{grid-column:auto}
   .owner-body .client-profile{align-items:flex-start}
@@ -2331,6 +2361,10 @@ button.client-direct-action{font-family:inherit}
   .owner-body .appointment-card-header {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .owner-body .appointment-header-badges {
+    justify-content: flex-start;
   }
 
   .owner-body .appointment-status-badge {
