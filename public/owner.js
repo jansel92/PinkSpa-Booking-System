@@ -41,6 +41,7 @@ function animateCounter(element, finalValue, duration = 850) {
 
   const numericValue = Number(finalValue) || 0;
   if (prefersReducedOwnerMotion()) {
+    element.classList.remove("is-counting");
     element.textContent = String(numericValue);
     animatedCounterValues.set(element, numericValue);
     return;
@@ -51,12 +52,14 @@ function animateCounter(element, finalValue, duration = 850) {
     : 0;
 
   if (startValue === numericValue) {
+    element.classList.remove("is-counting");
     element.textContent = String(numericValue);
     return;
   }
 
   const startedAt = performance.now();
   const easeOut = progress => 1 - Math.pow(1 - progress, 3);
+  element.classList.add("is-counting");
 
   function frame(now) {
     const progress = Math.min(1, (now - startedAt) / duration);
@@ -69,6 +72,7 @@ function animateCounter(element, finalValue, duration = 850) {
     }
 
     animatedCounterValues.set(element, numericValue);
+    element.classList.remove("is-counting");
   }
 
   window.requestAnimationFrame(frame);
