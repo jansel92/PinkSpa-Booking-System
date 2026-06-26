@@ -1178,6 +1178,64 @@ button.client-direct-action{font-family:inherit}
 }
 
 @media(max-width:650px) {
+  .owner-body .sidebar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
+    overflow: visible;
+  }
+
+  .owner-body .sidebar-tabs {
+    display: flex;
+    min-width: 0;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px;
+    scroll-behavior: smooth;
+    scroll-padding-inline: 14px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .owner-body .sidebar-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .owner-body .sidebar .brand {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .owner-body .sidebar-logo {
+    width: 52px !important;
+  }
+
+  .owner-body .sidebar .tab {
+    flex: 0 0 auto;
+    min-width: max-content;
+    max-width: none;
+    min-height: 42px;
+    padding: 10px 14px;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+
+  .owner-body .sidebar .tab.active {
+    box-shadow: 0 12px 26px rgba(183, 25, 86, .2);
+  }
+
+  .owner-body .sidebar .logout {
+    flex: 0 0 auto;
+    min-height: 42px;
+    margin: 0;
+    padding: 10px 13px;
+    white-space: nowrap;
+  }
+
   .owner-body .dash-main {
     padding: 18px 14px 28px;
   }
