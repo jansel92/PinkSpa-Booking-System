@@ -2019,7 +2019,10 @@ async function deleteService(id, button) {
 async function loadSettings() {
   const form = document.getElementById("settingsForm");
   const message = document.getElementById("settingsMessage");
-  if (message) message.textContent = "Loading business settings...";
+  if (message) {
+    message.className = "message settings-message is-loading";
+    message.textContent = "Loading business settings...";
+  }
   setFormLoading(form, true);
   try {
     const settings = await api("/api/settings");
@@ -2028,9 +2031,15 @@ async function loadSettings() {
       if (form.elements[key]) form.elements[key].value = settings[key] || "";
     });
     updateDashboardGreeting();
-    if (message) message.textContent = "";
+    if (message) {
+      message.className = "message settings-message";
+      message.textContent = "";
+    }
   } catch (error) {
-    if (message) message.textContent = "Business settings could not be loaded. Please try again.";
+    if (message) {
+      message.className = "message settings-message is-error";
+      message.textContent = "Business settings could not be loaded. Please try again.";
+    }
     throw error;
   } finally {
     setFormLoading(form, false);
@@ -2054,7 +2063,11 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
     }
   });
 
-  if (success) document.getElementById("settingsMessage").textContent = "Settings saved.";
+  if (success) {
+    const message = document.getElementById("settingsMessage");
+    message.className = "message settings-message is-success";
+    message.textContent = "Settings saved.";
+  }
 });
 
 async function loadBlockedDays() {
@@ -2075,21 +2088,30 @@ async function loadBlockedDays() {
   list.replaceChildren();
 
   if (!days.length) {
-    list.appendChild(createEmptyState("No blocked dates", "Your booking calendar is currently open."));
+    const empty = createEmptyState("No blocked dates", "Your booking calendar is currently open.");
+    empty.classList.add("blocked-empty-state");
+    list.appendChild(empty);
     return;
   }
 
   days.forEach(day => {
     const row = document.createElement("div");
-    row.className = "service-row";
+    row.className = "service-row blocked-date-card";
 
     row.innerHTML = `
-      <div>
-        <strong>${day.block_date}</strong><br>
-        <small>${day.reason || "Unavailable"}</small>
+      <div class="blocked-date-main">
+        <div class="blocked-date-icon" aria-hidden="true">×</div>
+        <div>
+          <strong>${formatClientDate(day.block_date)}</strong>
+          <span>${day.block_date}</span>
+        </div>
       </div>
 
-      <button onclick="deleteBlockedDay(${day.id}, this)">
+      <div class="blocked-date-reason">
+        ${day.reason || "Unavailable"}
+      </div>
+
+      <button class="blocked-date-remove" onclick="deleteBlockedDay(${day.id}, this)">
         Remove
       </button>
     `;
@@ -2135,7 +2157,9 @@ if (blockedDayForm) {
 
     if (success) {
       e.target.reset();
-      document.getElementById("blockedDayMessage").textContent = "Date blocked successfully.";
+      const message = document.getElementById("blockedDayMessage");
+      message.className = "message blocked-message is-success";
+      message.textContent = "Date blocked successfully.";
     }
   });
 }
