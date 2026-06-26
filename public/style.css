@@ -958,11 +958,11 @@ button.client-direct-action{font-family:inherit}
 .owner-body .dash-header-actions {
   align-items: flex-start;
   padding: 10px;
-  border: 1px solid rgba(255,255,255,.72);
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255,255,255,.48), rgba(255,247,250,.38));
-  box-shadow: 0 12px 30px rgba(99, 30, 62, .07);
-  backdrop-filter: blur(18px);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .owner-body .btn.primary,
@@ -1257,6 +1257,10 @@ button.client-direct-action{font-family:inherit}
     width: 100%;
     padding: 8px;
     border-radius: 24px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .owner-body .dash-header-actions .btn {
