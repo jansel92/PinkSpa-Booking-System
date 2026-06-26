@@ -4503,34 +4503,106 @@ button.client-direct-action{font-family:inherit}
   }
 
   .review-screen {
-    padding: 18px;
+    align-items: start;
+    min-height: 100svh;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
   }
 
   .review-card {
-    padding: 24px 18px;
-    border-radius: 28px;
+    width: 100%;
+    max-width: calc(100vw - 28px);
+    padding: 22px 16px;
+    border-radius: 26px;
   }
 
   .review-brand {
-    margin-bottom: 18px;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 14px;
+    font-size: 20px;
+  }
+
+  .review-logo {
+    width: 48px;
+    height: 48px;
   }
 
   .review-heading {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .review-heading h1 {
+    font-size: clamp(38px, 13vw, 50px);
+    letter-spacing: -1.5px;
+  }
+
+  .review-heading p:not(.review-eyebrow) {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .review-stars {
+    margin-bottom: 14px;
+  }
+
+  .review-stars legend {
+    text-align: center;
   }
 
   .review-star-options {
     width: 100%;
     justify-content: center;
-    padding: 10px 8px;
+    gap: 7px;
+    padding: 11px 8px;
   }
 
   .review-star-options label {
-    font-size: clamp(28px, 10vw, 38px);
+    min-width: 42px;
+    min-height: 42px;
+    display: grid;
+    place-items: center;
+    font-size: clamp(30px, 10vw, 38px);
+  }
+
+  .review-page label {
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+
+  .review-page input,
+  .review-page textarea,
+  .review-submit {
+    width: 100%;
+  }
+
+  .review-page input,
+  .review-page textarea {
+    border-radius: 16px;
+    padding: 13px 14px;
   }
 
   .review-page textarea {
-    min-height: 128px;
+    min-height: 118px;
+  }
+
+  .review-submit {
+    min-height: 50px;
+  }
+
+  .review-message {
+    margin-top: 12px;
+    font-size: 13px;
+  }
+
+  .home-page .reviews-grid {
+    gap: 12px;
+  }
+
+  .home-page .review-card {
+    border-radius: 24px;
   }
 
   .home-page .booking-section {
