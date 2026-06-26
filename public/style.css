@@ -319,10 +319,11 @@ footer{text-align:center;color:var(--muted);padding:28px}
   position:fixed;
   top:84px;
   right:24px;
-  z-index:999999;
+  z-index:1000000;
   display:grid;
   width:min(430px,calc(100vw - 32px));
   max-height:min(610px,calc(100vh - 130px));
+  max-height:min(610px,calc(100dvh - 130px));
   box-sizing:border-box;
   gap:14px;
   padding:18px;
@@ -429,6 +430,10 @@ footer{text-align:center;color:var(--muted);padding:28px}
     linear-gradient(145deg,#fff,#fff5f9);
   box-shadow:0 16px 40px rgba(151,22,77,.08);
   animation:revenueCardIn .55s cubic-bezier(.22,1,.36,1) both;
+}
+.revenue-card > *{
+  position:relative;
+  z-index:1;
 }
 .revenue-card::before{
   grid-area:icon;
@@ -1241,6 +1246,8 @@ button.client-direct-action{font-family:inherit}
   color:#8a6200;
   font-size:12px;
   font-weight:950;
+  max-width:min(280px,100%);
+  overflow-wrap:anywhere;
   white-space:nowrap;
 }
 .blocked-date-remove{
@@ -1691,6 +1698,8 @@ button.client-direct-action{font-family:inherit}
 }
 @media(max-width:380px){
   .owner-body .stats,.owner-body .status-row{grid-template-columns:1fr}
+  .owner-body .revenue-grid{grid-template-columns:1fr}
+  .owner-body .owner-service-actions{grid-template-columns:1fr}
   .owner-body .whatsapp-actions,.owner-body .client-direct-actions{grid-template-columns:1fr}
   .owner-body .client-metrics,.owner-body .client-loyalty-summary{grid-template-columns:1fr}
   .owner-body .client-metric-wide{grid-column:auto}
@@ -2040,8 +2049,13 @@ button.client-direct-action{font-family:inherit}
   transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
 }
 
-.owner-body .revenue-card::before,
 .owner-body .client-card::before {
+  width: 5px;
+  background: linear-gradient(180deg, #ff8eb5, var(--deep));
+  box-shadow: 0 0 24px rgba(255, 95, 147, .3);
+}
+
+.owner-body .revenue-card::after {
   width: 5px;
   background: linear-gradient(180deg, #ff8eb5, var(--deep));
   box-shadow: 0 0 24px rgba(255, 95, 147, .3);
@@ -2346,6 +2360,8 @@ button.client-direct-action{font-family:inherit}
     right: 12px;
     left: 12px;
     max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 112px);
+    overflow: hidden;
     border-radius: 26px;
   }
 }
