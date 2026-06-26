@@ -1918,6 +1918,158 @@ button.client-direct-action{font-family:inherit}
   backdrop-filter: none;
 }
 
+.owner-body .daily-brief-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(260px, .82fr) minmax(0, 1.18fr);
+  gap: clamp(18px, 3vw, 30px);
+  align-items: stretch;
+  margin: 0 0 28px;
+  padding: clamp(24px, 3vw, 34px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .78);
+  border-radius: 38px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 206, 224, .88), transparent 31%),
+    radial-gradient(circle at 88% 4%, rgba(255, 234, 194, .58), transparent 28%),
+    linear-gradient(135deg, rgba(255,255,255,.92), rgba(255,246,250,.82));
+  box-shadow: var(--owner-shadow);
+  backdrop-filter: blur(24px);
+  animation: dailyBriefRise .72s cubic-bezier(.22,1,.36,1) both;
+}
+
+.owner-body .daily-brief-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,.62), transparent 32%),
+    radial-gradient(circle at 92% 86%, rgba(183, 25, 86, .12), transparent 28%);
+  pointer-events: none;
+}
+
+.owner-body .daily-brief-copy,
+.owner-body .daily-brief-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.owner-body .daily-brief-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.owner-body .daily-brief-copy h2 {
+  margin: 8px 0 12px;
+  color: #25161d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(32px, 4vw, 54px);
+  font-weight: 500;
+  line-height: .98;
+  letter-spacing: -.06em;
+}
+
+.owner-body .daily-brief-message {
+  max-width: 560px;
+  margin: 0;
+  color: #8f2855;
+  font-weight: 800;
+  line-height: 1.65;
+}
+
+.owner-body .daily-brief-message.is-empty {
+  color: #8a6374;
+}
+
+.owner-body .daily-brief-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.owner-body .daily-brief-metric {
+  position: relative;
+  display: grid;
+  min-height: 118px;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 218, 231, .86);
+  border-radius: 24px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.88), rgba(255,247,250,.72)),
+    rgba(255,255,255,.7);
+  box-shadow: 0 18px 44px rgba(151, 22, 77, .08);
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+.owner-body .daily-brief-metric::before {
+  content: "✦";
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 12px;
+  place-items: center;
+  border: 1px solid rgba(255, 211, 225, .88);
+  border-radius: 13px;
+  background: linear-gradient(135deg, #fff9fb, #ffe4ee);
+  box-shadow: 0 10px 22px rgba(183, 25, 86, .09);
+  color: var(--deep);
+  font-size: 15px;
+}
+
+.owner-body .daily-brief-metric[data-brief-icon="appointments"]::before { content: "📅"; }
+.owner-body .daily-brief-metric[data-brief-icon="time"]::before { content: "⏰"; }
+.owner-body .daily-brief-metric[data-brief-icon="revenue"]::before { content: "$"; }
+.owner-body .daily-brief-metric[data-brief-icon="clients"]::before { content: "♡"; }
+.owner-body .daily-brief-metric[data-brief-icon="confirmations"]::before { content: "✓"; }
+.owner-body .daily-brief-metric[data-brief-icon="reviews"]::before { content: "★"; }
+.owner-body .daily-brief-metric[data-brief-icon="reminders"]::before {
+  content: "WA";
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.owner-body .daily-brief-metric span {
+  color: #8a6374;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.owner-body .daily-brief-metric strong {
+  margin-top: 7px;
+  color: var(--deep);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(24px, 2.4vw, 34px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+@media (hover:hover) {
+  .owner-body .daily-brief-metric:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 167, 198, .9);
+    box-shadow: 0 22px 50px rgba(151, 22, 77, .12);
+  }
+}
+
+@keyframes dailyBriefRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .owner-body .btn.primary,
 .owner-body .calendar-today-button {
   border: 1px solid rgba(255,255,255,.32);
@@ -2290,6 +2442,49 @@ button.client-direct-action{font-family:inherit}
     padding: 12px 16px;
   }
 
+  .owner-body .daily-brief-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 22px 18px;
+    border-radius: 28px;
+  }
+
+  .owner-body .daily-brief-copy h2 {
+    font-size: clamp(31px, 10vw, 42px);
+  }
+
+  .owner-body .daily-brief-message {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .owner-body .daily-brief-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .owner-body .daily-brief-metric {
+    min-height: 104px;
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .owner-body .daily-brief-metric::before {
+    width: 31px;
+    height: 31px;
+    margin-bottom: 9px;
+    border-radius: 12px;
+  }
+
+  .owner-body .daily-brief-metric span {
+    font-size: 9.5px;
+  }
+
+  .owner-body .daily-brief-metric strong {
+    font-size: clamp(23px, 7vw, 30px);
+  }
+
   .owner-body .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
@@ -2400,11 +2595,18 @@ button.client-direct-action{font-family:inherit}
   }
 }
 
+@media(max-width:380px) {
+  .owner-body .daily-brief-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media(prefers-reduced-motion:reduce) {
-  .owner-body :is(.stats div,.revenue-card,.appointment-card,.service-row,.owner-service-card,.blocked-date-card,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.owner-review-card,.tab,.logout) {
+  .owner-body :is(.stats div,.daily-brief-metric,.revenue-card,.appointment-card,.service-row,.owner-service-card,.blocked-date-card,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.owner-review-card,.tab,.logout) {
     transition: none;
   }
 
+  .owner-body .daily-brief-card,
   .owner-body .appointment-timeline-card,
   .owner-body .financial-panel,
   .owner-body .owner-review-card,

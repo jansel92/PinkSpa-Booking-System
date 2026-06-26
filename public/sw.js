@@ -1,4 +1,4 @@
-const CACHE_NAME = "pinkspa-cache-v58";
+const CACHE_NAME = "pinkspa-cache-v59";
 const urlsToCache = [
   "/",
   "/index.html",

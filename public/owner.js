@@ -11,6 +11,7 @@ async function api(url, options = {}) {
 let editingServiceId = null;
 let allClients = [];
 let allAppointments = [];
+let allReviews = [];
 let allNotifications = [];
 let notificationUnreadCount = 0;
 let notificationRefreshTimer = null;
@@ -114,7 +115,10 @@ function updateDashboardGreeting() {
   const greeting = document.getElementById("dashboardGreeting");
   const dateText = document.getElementById("dashboardDate");
   const summary = document.getElementById("dashboardSummary");
-  if (!greeting || !dateText || !summary) return;
+  if (!greeting || !dateText || !summary) {
+    updateDailyBrief();
+    return;
+  }
 
   const now = new Date();
   const todayKey = localDateKey(now);
@@ -138,6 +142,64 @@ function updateDashboardGreeting() {
     year: "numeric"
   }).format(now);
   summary.textContent = `${todaysAppointments.length} appointment${todaysAppointments.length === 1 ? "" : "s"} today • ${currency.format(expectedRevenue)} expected revenue • ${notificationUnreadCount} unread notification${notificationUnreadCount === 1 ? "" : "s"}`;
+  updateDailyBrief();
+}
+
+function setDailyBriefText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
+}
+
+function firstAppointmentTime(appointments) {
+  if (!appointments.length) return "--";
+  const [firstAppointment] = [...appointments].sort((left, right) => {
+    return appointmentTimeMinutes(left.appointment_time) - appointmentTimeMinutes(right.appointment_time);
+  });
+  return firstAppointment?.appointment_time || "--";
+}
+
+function updateDailyBrief() {
+  const card = document.getElementById("dailyBrief");
+  if (!card) return;
+
+  const now = new Date();
+  const todayKey = localDateKey(now);
+  const currency = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const activeTodayStatuses = new Set(["pending", "confirmed", "completed"]);
+  const todaysAppointments = allAppointments.filter(appointment => {
+    return appointment.appointment_date === todayKey && activeTodayStatuses.has(appointment.status);
+  });
+  const expectedRevenue = todaysAppointments.reduce((total, appointment) => {
+    return total + parseServicePrice(appointment.service_price);
+  }, 0);
+  const newClientsToday = allClients.filter(client => client.first_visit_date === todayKey).length;
+  const pendingConfirmations = allAppointments.filter(appointment => appointment.status === "pending").length;
+  const pendingReviews = allReviews.filter(review => !review.approved).length;
+  const pendingReminders = reminderOverviewCount(allAppointments);
+  const firstTime = firstAppointmentTime(todaysAppointments);
+  const message = document.getElementById("dailyBriefMessage");
+
+  setDailyBriefText("dailyBriefTitle", `${dashboardGreetingPeriod(now)}, Rachel!`);
+  setDailyBriefText("briefTodayCount", String(todaysAppointments.length));
+  setDailyBriefText("briefFirstTime", firstTime);
+  setDailyBriefText("briefRevenue", currency.format(expectedRevenue));
+  setDailyBriefText("briefNewClients", String(newClientsToday));
+  setDailyBriefText("briefPendingConfirmations", String(pendingConfirmations));
+  setDailyBriefText("briefPendingReviews", String(pendingReviews));
+  setDailyBriefText("briefPendingReminders", String(pendingReminders));
+
+  if (!message) return;
+  if (!todaysAppointments.length) {
+    message.classList.add("is-empty");
+    message.textContent = "No appointments are scheduled for today. A calm day to follow up, plan ahead, and keep the PinkSpa experience polished.";
+    return;
+  }
+
+  message.classList.remove("is-empty");
+  message.textContent = `${todaysAppointments.length} appointment${todaysAppointments.length === 1 ? "" : "s"} today, starting at ${firstTime}. Estimated revenue is ${currency.format(expectedRevenue)}.`;
 }
 
 function setLoadingState(container, message = "Loading...") {
@@ -1503,9 +1565,11 @@ async function loadClients() {
     allClients = Array.isArray(data.clients) ? data.clients : [];
     applyClientSearch();
     renderRevenueDashboard(allAppointments, allClients);
+    updateDailyBrief();
   } catch (error) {
     console.error("Unable to load clients:", error);
     allClients = [];
+    updateDailyBrief();
     summary.textContent = "Clients unavailable";
     const message = document.createElement("p");
     message.className = "owner-empty-state";
@@ -2226,10 +2290,14 @@ async function loadReviews() {
   try {
     data = await api("/api/admin/reviews");
   } catch (error) {
+    allReviews = [];
+    updateDailyBrief();
     setLoadError(container, "Reviews could not be loaded. Please try again.");
     throw error;
   }
   const reviews = data.reviews || [];
+  allReviews = reviews;
+  updateDailyBrief();
   finishLoading(container);
 
   if (!reviews.length) {
