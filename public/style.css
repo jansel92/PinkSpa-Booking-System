@@ -900,6 +900,203 @@ button.client-direct-action{font-family:inherit}
 .status-no-show{background:#eee;color:#333}
 .service-row{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .service-row button{border:0;border-radius:999px;background:white;color:var(--deep);font-weight:900;padding:10px 14px;cursor:pointer}
+.services-form-panel,
+.services-list-panel{
+  position:relative;
+  overflow:hidden;
+}
+.services-form-panel::before,
+.services-list-panel::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:110px;
+  background:radial-gradient(circle at 92% 0%,rgba(255,214,230,.42),transparent 34%);
+  pointer-events:none;
+}
+.services-form-panel > *,
+.services-list-panel > *{
+  position:relative;
+  z-index:1;
+}
+.services-form-panel .message{
+  margin:14px 0 18px;
+  padding:13px 14px;
+  border:1px solid rgba(255,211,225,.72);
+  border-radius:18px;
+  background:rgba(255,255,255,.58);
+  color:#8a6374;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.55;
+}
+#serviceForm{
+  display:grid;
+  gap:13px;
+}
+#serviceForm label{
+  color:var(--deep);
+  font-size:12px;
+  font-weight:950;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+#serviceForm input{
+  margin-top:7px;
+  border-color:rgba(255,211,225,.9);
+  border-radius:18px;
+  background:rgba(255,255,255,.9);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.88),0 8px 18px rgba(151,22,77,.04);
+}
+#serviceForm input[type="file"]{
+  padding:12px;
+  cursor:pointer;
+}
+#serviceForm input[type="file"]::file-selector-button{
+  margin-right:12px;
+  border:1px solid rgba(255,211,225,.86);
+  border-radius:999px;
+  background:linear-gradient(135deg,#fff,#fff0f6);
+  color:var(--deep);
+  font:900 12px Inter,sans-serif;
+  padding:9px 12px;
+  cursor:pointer;
+}
+.service-image-preview-box{
+  display:grid;
+  gap:10px;
+  margin:2px 0 6px;
+  padding:14px;
+  border:1px solid rgba(255,211,225,.76);
+  border-radius:22px;
+  background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(255,248,251,.72));
+  box-shadow:0 12px 28px rgba(151,22,77,.07);
+}
+.service-image-preview-box[hidden]{display:none}
+.service-image-preview-box strong{
+  color:#936174;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.service-image-preview-box img{
+  display:block;
+  width:132px;
+  height:132px;
+  object-fit:cover;
+  border:1px solid #ffd3e4;
+  border-radius:22px;
+  box-shadow:0 14px 32px rgba(199,23,99,.14);
+}
+.service-cancel-edit{
+  margin-top:10px;
+  background:#21171c!important;
+  color:white!important;
+}
+.owner-service-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:18px;
+  padding:16px;
+  overflow:hidden;
+  border-radius:26px;
+  background:
+    radial-gradient(circle at 95% 0%,rgba(255,227,188,.34),transparent 28%),
+    linear-gradient(145deg,#fff,#fff8fb);
+  box-shadow:0 14px 36px rgba(151,22,77,.07);
+  animation:serviceCardIn .48s cubic-bezier(.22,1,.36,1) both;
+}
+.owner-service-card::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:linear-gradient(180deg,#ff8eb5,var(--deep));
+  box-shadow:0 0 24px rgba(255,95,147,.24);
+}
+.owner-service-media{
+  display:grid;
+  grid-template-columns:92px minmax(0,1fr);
+  align-items:center;
+  gap:15px;
+  min-width:0;
+}
+.owner-service-media img{
+  display:block;
+  width:92px;
+  height:92px;
+  object-fit:cover;
+  border:1px solid #ffd3e4;
+  border-radius:22px;
+  box-shadow:0 14px 30px rgba(79,17,44,.11);
+}
+.owner-service-info{
+  display:grid;
+  gap:8px;
+  min-width:0;
+}
+.owner-service-info strong{
+  color:#25161d;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(22px,2.1vw,29px);
+  font-weight:700;
+  letter-spacing:-.05em;
+  line-height:1.05;
+  overflow-wrap:anywhere;
+}
+.owner-service-category{
+  width:max-content;
+  max-width:100%;
+  padding:7px 10px;
+  border:1px solid rgba(255,211,225,.82);
+  border-radius:999px;
+  background:linear-gradient(135deg,#fff7fa,#fff0f6);
+  color:var(--deep);
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.owner-service-meta{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.owner-service-meta span{
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:7px 10px;
+  border:1px solid rgba(255,211,225,.72);
+  border-radius:999px;
+  background:rgba(255,255,255,.68);
+  color:#8a6374;
+  font-size:12px;
+  font-weight:900;
+}
+.owner-service-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.owner-service-actions button{
+  min-height:40px;
+  border:1px solid rgba(255,211,225,.72);
+  box-shadow:0 8px 18px rgba(79,17,44,.07);
+}
+.owner-service-actions .service-edit-button{
+  background:#fff;
+  color:var(--deep);
+}
+.owner-service-actions .service-delete-button{
+  border-color:#ffd0db;
+  background:#fff0f3;
+  color:#a60d35;
+}
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .settings-grid[aria-busy="true"]{opacity:.64}
 
@@ -926,6 +1123,7 @@ button.client-direct-action{font-family:inherit}
 @keyframes calendarDayIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes financialPanelIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes ownerReviewIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes serviceCardIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes dashboardFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 
 /* Owner Calendar */
@@ -1294,6 +1492,12 @@ button.client-direct-action{font-family:inherit}
   .owner-review-status{align-self:flex-start}
   .owner-review-card .status-row{grid-template-columns:1fr}
   .service-row{align-items:stretch;flex-direction:column}
+  .owner-service-card{grid-template-columns:1fr;padding:14px;border-radius:24px}
+  .owner-service-media{grid-template-columns:82px minmax(0,1fr);gap:12px}
+  .owner-service-media img{width:82px;height:82px;border-radius:20px}
+  .owner-service-actions{display:grid;grid-template-columns:1fr 1fr;justify-content:stretch}
+  .owner-service-actions button{width:100%;min-height:44px}
+  .service-image-preview-box img{width:100%;height:auto;max-height:220px}
   .whatsapp-actions,.client-direct-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .whatsapp-action,.client-direct-action{width:100%;min-height:44px}
   .status-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1314,8 +1518,8 @@ button.client-direct-action{font-family:inherit}
 @media(prefers-reduced-motion:reduce){
   .owner-body *{scroll-behavior:auto!important}
   .dashboard-entrance-ready :is(.dashboard-greeting,.dash-header-actions,.stats > div){animation:none;will-change:auto}
-  .revenue-card,.financial-panel,.calendar-day,.client-card,.client-timeline-content,.owner-review-card,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
-  .financial-ranked-item,.recent-completed-item,.client-timeline-item,.client-photo-grid a,.calendar-today-button,.calendar-appointment,.trend-bar,.financial-status-bar,.whatsapp-action,.client-direct-action,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
+  .revenue-card,.financial-panel,.calendar-day,.client-card,.client-timeline-content,.owner-review-card,.owner-service-card,.notification-item,.tab-content:not(.hidden),.owner-toast,.owner-toast-leaving,.owner-spinner,.owner-toast-progress{animation:none}
+  .financial-ranked-item,.recent-completed-item,.client-timeline-item,.client-photo-grid a,.owner-service-card,.owner-service-actions button,.calendar-today-button,.calendar-appointment,.trend-bar,.financial-status-bar,.whatsapp-action,.client-direct-action,.notification-panel,.notification-bell,.notification-mark-all,.notification-read-button,.owner-body :is(.tab,.logout,.btn,input,select,textarea,.appointment-card,.service-row,.status-row button,.notification-item){transition:none}
 }
 
 /* Owner Dashboard 2.0 - Visual Foundation */
@@ -1962,13 +2166,14 @@ button.client-direct-action{font-family:inherit}
 }
 
 @media(prefers-reduced-motion:reduce) {
-  .owner-body :is(.stats div,.revenue-card,.appointment-card,.service-row,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.owner-review-card,.tab,.logout) {
+  .owner-body :is(.stats div,.revenue-card,.appointment-card,.service-row,.owner-service-card,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.owner-review-card,.tab,.logout) {
     transition: none;
   }
 
   .owner-body .appointment-timeline-card,
   .owner-body .financial-panel,
   .owner-body .owner-review-card,
+  .owner-body .owner-service-card,
   .owner-body .calendar-day {
     animation: none;
   }

@@ -552,16 +552,15 @@ function ensureImagePreviewBox() {
   if (!previewBox) {
     previewBox = document.createElement("div");
     previewBox.id = "serviceImagePreviewBox";
-    previewBox.style.margin = "12px 0 16px";
-    previewBox.style.display = "none";
+    previewBox.className = "service-image-preview-box";
+    previewBox.hidden = true;
 
     previewBox.innerHTML = `
-      <strong style="display:block;margin-bottom:8px;">Current Image Preview</strong>
+      <strong>Current Image Preview</strong>
       <img
         id="serviceImagePreview"
         src=""
         alt="Service Image Preview"
-        style="width:120px;height:120px;object-fit:cover;border-radius:18px;border:1px solid #ffd3e4;box-shadow:0 12px 30px rgba(199,23,99,.14);"
       />
     `;
 
@@ -581,13 +580,13 @@ function showImagePreview(src) {
   const previewImg = document.getElementById("serviceImagePreview");
 
   if (!src) {
-    previewBox.style.display = "none";
+    previewBox.hidden = true;
     previewImg.src = "";
     return;
   }
 
   previewImg.src = src;
-  previewBox.style.display = "block";
+  previewBox.hidden = false;
 }
 
 function setupImageFilePreview() {
@@ -1849,30 +1848,35 @@ async function loadServices() {
   list.replaceChildren();
 
   if (!services.length) {
-    list.appendChild(createEmptyState("No active services", "Add a service to make it available for booking."));
+    const empty = createEmptyState("No active services", "Add a service to make it available for booking.");
+    empty.classList.add("services-empty-state");
+    list.appendChild(empty);
     return;
   }
 
   services.forEach(service => {
     const row = document.createElement("div");
-    row.className = "service-row";
+    row.className = "service-row owner-service-card";
 
     row.innerHTML = `
-      <div style="display:flex; align-items:center; gap:14px;">
+      <div class="owner-service-media">
         <img
           src="${serviceImage(service)}"
           alt="${service.name}"
-          style="width:70px;height:70px;object-fit:cover;border-radius:16px;border:1px solid #ffd3e4;"
         />
-        <div>
-          <strong>${service.name}</strong><br>
-          <small>${service.category} • ${service.price} • ${service.duration} min</small>
+        <div class="owner-service-info">
+          <span class="owner-service-category">${service.category || "Other"}</span>
+          <strong>${service.name}</strong>
+          <div class="owner-service-meta">
+            <span>${service.price || "Price not set"}</span>
+            <span>${service.duration || 60} min</span>
+          </div>
         </div>
       </div>
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button onclick='editService(${JSON.stringify(service)})'>Edit</button>
-        <button onclick="deleteService(${service.id}, this)">Remove</button>
+      <div class="owner-service-actions">
+        <button class="service-edit-button" onclick='editService(${JSON.stringify(service)})'>Edit</button>
+        <button class="service-delete-button" onclick="deleteService(${service.id}, this)">Remove</button>
       </div>
     `;
 
@@ -1906,10 +1910,7 @@ function editService(service) {
     cancelButton = document.createElement("button");
     cancelButton.id = "cancelEditService";
     cancelButton.type = "button";
-    cancelButton.className = "btn full";
-    cancelButton.style.marginTop = "10px";
-    cancelButton.style.background = "#21171c";
-    cancelButton.style.color = "white";
+    cancelButton.className = "btn full service-cancel-edit";
     cancelButton.textContent = "Cancel Edit";
     cancelButton.onclick = cancelEditService;
     form.appendChild(cancelButton);
