@@ -2712,6 +2712,57 @@ button.client-direct-action{font-family:inherit}
   .owner-body .recent-activity-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
   .owner-body .recent-activity-list { grid-template-columns: 1fr; }
   .owner-body .recent-activity-copy strong { white-space: normal; }
+
+  .owner-body .stats div,
+  .owner-body .revenue-card {
+    grid-template-columns: minmax(0, 1fr) 36px;
+    grid-template-areas:
+      "label icon"
+      "value value";
+    align-items: start;
+    column-gap: 10px;
+  }
+
+  .owner-body .revenue-card {
+    min-height: 120px;
+    padding: 15px;
+  }
+
+  .owner-body .revenue-card::before {
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 14px;
+    font-size: 15px;
+  }
+
+  .owner-body .revenue-card[data-revenue-card="lifetime"]::before,
+  .owner-body .revenue-card[data-revenue-card="average"]::before {
+    font-size: 18px;
+  }
+
+  .owner-body .stats span,
+  .owner-body .revenue-card span {
+    min-width: 0;
+    padding-right: 2px;
+    font-size: 10px;
+    letter-spacing: .055em;
+    line-height: 1.4;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .owner-body .stats strong,
+  .owner-body .revenue-card strong {
+    min-width: 0;
+    margin-top: 3px;
+  }
+
+  .owner-body .revenue-card .revenue-service-name {
+    font-size: clamp(20px, 6vw, 27px);
+    line-height: 1.08;
+  }
 }
 
 @media(prefers-reduced-motion:reduce) {
