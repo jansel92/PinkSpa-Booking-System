@@ -46,6 +46,7 @@
 
       <div class="sidebar-tabs" role="tablist" aria-label="Owner dashboard sections">
         <button data-tab="financial" class="tab active">Financial</button>
+        <button data-tab="insights" class="tab">Business Insights</button>
         <button data-tab="appointments" class="tab">Appointments</button>
         <button data-tab="calendar" class="tab">Calendar</button>
         <button data-tab="clients" class="tab">Clients</button>
@@ -247,6 +248,100 @@
             </div>
             <div id="recentCompletedList" class="recent-completed-list"></div>
           </section>
+        </div>
+      </section>
+
+      <section id="insightsTab" class="tab-content business-insights hidden" aria-labelledby="businessInsightsTitle">
+        <div class="insights-heading">
+          <div>
+            <p class="eyebrow dark">Actionable Analytics</p>
+            <h2 id="businessInsightsTitle">Business Insights</h2>
+          </div>
+          <p>Calculated from recorded PinkSpa appointments. Revenue includes completed appointments only.</p>
+        </div>
+
+        <div class="insight-kpi-grid" aria-label="Business insight summary">
+          <article class="insight-kpi-card" data-insight-kpi="ticket">
+            <span>Average Ticket</span>
+            <strong id="insightAverageTicket">$0.00</strong>
+            <small>Completed appointments</small>
+          </article>
+          <article class="insight-kpi-card" data-insight-kpi="cancellation">
+            <span>Cancellation Rate</span>
+            <strong id="insightCancellationRate">0%</strong>
+            <small>All appointment requests</small>
+          </article>
+          <article class="insight-kpi-card" data-insight-kpi="no-show">
+            <span>No-show Rate</span>
+            <strong id="insightNoShowRate">0%</strong>
+            <small>All appointment requests</small>
+          </article>
+        </div>
+
+        <div class="insights-grid">
+          <article class="insight-panel insight-panel-wide">
+            <div class="insight-panel-heading">
+              <h3>Revenue Trend</h3>
+              <span>Last 6 months · completed</span>
+            </div>
+            <div id="insightRevenueTrend" class="insight-column-chart" aria-label="Completed appointment revenue for the last six months"></div>
+          </article>
+
+          <article class="insight-panel insight-panel-wide">
+            <div class="insight-panel-heading">
+              <h3>Appointment Trend</h3>
+              <span>Last 6 months · all requests</span>
+            </div>
+            <div id="insightAppointmentTrend" class="insight-column-chart" aria-label="Appointment requests for the last six months"></div>
+          </article>
+
+          <article class="insight-panel">
+            <div class="insight-panel-heading">
+              <h3>New vs Returning</h3>
+              <span>Appointment share</span>
+            </div>
+            <div id="insightClientMix" class="insight-client-mix"></div>
+          </article>
+
+          <article class="insight-panel">
+            <div class="insight-panel-heading">
+              <h3>Most Popular Services</h3>
+              <span>Completed bookings</span>
+            </div>
+            <div id="insightPopularServices" class="insight-ranked-bars"></div>
+          </article>
+
+          <article class="insight-panel">
+            <div class="insight-panel-heading">
+              <h3>Slowest Services</h3>
+              <span>Fewest completed bookings</span>
+            </div>
+            <div id="insightSlowServices" class="insight-ranked-bars"></div>
+          </article>
+
+          <article class="insight-panel">
+            <div class="insight-panel-heading">
+              <h3>Busiest Days</h3>
+              <span>Recorded booking activity</span>
+            </div>
+            <div id="insightBusiestDays" class="insight-ranked-bars"></div>
+          </article>
+
+          <article class="insight-panel">
+            <div class="insight-panel-heading">
+              <h3>Slowest Days</h3>
+              <span>Recorded booking activity</span>
+            </div>
+            <div id="insightSlowestDays" class="insight-ranked-bars"></div>
+          </article>
+
+          <article class="insight-panel insight-panel-wide insight-recommendations-panel">
+            <div class="insight-panel-heading">
+              <h3>Smart Recommendations</h3>
+              <span>Based only on your records</span>
+            </div>
+            <div id="insightRecommendations" class="insight-recommendations"></div>
+          </article>
         </div>
       </section>
 

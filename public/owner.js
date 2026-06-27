@@ -1381,6 +1381,284 @@ function renderRevenueDashboard(appointments, clients = allClients) {
   }
 }
 
+function insightMonthSeries(appointments, valueForAppointment) {
+  const today = new Date();
+  return Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(today.getFullYear(), today.getMonth() - (5 - index), 1);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const value = appointments
+      .filter(appointment => String(appointment.appointment_date || "").startsWith(key))
+      .reduce((total, appointment) => total + valueForAppointment(appointment), 0);
+    return {
+      key,
+      label: date.toLocaleDateString("en-US", { month: "short" }),
+      fullLabel: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      value
+    };
+  });
+}
+
+function renderInsightColumns(containerId, series, formatValue) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.replaceChildren();
+  const maximum = Math.max(...series.map(item => item.value), 0);
+
+  if (!maximum) {
+    container.appendChild(createFinancialEmpty("No recorded data for this period."));
+    return;
+  }
+
+  series.forEach(item => {
+    const column = document.createElement("div");
+    column.className = "insight-chart-column";
+    column.setAttribute("aria-label", `${item.fullLabel}: ${formatValue(item.value)}`);
+    const value = document.createElement("span");
+    value.className = "insight-chart-value";
+    value.textContent = formatValue(item.value);
+    const track = document.createElement("div");
+    track.className = "insight-chart-track";
+    const bar = document.createElement("div");
+    bar.className = "insight-chart-bar";
+    bar.style.setProperty("--insight-height", `${Math.max(item.value ? 7 : 0, (item.value / maximum) * 100)}%`);
+    track.appendChild(bar);
+    const label = document.createElement("strong");
+    label.textContent = item.label;
+    column.append(value, track, label);
+    container.appendChild(column);
+  });
+}
+
+function renderInsightRankedBars(containerId, entries, emptyMessage, suffix = "") {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.replaceChildren();
+  if (!entries.length) {
+    container.appendChild(createFinancialEmpty(emptyMessage));
+    return;
+  }
+
+  const maximum = Math.max(...entries.map(entry => entry.value), 1);
+  entries.forEach((entry, index) => {
+    const item = document.createElement("div");
+    item.className = "insight-ranked-item";
+    const heading = document.createElement("div");
+    const label = document.createElement("strong");
+    label.textContent = entry.label;
+    const value = document.createElement("span");
+    value.textContent = `${entry.value}${suffix}`;
+    heading.append(label, value);
+    const track = document.createElement("div");
+    track.className = "insight-ranked-track";
+    const bar = document.createElement("div");
+    bar.className = "insight-ranked-bar";
+    bar.style.setProperty("--insight-width", `${(entry.value / maximum) * 100}%`);
+    bar.style.setProperty("--insight-delay", `${index * 55}ms`);
+    track.appendChild(bar);
+    item.append(heading, track);
+    container.appendChild(item);
+  });
+}
+
+function insightClientKey(appointment) {
+  const phone = String(appointment.client_phone || "").replace(/\D/g, "");
+  const email = String(appointment.client_email || "").trim().toLowerCase();
+  const name = String(appointment.client_name || "").trim().toLowerCase().replace(/\s+/g, " ");
+  return phone || email || name || `appointment-${appointment.id}`;
+}
+
+function insightClientMix(appointments) {
+  const seen = new Set();
+  let newAppointments = 0;
+  let returningAppointments = 0;
+  [...appointments]
+    .sort((left, right) => {
+      return String(left.appointment_date || "").localeCompare(String(right.appointment_date || "")) ||
+        appointmentTimeMinutes(left.appointment_time) - appointmentTimeMinutes(right.appointment_time) ||
+        Number(left.id || 0) - Number(right.id || 0);
+    })
+    .forEach(appointment => {
+      const key = insightClientKey(appointment);
+      if (seen.has(key)) returningAppointments += 1;
+      else {
+        seen.add(key);
+        newAppointments += 1;
+      }
+    });
+  return { newAppointments, returningAppointments };
+}
+
+function renderInsightClientMix(appointments) {
+  const container = document.getElementById("insightClientMix");
+  if (!container) return { newAppointments: 0, returningAppointments: 0, returningShare: 0 };
+  container.replaceChildren();
+  const mix = insightClientMix(appointments);
+  const total = mix.newAppointments + mix.returningAppointments;
+  const returningShare = total ? (mix.returningAppointments / total) * 100 : 0;
+  if (!total) {
+    container.appendChild(createFinancialEmpty("No client appointment history yet."));
+    return { ...mix, returningShare };
+  }
+
+  const donut = document.createElement("div");
+  donut.className = "insight-donut";
+  donut.style.setProperty("--returning-share", `${returningShare * 3.6}deg`);
+  donut.setAttribute("role", "img");
+  donut.setAttribute("aria-label", `${Math.round(returningShare)} percent returning appointments`);
+  const donutValue = document.createElement("strong");
+  donutValue.textContent = `${Math.round(returningShare)}%`;
+  const donutLabel = document.createElement("span");
+  donutLabel.textContent = "Returning";
+  donut.append(donutValue, donutLabel);
+
+  const legend = document.createElement("div");
+  legend.className = "insight-mix-legend";
+  [["New", mix.newAppointments, "new"], ["Returning", mix.returningAppointments, "returning"]].forEach(([label, count, type]) => {
+    const item = document.createElement("div");
+    item.dataset.mixType = type;
+    const copy = document.createElement("span");
+    copy.textContent = label;
+    const value = document.createElement("strong");
+    value.textContent = String(count);
+    item.append(copy, value);
+    legend.appendChild(item);
+  });
+  container.append(donut, legend);
+  return { ...mix, returningShare };
+}
+
+function renderInsightRecommendations({ appointments, activeDayEntries, serviceEntries, mix, cancellationRate, noShowRate }) {
+  const container = document.getElementById("insightRecommendations");
+  if (!container) return;
+  container.replaceChildren();
+  const recommendations = [];
+
+  if (activeDayEntries.some(entry => entry.value > 0)) {
+    const busiest = [...activeDayEntries].sort((left, right) => right.value - left.value)[0];
+    const slowest = [...activeDayEntries].sort((left, right) => left.value - right.value)[0];
+    recommendations.push({
+      title: "Protect peak availability",
+      text: `${busiest.label} has the highest recorded booking activity with ${busiest.value} appointment${busiest.value === 1 ? "" : "s"}.`
+    });
+    recommendations.push({
+      title: "Build a quieter day",
+      text: `${slowest.label} has the lowest recorded booking activity with ${slowest.value} appointment${slowest.value === 1 ? "" : "s"}. Consider highlighting availability on that day.`
+    });
+  }
+
+  if (serviceEntries.length) {
+    const highestRevenueService = [...serviceEntries].sort((left, right) => right.revenue - left.revenue)[0];
+    recommendations.push({
+      title: "Lead with proven demand",
+      text: `${highestRevenueService.label} generated the highest recorded completed revenue at ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(highestRevenueService.revenue)}.`
+    });
+  }
+
+  if (appointments.length) {
+    recommendations.push({
+      title: "Client loyalty snapshot",
+      text: `Returning clients represent ${Math.round(mix.returningShare)}% of recorded appointments.`
+    });
+    if (cancellationRate > 0 || noShowRate > 0) {
+      recommendations.push({
+        title: "Protect booked time",
+        text: `Recorded appointments have a ${cancellationRate.toFixed(1)}% cancellation rate and a ${noShowRate.toFixed(1)}% no-show rate.`
+      });
+    }
+  }
+
+  if (!recommendations.length) {
+    container.appendChild(createFinancialEmpty("More appointment history is needed to generate recommendations."));
+    return;
+  }
+
+  recommendations.slice(0, 5).forEach((recommendation, index) => {
+    const item = document.createElement("article");
+    item.className = "insight-recommendation";
+    const number = document.createElement("span");
+    number.textContent = String(index + 1).padStart(2, "0");
+    const copy = document.createElement("div");
+    const title = document.createElement("strong");
+    title.textContent = recommendation.title;
+    const text = document.createElement("p");
+    text.textContent = recommendation.text;
+    copy.append(title, text);
+    item.append(number, copy);
+    container.appendChild(item);
+  });
+}
+
+function renderBusinessInsights(appointments = allAppointments) {
+  const section = document.getElementById("insightsTab");
+  if (!section) return;
+  const completed = appointments.filter(appointment => appointment.status === "completed");
+  const activeAppointments = appointments.filter(appointment => !["cancelled", "no-show"].includes(appointment.status));
+  const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const totalCompletedRevenue = completed.reduce((total, appointment) => total + parseServicePrice(appointment.service_price), 0);
+  const averageTicket = completed.length ? totalCompletedRevenue / completed.length : 0;
+  const cancelledCount = appointments.filter(appointment => appointment.status === "cancelled").length;
+  const noShowCount = appointments.filter(appointment => appointment.status === "no-show").length;
+  const cancellationRate = appointments.length ? (cancelledCount / appointments.length) * 100 : 0;
+  const noShowRate = appointments.length ? (noShowCount / appointments.length) * 100 : 0;
+
+  const metricValues = {
+    insightAverageTicket: currency.format(averageTicket),
+    insightCancellationRate: `${cancellationRate.toFixed(1)}%`,
+    insightNoShowRate: `${noShowRate.toFixed(1)}%`
+  };
+  Object.entries(metricValues).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  });
+
+  const revenueSeries = insightMonthSeries(completed, appointment => parseServicePrice(appointment.service_price));
+  const appointmentSeries = insightMonthSeries(appointments, () => 1);
+  renderInsightColumns("insightRevenueTrend", revenueSeries, value => currency.format(value));
+  renderInsightColumns("insightAppointmentTrend", appointmentSeries, value => String(value));
+  const mix = renderInsightClientMix(appointments);
+
+  const services = completed.reduce((metrics, appointment) => {
+    const label = appointment.service_name || "Unknown Service";
+    const current = metrics.get(label) || { label, value: 0, revenue: 0 };
+    current.value += 1;
+    current.revenue += parseServicePrice(appointment.service_price);
+    metrics.set(label, current);
+    return metrics;
+  }, new Map());
+  const serviceEntries = Array.from(services.values());
+  const popularServices = [...serviceEntries]
+    .sort((left, right) => right.value - left.value || right.revenue - left.revenue || left.label.localeCompare(right.label))
+    .slice(0, 5);
+  const slowServices = [...serviceEntries]
+    .sort((left, right) => left.value - right.value || left.revenue - right.revenue || left.label.localeCompare(right.label))
+    .slice(0, 5);
+  renderInsightRankedBars("insightPopularServices", popularServices, "No completed service bookings yet.");
+  renderInsightRankedBars("insightSlowServices", slowServices, "No completed service bookings yet.");
+
+  const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const dayCounts = new Map(dayNames.map(day => [day, 0]));
+  activeAppointments.forEach(appointment => {
+    const date = new Date(`${appointment.appointment_date}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return;
+    const day = date.toLocaleDateString("en-US", { weekday: "long" });
+    if (dayCounts.has(day)) dayCounts.set(day, dayCounts.get(day) + 1);
+  });
+  const activeDayEntries = dayNames.map(label => ({ label, value: dayCounts.get(label) || 0 }));
+  const busiestDays = [...activeDayEntries].sort((left, right) => right.value - left.value || dayNames.indexOf(left.label) - dayNames.indexOf(right.label));
+  const slowestDays = [...activeDayEntries].sort((left, right) => left.value - right.value || dayNames.indexOf(left.label) - dayNames.indexOf(right.label));
+  renderInsightRankedBars("insightBusiestDays", activeAppointments.length ? busiestDays : [], "No active appointment days recorded.");
+  renderInsightRankedBars("insightSlowestDays", activeAppointments.length ? slowestDays : [], "No active appointment days recorded.");
+
+  renderInsightRecommendations({
+    appointments,
+    activeDayEntries,
+    serviceEntries,
+    mix,
+    cancellationRate,
+    noShowRate
+  });
+}
+
 function formatClientDate(dateValue) {
   if (!dateValue) return "No completed visits";
 
@@ -2254,6 +2532,7 @@ async function loadAppointments() {
   setCounterValue("statCompleted", completed);
 
   renderRevenueDashboard(appointments, allClients);
+  renderBusinessInsights(appointments);
   updateReminderOverview(appointments);
 
   if (!appointments.length) {
