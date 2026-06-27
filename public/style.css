@@ -7570,3 +7570,300 @@ button.client-direct-action{font-family:inherit}
     transition:none;
   }
 }
+
+/* PinkSpa 1.0 interaction polish */
+:root {
+  --pinkspa-motion-fast: 220ms;
+  --pinkspa-motion: 280ms;
+  --pinkspa-ease: cubic-bezier(.22, 1, .36, 1);
+  --pinkspa-focus: 0 0 0 4px rgba(255, 95, 147, .16), 0 10px 28px rgba(183, 25, 86, .1);
+}
+
+.home-page :is(button,.btn,[role="button"]),
+.review-page :is(button,.btn,[role="button"]),
+.owner-body :is(button,.btn,[role="button"]) {
+  transition:
+    translate var(--pinkspa-motion) var(--pinkspa-ease),
+    scale var(--pinkspa-motion-fast) var(--pinkspa-ease),
+    color var(--pinkspa-motion) ease,
+    background-color var(--pinkspa-motion) ease,
+    border-color var(--pinkspa-motion) ease,
+    box-shadow var(--pinkspa-motion) var(--pinkspa-ease),
+    filter var(--pinkspa-motion) ease,
+    opacity var(--pinkspa-motion-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-page :is(button,.btn,[role="button"]):active:not(:disabled):not([aria-disabled="true"]),
+.review-page :is(button,.btn,[role="button"]):active:not(:disabled):not([aria-disabled="true"]),
+.owner-body :is(button,.btn,[role="button"]):active:not(:disabled):not([aria-disabled="true"]) {
+  scale: .98;
+}
+
+@media (hover:hover) {
+  .home-page :is(button,.btn,[role="button"]):hover:not(:disabled):not([aria-disabled="true"]),
+  .review-page :is(button,.btn,[role="button"]):hover:not(:disabled):not([aria-disabled="true"]),
+  .owner-body :is(button,.btn,[role="button"]):hover:not(:disabled):not([aria-disabled="true"]) {
+    translate: 0 -2px;
+  }
+}
+
+.home-page :is(button,.btn):disabled,
+.home-page :is(button,.btn)[aria-disabled="true"],
+.review-page :is(button,.btn):disabled,
+.review-page :is(button,.btn)[aria-disabled="true"],
+.owner-body :is(button,.btn):disabled,
+.owner-body :is(button,.btn)[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .58;
+  filter: grayscale(.18) saturate(.55);
+  box-shadow: none;
+  translate: none;
+  scale: 1;
+}
+
+.home-page button[aria-busy="true"],
+.review-page button[aria-busy="true"],
+.owner-body button[aria-busy="true"] {
+  position: relative;
+  overflow: hidden;
+  cursor: progress;
+}
+
+.home-page button[aria-busy="true"]::after,
+.review-page button[aria-busy="true"]::after,
+.owner-body button[aria-busy="true"]::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg,transparent 22%,rgba(255,255,255,.42) 48%,transparent 74%);
+  content: "";
+  transform: translateX(-120%);
+  animation: pinkspaControlShimmer 1.15s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.home-page :is(.service-card,.home-stat-card,.recent-booking-card,.review-card,.form-card,.info-box span,.faq-item,.booking-mini-summary,.recommendation-card),
+.review-page .review-card,
+.owner-body :is(.panel,.stats > div,.daily-brief-card,.daily-brief-metric,.recent-activity-card,.recent-activity-item,.revenue-card,.financial-panel,.insight-kpi-card,.insight-panel,.appointment-card,.calendar-day,.calendar-appointment,.client-card,.owner-service-card,.owner-review-card,.blocked-date-card,.owner-empty-state) {
+  transition:
+    translate var(--pinkspa-motion) var(--pinkspa-ease),
+    border-color var(--pinkspa-motion) ease,
+    box-shadow var(--pinkspa-motion) var(--pinkspa-ease),
+    background-color var(--pinkspa-motion) ease;
+}
+
+@media (hover:hover) {
+  .home-page :is(.service-card,.home-stat-card,.recent-booking-card,.review-card,.form-card,.info-box span,.faq-item,.recommendation-card):hover,
+  .review-page .review-card:hover,
+  .owner-body :is(.panel,.stats > div,.daily-brief-metric,.recent-activity-item,.revenue-card,.financial-panel,.insight-kpi-card,.insight-panel,.appointment-card,.calendar-day,.calendar-appointment,.client-card,.owner-service-card,.owner-review-card,.blocked-date-card):hover {
+    translate: 0 -3px;
+    border-color: rgba(255, 153, 189, .58);
+    box-shadow: 0 24px 58px rgba(104, 30, 63, .14);
+  }
+}
+
+.home-page :is(input,select,textarea),
+.review-page :is(input,select,textarea),
+.owner-body :is(input,select,textarea) {
+  transition:
+    border-color var(--pinkspa-motion) ease,
+    box-shadow var(--pinkspa-motion) var(--pinkspa-ease),
+    background-color var(--pinkspa-motion) ease,
+    translate var(--pinkspa-motion) var(--pinkspa-ease);
+}
+
+.home-page :is(input,select,textarea)::placeholder,
+.review-page :is(input,select,textarea)::placeholder,
+.owner-body :is(input,select,textarea)::placeholder {
+  color: #a88494;
+  opacity: .76;
+}
+
+.home-page :is(input,select,textarea):focus,
+.review-page :is(input,select,textarea):focus,
+.owner-body :is(input,select,textarea):focus {
+  border-color: rgba(255, 95, 147, .82);
+  background-color: #fff;
+  box-shadow: var(--pinkspa-focus);
+}
+
+.home-page :is(input,select,textarea):focus-visible,
+.review-page :is(input,select,textarea):focus-visible,
+.owner-body :is(input,select,textarea):focus-visible {
+  outline: 2px solid rgba(183, 25, 86, .3);
+  outline-offset: 2px;
+}
+
+.home-page select,
+.review-page select,
+.owner-body select {
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(151,22,77,.05);
+}
+
+.home-page :is(.booking-confirmation,.gallery-lightbox),
+.owner-body .client-profile-overlay {
+  backdrop-filter: blur(16px) saturate(1.04);
+}
+
+.home-page .booking-confirmation.active,
+.home-page .gallery-lightbox.active {
+  animation: pinkspaBackdropIn var(--pinkspa-motion) ease both;
+}
+
+.home-page .booking-confirmation-card,
+.home-page .gallery-lightbox img,
+.owner-body .client-profile-drawer {
+  transition:
+    transform var(--pinkspa-motion) var(--pinkspa-ease),
+    opacity var(--pinkspa-motion) ease,
+    box-shadow var(--pinkspa-motion) var(--pinkspa-ease);
+}
+
+.home-page .booking-confirmation.active .booking-confirmation-card,
+.home-page .gallery-lightbox.active img {
+  animation: pinkspaModalIn var(--pinkspa-motion) var(--pinkspa-ease) both;
+}
+
+.owner-body .client-profile-overlay,
+.owner-body .client-profile-drawer {
+  transition-duration: var(--pinkspa-motion);
+  transition-timing-function: var(--pinkspa-ease);
+}
+
+.owner-body .notification-panel {
+  border-radius: 26px;
+  box-shadow: 0 30px 82px rgba(54,14,34,.27), 0 0 0 1px rgba(255,255,255,.7) inset;
+  transition:
+    opacity 260ms ease,
+    transform 260ms var(--pinkspa-ease),
+    visibility 260ms ease;
+  transform-origin: top right;
+}
+
+.owner-body :is(.appointment-status-badge,.appointment-reminder-badge,.calendar-status-badge,.client-vip-badge,.client-appointment-badge,.notification-badge,.owner-review-status,.owner-service-category,.blocked-date-reason),
+.home-page :is(.service-category,.client-status-badge) {
+  min-height: 28px;
+  padding: 6px 11px;
+  align-items: center;
+  justify-content: center;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: .025em;
+  box-shadow: 0 7px 18px rgba(79,17,44,.07);
+}
+
+.owner-body .notification-badge {
+  min-width: 23px;
+  min-height: 23px;
+  padding: 3px 6px;
+  border-color: #fff;
+}
+
+.owner-body .owner-loading {
+  position: relative;
+  min-height: 104px;
+  overflow: hidden;
+  border: 1px solid rgba(255,211,225,.72);
+  border-radius: 20px;
+  background:
+    linear-gradient(100deg,rgba(255,246,250,.82),rgba(255,255,255,.94),rgba(255,246,250,.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.owner-body .owner-loading::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg,transparent 20%,rgba(255,255,255,.9) 48%,transparent 76%);
+  content: "";
+  transform: translateX(-120%);
+  animation: pinkspaSkeleton 1.35s ease-in-out infinite;
+}
+
+.owner-body .owner-loading > * { position: relative; z-index: 1; }
+
+.owner-body .owner-toast {
+  gap: 13px;
+  padding: 16px 15px 18px;
+  border-color: rgba(255,190,214,.78);
+  border-radius: 20px;
+  background: rgba(255,255,255,.965);
+  box-shadow: 0 24px 64px rgba(79,17,44,.22), inset 0 1px 0 rgba(255,255,255,.92);
+  animation-duration: var(--pinkspa-motion);
+  animation-timing-function: var(--pinkspa-ease);
+  backdrop-filter: blur(20px) saturate(1.05);
+}
+
+.owner-body .owner-toast-leaving { animation-duration: var(--pinkspa-motion-fast); }
+.owner-body .owner-toast-icon { width: 36px; height: 36px; }
+.owner-body .owner-toast-content { gap: 4px; }
+.owner-body .owner-toast-close { padding: 2px; border-radius: 50%; }
+
+.home-page table,
+.review-page table,
+.owner-body table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: clip;
+  border: 1px solid rgba(255,211,225,.72);
+  border-radius: 20px;
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 14px 34px rgba(151,22,77,.07);
+}
+
+.home-page :is(th,td),
+.review-page :is(th,td),
+.owner-body :is(th,td) { padding: 14px 16px; border-bottom: 1px solid rgba(255,224,235,.82); text-align: left; }
+.home-page th,
+.review-page th,
+.owner-body th { position: sticky; top: 0; z-index: 2; background: rgba(255,246,250,.96); color: var(--deep); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; backdrop-filter: blur(12px); }
+.home-page tbody tr,
+.review-page tbody tr,
+.owner-body tbody tr { transition: background-color var(--pinkspa-motion) ease; }
+@media (hover:hover) {
+  .home-page tbody tr:hover,
+  .review-page tbody tr:hover,
+  .owner-body tbody tr:hover { background: rgba(255,241,247,.72); }
+}
+.home-page tbody tr:last-child td,
+.review-page tbody tr:last-child td,
+.owner-body tbody tr:last-child td { border-bottom: 0; }
+
+@keyframes pinkspaControlShimmer {
+  to { transform: translateX(120%); }
+}
+@keyframes pinkspaSkeleton {
+  to { transform: translateX(120%); }
+}
+@keyframes pinkspaBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pinkspaModalIn {
+  from { opacity: 0; transform: translateY(8px) scale(.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page :is(button,.btn,[role="button"],input,select,textarea,.service-card,.home-stat-card,.recent-booking-card,.review-card,.form-card,.info-box span,.faq-item,.booking-confirmation-card,.gallery-lightbox img),
+  .review-page :is(button,.btn,[role="button"],input,select,textarea,.review-card),
+  .owner-body :is(button,.btn,[role="button"],input,select,textarea,.panel,.stats > div,.daily-brief-card,.daily-brief-metric,.recent-activity-card,.recent-activity-item,.revenue-card,.financial-panel,.insight-kpi-card,.insight-panel,.appointment-card,.calendar-day,.calendar-appointment,.client-card,.owner-service-card,.owner-review-card,.blocked-date-card,.notification-panel,.client-profile-overlay,.client-profile-drawer,.owner-toast,tbody tr) {
+    transition: none !important;
+    translate: none !important;
+    scale: 1 !important;
+  }
+
+  .home-page :is(.booking-confirmation.active,.gallery-lightbox.active,.booking-confirmation.active .booking-confirmation-card,.gallery-lightbox.active img),
+  .owner-body .owner-loading::before,
+  .owner-body button[aria-busy="true"]::after,
+  .home-page button[aria-busy="true"]::after,
+  .review-page button[aria-busy="true"]::after {
+    animation: none !important;
+  }
+}
