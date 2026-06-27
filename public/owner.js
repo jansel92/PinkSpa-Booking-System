@@ -22,6 +22,10 @@ let activityLastSyncedAt = null;
 let activityEventSequence = 0;
 const sessionActivityEvents = [];
 const newActivityKeys = new Set();
+let activeClientFilter = "all";
+let activeClientProfile = null;
+let clientProfileLastFocus = null;
+const CLIENT_PROFILE_STORAGE_KEY = "pinkspa.owner.clientProfiles.v1";
 const reduceOwnerMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const animatedCounterValues = new WeakMap();
 
@@ -468,7 +472,8 @@ function recordReminderActivity(appointment, label) {
     icon: activityIcon("reminder"),
     message: `${label} opened for ${appointment.client_name || "a client"}'s ${appointment.service_name || "appointment"}.`,
     createdAt,
-    tone: "success"
+    tone: "success",
+    clientId: String(appointment.client_phone || "").replace(/\D/g, "") || String(appointment.client_email || "").trim().toLowerCase()
   };
   sessionActivityEvents.unshift(event);
   if (sessionActivityEvents.length > 8) sessionActivityEvents.length = 8;
@@ -1434,253 +1439,504 @@ function nextClientAppointment(appointments) {
     .sort((left, right) => left.dateTime - right.dateTime)[0]?.appointment || null;
 }
 
-function renderClientTimeline(container, client, currency) {
-  const appointments = Array.isArray(client.appointments) ? client.appointments : [];
-  const upcoming = nextClientAppointment(appointments);
-  const summary = document.createElement("div");
-  summary.className = "client-loyalty-summary";
-  const nextAppointmentText = upcoming
-    ? `${formatClientDate(upcoming.appointment_date)} at ${upcoming.appointment_time} - ${upcoming.service_name}`
-    : "No upcoming appointment";
-  const loyaltyMetrics = [
-    ["First Visit", formatClientDate(client.first_visit_date)],
-    ["Last Visit", formatClientDate(client.last_visit_date)],
-    ["Next Appointment", nextAppointmentText, "wide"],
-    ["Total Appointments", String(client.total_appointments || 0)],
-    ["Completed Visits", String(client.completed_visits || 0)],
-    ["Cancelled", String(client.cancelled_appointments || 0)],
-    ["No-shows", String(client.no_shows || 0)],
-    ["Total Money Spent", currency.format(Number(client.total_spent) || 0)],
-    ["Average Value", currency.format(Number(client.average_appointment_value) || 0)],
-    ["Favorite Service", client.favorite_service || "-"],
-    ["Reviews Submitted", String(client.reviews?.length || 0)],
-    ["Inspiration Photos", String(client.inspiration_photos?.length || 0)]
-  ];
+function clientIsVip(client) {
+  return Number(client.completed_visits || 0) >= 10;
+}
 
-  loyaltyMetrics.forEach(([label, value, width]) => {
-    const metric = createClientMetric(label, value);
-    if (width === "wide") metric.classList.add("client-metric-wide");
-    summary.appendChild(metric);
-  });
-
-  const timelineSection = document.createElement("section");
-  timelineSection.className = "client-timeline-section";
-  const heading = document.createElement("h4");
-  heading.textContent = `Appointment Timeline (${appointments.length})`;
-  const note = document.createElement("p");
-  note.textContent = "Estimated prices use each primary service's current listed price.";
-  timelineSection.append(heading, note);
-
-  if (!appointments.length) {
-    timelineSection.appendChild(createEmptyState("No appointment history", "Appointments will appear here after booking."));
-  } else {
-    const list = document.createElement("div");
-    list.className = "client-timeline-list";
-    appointments.forEach(appointment => {
-      const item = document.createElement("article");
-      const supportedStatuses = ["pending", "confirmed", "completed", "cancelled", "no-show"];
-      const status = supportedStatuses.includes(appointment.status) ? appointment.status : "pending";
-      item.className = `client-timeline-item calendar-status-${status}`;
-
-      const date = document.createElement("div");
-      date.className = "client-timeline-date";
-      const dateValue = document.createElement("strong");
-      dateValue.textContent = formatClientDate(appointment.appointment_date);
-      const time = document.createElement("span");
-      time.textContent = appointment.appointment_time || "Time unavailable";
-      date.append(dateValue, time);
-
-      const service = document.createElement("div");
-      service.className = "client-timeline-service";
-      const serviceName = document.createElement("strong");
-      serviceName.textContent = appointment.service_name || "Unknown Service";
-      const duration = document.createElement("span");
-      duration.textContent = `${Number(appointment.duration_minutes) || 60} minutes`;
-      service.append(serviceName, duration);
-
-      const price = document.createElement("strong");
-      price.className = "client-timeline-price";
-      price.textContent = `Est. ${currency.format(Number(appointment.estimated_price) || 0)}`;
-
-      const statusBadge = document.createElement("span");
-      statusBadge.className = "client-timeline-status";
-      statusBadge.textContent = calendarStatusName(appointment.status);
-      item.append(date, service, price, statusBadge);
-      list.appendChild(item);
-    });
-    timelineSection.appendChild(list);
+function readClientProfileMetadata() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CLIENT_PROFILE_STORAGE_KEY) || "{}");
+    return stored && typeof stored === "object" ? stored : {};
+  } catch (error) {
+    console.warn("Unable to read local client profile details:", error);
+    return {};
   }
+}
 
-  container.append(summary, timelineSection);
+function clientProfileMetadata(client) {
+  return readClientProfileMetadata()[client.id] || {};
+}
+
+function saveClientProfileMetadata(client, metadata) {
+  const profiles = readClientProfileMetadata();
+  profiles[client.id] = metadata;
+  localStorage.setItem(CLIENT_PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+}
+
+function clientLastAppointment(client) {
+  const appointments = Array.isArray(client.appointments) ? client.appointments : [];
+  const now = new Date();
+  return appointments
+    .map(appointment => ({ appointment, dateTime: clientAppointmentDateTime(appointment) }))
+    .filter(item => item.dateTime && item.dateTime <= now)
+    .sort((left, right) => right.dateTime - left.dateTime)[0]?.appointment || null;
+}
+
+function clientDateTimeLabel(appointment, fallback = "None") {
+  return appointment
+    ? `${formatClientDate(appointment.appointment_date)} · ${appointment.appointment_time || "Time unavailable"}`
+    : fallback;
 }
 
 function renderClientCard(client) {
-  const card = document.createElement("article");
-  card.className = "client-card";
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "client-card client-profile-trigger";
+  card.setAttribute("aria-label", `Open ${client.name || "client"} profile`);
 
-  const header = document.createElement("div");
-  header.className = "client-card-header";
-
-  const profile = document.createElement("div");
+  const profile = document.createElement("span");
   profile.className = "client-profile";
-
-  const avatar = document.createElement("div");
+  const avatar = document.createElement("span");
   avatar.className = "client-avatar";
   avatar.textContent = clientInitials(client.name);
   avatar.setAttribute("aria-hidden", "true");
-
-  const identity = document.createElement("div");
+  const identity = document.createElement("span");
   identity.className = "client-identity";
-  const name = document.createElement("h3");
+  const name = document.createElement("strong");
+  name.className = "client-list-name";
   name.textContent = client.name || "PinkSpa Client";
-  const contact = document.createElement("div");
-  contact.className = "client-contact";
-
-  if (client.phone) {
-    const phone = document.createElement("a");
-    phone.href = `tel:${String(client.phone).replace(/\D/g, "")}`;
-    phone.textContent = client.phone;
-    contact.appendChild(phone);
-  }
-
-  if (client.email) {
-    const email = document.createElement("a");
-    email.href = `mailto:${client.email}`;
-    email.textContent = client.email;
-    contact.appendChild(email);
-  } else {
-    const noEmail = document.createElement("span");
-    noEmail.textContent = "No email provided";
-    contact.appendChild(noEmail);
-  }
-
-  identity.append(name, contact);
+  const phone = document.createElement("span");
+  phone.className = "client-list-phone";
+  phone.textContent = client.phone || "No phone provided";
+  identity.append(name, phone);
   profile.append(avatar, identity);
 
-  const badges = document.createElement("div");
-  badges.className = "client-badges";
-  const vipBadge = document.createElement("span");
-  const vipLevel = client.vip_level || "New Client";
-  const vipClass = vipLevel.toLowerCase().replace(/\s+/g, "-");
-  vipBadge.className = `client-vip-badge client-vip-${vipClass}`;
-  vipBadge.textContent = vipLevel;
-  vipBadge.setAttribute("aria-label", `Loyalty level: ${vipLevel}`);
-  const appointmentBadge = document.createElement("span");
-  appointmentBadge.className = "client-appointment-badge";
-  appointmentBadge.textContent = `${client.total_appointments} appointment${client.total_appointments === 1 ? "" : "s"}`;
-  badges.append(vipBadge, appointmentBadge);
-  header.append(profile, badges);
+  const last = document.createElement("span");
+  last.className = "client-list-detail";
+  last.innerHTML = "<small>Last Appointment</small>";
+  const lastValue = document.createElement("strong");
+  lastValue.textContent = clientDateTimeLabel(clientLastAppointment(client), "No previous visit");
+  last.appendChild(lastValue);
 
-  const currency = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD"
-  });
-  const metrics = document.createElement("div");
-  metrics.className = "client-metrics";
-  metrics.append(
-    createClientMetric("Total Spent", currency.format(Number(client.total_spent || 0))),
-    createClientMetric("Visits", String(client.completed_visits || 0)),
-    createClientMetric("Favorite Service", client.favorite_service || "-"),
-    createClientMetric("Last Visit", formatClientDate(client.last_visit_date))
-  );
+  const next = document.createElement("span");
+  next.className = "client-list-detail";
+  next.innerHTML = "<small>Next Appointment</small>";
+  const nextValue = document.createElement("strong");
+  nextValue.textContent = clientDateTimeLabel(nextClientAppointment(client.appointments));
+  next.appendChild(nextValue);
 
-  card.append(header, metrics);
+  const visits = document.createElement("span");
+  visits.className = "client-list-visits";
+  const visitsValue = document.createElement("strong");
+  visitsValue.textContent = String(client.completed_visits || 0);
+  const visitsLabel = document.createElement("small");
+  visitsLabel.textContent = "Lifetime Visits";
+  visits.append(visitsValue, visitsLabel);
 
-  const timelineDetails = document.createElement("details");
-  timelineDetails.className = "client-timeline-details";
-  const timelineSummary = document.createElement("summary");
-  const timelineSummaryMain = document.createElement("span");
-  timelineSummaryMain.className = "client-timeline-summary-main";
-  const timelineLabel = document.createElement("span");
-  timelineLabel.textContent = "View Timeline";
-  const timelineCount = document.createElement("small");
-  timelineCount.textContent = `${client.total_appointments || 0} appointment${client.total_appointments === 1 ? "" : "s"}`;
-  timelineSummaryMain.append(timelineLabel, timelineCount);
-  timelineSummary.appendChild(timelineSummaryMain);
-  const timelineContent = document.createElement("div");
-  timelineContent.className = "client-timeline-content";
-  timelineDetails.append(timelineSummary, timelineContent);
-  timelineDetails.addEventListener("toggle", () => {
-    if (!timelineDetails.open || timelineContent.dataset.loaded) return;
-    timelineContent.dataset.loaded = "true";
-    renderClientTimeline(timelineContent, client, currency);
-  });
-  card.appendChild(timelineDetails);
-
-  if (client.reviews?.length) {
-    const reviewDetails = document.createElement("details");
-    reviewDetails.className = "client-details";
-    const reviewSummary = document.createElement("summary");
-    reviewSummary.textContent = `Reviews submitted (${client.reviews.length})`;
-    reviewDetails.appendChild(reviewSummary);
-
-    client.reviews.forEach(review => {
-      const reviewItem = document.createElement("div");
-      reviewItem.className = "client-review";
-      const rating = document.createElement("strong");
-      const safeRating = Math.max(0, Math.min(5, Math.round(Number(review.rating) || 0)));
-      rating.textContent = `${"★".repeat(safeRating)}${"☆".repeat(5 - safeRating)}`;
-      const reviewText = document.createElement("p");
-      reviewText.textContent = review.review_text;
-      const reviewStatus = document.createElement("small");
-      reviewStatus.textContent = review.approved ? "Approved" : "Pending approval";
-      reviewItem.append(rating, reviewText, reviewStatus);
-      reviewDetails.appendChild(reviewItem);
-    });
-
-    card.appendChild(reviewDetails);
+  const end = document.createElement("span");
+  end.className = "client-list-end";
+  if (clientIsVip(client)) {
+    const vip = document.createElement("span");
+    vip.className = "client-vip-badge client-vip-premium";
+    vip.textContent = "VIP";
+    end.appendChild(vip);
   }
+  const arrow = document.createElement("span");
+  arrow.className = "client-open-arrow";
+  arrow.setAttribute("aria-hidden", "true");
+  arrow.textContent = "›";
+  end.appendChild(arrow);
 
-  if (client.inspiration_photos?.length) {
-    const photoSection = document.createElement("div");
-    photoSection.className = "client-photos";
-    const photoHeading = document.createElement("h4");
-    photoHeading.textContent = `Inspiration Photos (${client.inspiration_photos.length})`;
-    const photoGrid = document.createElement("div");
-    photoGrid.className = "client-photo-grid";
-
-    client.inspiration_photos.forEach(photo => {
-      const photoLink = document.createElement("a");
-      photoLink.href = `/api/appointments/${photo.appointment_id}/inspiration`;
-      photoLink.target = "_blank";
-      photoLink.rel = "noopener noreferrer";
-      photoLink.title = `${photo.service_name} - ${formatClientDate(photo.appointment_date)}`;
-
-      const image = document.createElement("img");
-      image.src = photoLink.href;
-      image.alt = `${photo.service_name} inspiration photo`;
-      image.loading = "lazy";
-
-      const caption = document.createElement("span");
-      caption.textContent = photo.service_name;
-      photoLink.append(image, caption);
-      photoGrid.appendChild(photoLink);
-    });
-
-    photoSection.append(photoHeading, photoGrid);
-    card.appendChild(photoSection);
-  }
-
+  card.append(profile, last, next, visits, end);
+  card.addEventListener("click", () => openClientProfile(client, card));
   return card;
+}
+
+function createClientProfileSection(title, className = "") {
+  const section = document.createElement("section");
+  section.className = `client-profile-section ${className}`.trim();
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+  section.appendChild(heading);
+  return section;
+}
+
+function appendClientInfo(container, label, value) {
+  const item = document.createElement("div");
+  item.className = "client-info-item";
+  const itemLabel = document.createElement("span");
+  itemLabel.textContent = label;
+  const itemValue = document.createElement("strong");
+  itemValue.textContent = value || "Not recorded";
+  item.append(itemLabel, itemValue);
+  container.appendChild(item);
+}
+
+function clientWhatsappLink(client) {
+  const phone = whatsappPhoneNumber(client.phone);
+  if (!phone) return "";
+  const message = `Hi ${client.name || "there"}! This is ${dashboardBusinessName || "PinkSpa"}. How can we help with your next beauty appointment?`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
+function setClientActionLink(element, href, unavailableLabel) {
+  if (!element) return;
+  element.onclick = null;
+  if (href) {
+    element.href = href;
+    element.removeAttribute("aria-disabled");
+    return;
+  }
+  element.href = "#";
+  element.setAttribute("aria-disabled", "true");
+  element.onclick = event => {
+    event.preventDefault();
+    showToast(unavailableLabel, "error");
+  };
+}
+
+function renderClientProfileTimeline(section, client) {
+  const events = (client.appointments || []).map(appointment => {
+    const labels = {
+      pending: ["Appointment booked", "+"],
+      confirmed: ["Appointment confirmed", "✓"],
+      completed: ["Appointment completed", "★"],
+      cancelled: ["Appointment cancelled", "×"],
+      "no-show": ["Appointment marked no-show", "!"]
+    };
+    const [title, icon] = labels[appointment.status] || ["Appointment updated", "•"];
+    return {
+      title,
+      detail: `${appointment.service_name || "PinkSpa service"} · ${appointment.appointment_time || "Time unavailable"}`,
+      date: clientAppointmentDateTime(appointment),
+      icon,
+      tone: activityTone(`appointment-${appointment.status}`)
+    };
+  });
+
+  (client.reviews || []).forEach(review => {
+    events.push({
+      title: "Review submitted",
+      detail: `${Math.max(1, Math.min(5, Number(review.rating) || 1))}-star client review`,
+      date: parseNotificationDate(review.created_at),
+      icon: "♡",
+      tone: "warning"
+    });
+  });
+
+  sessionActivityEvents
+    .filter(event => event.type === "reminder" && event.clientId === client.id)
+    .forEach(event => {
+      events.push({
+        title: "WhatsApp reminder opened",
+        detail: "Reminder message prepared for the client",
+        date: parseNotificationDate(event.createdAt),
+        icon: "WA",
+        tone: "success"
+      });
+    });
+
+  events.sort((left, right) => (right.date?.getTime() || 0) - (left.date?.getTime() || 0));
+  const list = document.createElement("div");
+  list.className = "client-profile-timeline";
+  if (!events.length) {
+    list.appendChild(createEmptyState("No activity yet", "Client appointments and reviews will appear here."));
+  } else {
+    events.forEach(event => {
+      const item = document.createElement("article");
+      item.className = `client-profile-event activity-${event.tone}`;
+      const icon = document.createElement("span");
+      icon.className = "client-profile-event-icon";
+      icon.textContent = event.icon;
+      icon.setAttribute("aria-hidden", "true");
+      const copy = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = event.title;
+      const detail = document.createElement("span");
+      detail.textContent = event.detail;
+      copy.append(title, detail);
+      const time = document.createElement("time");
+      time.dateTime = event.date?.toISOString() || "";
+      time.textContent = event.date
+        ? `${event.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${relativeTime(event.date.toISOString())}`
+        : "Date unavailable";
+      item.append(icon, copy, time);
+      list.appendChild(item);
+    });
+  }
+  section.appendChild(list);
+}
+
+function renderClientNotesSection(section, client, metadata) {
+  const form = document.createElement("form");
+  form.className = "client-notes-form";
+  form.dataset.clientNotesForm = "true";
+
+  const birthdayLabel = document.createElement("label");
+  birthdayLabel.textContent = "Birthday";
+  const birthday = document.createElement("input");
+  birthday.type = "date";
+  birthday.name = "birthday";
+  birthday.value = metadata.birthday || "";
+  birthdayLabel.appendChild(birthday);
+
+  const contactLabel = document.createElement("label");
+  contactLabel.textContent = "Preferred Contact";
+  const contact = document.createElement("select");
+  contact.name = "preferred_contact";
+  ["Not recorded", "WhatsApp", "Phone Call", "Email", "Text Message"].forEach(optionLabel => {
+    const option = document.createElement("option");
+    option.value = optionLabel === "Not recorded" ? "" : optionLabel;
+    option.textContent = optionLabel;
+    option.selected = option.value === (metadata.preferred_contact || "");
+    contact.appendChild(option);
+  });
+  contactLabel.appendChild(contact);
+
+  const notesLabel = document.createElement("label");
+  notesLabel.className = "client-notes-field";
+  notesLabel.textContent = "Private Notes";
+  const notes = document.createElement("textarea");
+  notes.name = "notes";
+  notes.rows = 5;
+  notes.maxLength = 2000;
+  notes.placeholder = "Preferences, sensitivities, favorite styles, or payment notes...";
+  notes.value = metadata.notes || "";
+  notesLabel.appendChild(notes);
+
+  const localNote = document.createElement("p");
+  localNote.className = "client-local-storage-note";
+  localNote.textContent = "Saved privately in this owner dashboard browser. These details do not alter appointment records.";
+
+  const save = document.createElement("button");
+  save.type = "submit";
+  save.className = "btn primary";
+  save.textContent = "Save Client Notes";
+  form.append(birthdayLabel, contactLabel, notesLabel, localNote, save);
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    try {
+      saveClientProfileMetadata(client, {
+        birthday: birthday.value,
+        preferred_contact: contact.value,
+        notes: notes.value.trim()
+      });
+      showToast("Client profile notes saved on this device.");
+      openClientProfile(client, clientProfileLastFocus, false);
+    } catch (error) {
+      console.error(error);
+      showToast("Client notes could not be saved in this browser.", "error");
+    }
+  });
+  section.appendChild(form);
+}
+
+function renderClientQuickActions(section, client) {
+  const actions = document.createElement("div");
+  actions.className = "client-profile-quick-actions";
+  const actionLink = (label, href, className = "") => {
+    const link = document.createElement("a");
+    link.className = className;
+    link.textContent = label;
+    link.href = href || "#";
+    if (href?.startsWith("http")) {
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    }
+    if (!href) link.setAttribute("aria-disabled", "true");
+    actions.appendChild(link);
+    return link;
+  };
+
+  actionLink("Book Appointment", "/#book", "is-primary").target = "_blank";
+  const whatsapp = actionLink("Send WhatsApp", clientWhatsappLink(client));
+  const phone = String(client.phone || "").replace(/[^\d+]/g, "");
+  const call = actionLink("Call Client", phone ? `tel:${phone}` : "");
+  [whatsapp, call].forEach(link => {
+    if (link.getAttribute("aria-disabled") === "true") {
+      link.addEventListener("click", event => {
+        event.preventDefault();
+        showToast("This client does not have the required contact information.", "error");
+      });
+    }
+  });
+
+  const copyAction = (label, value) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", async () => {
+      if (!value) {
+        showToast(`This client does not have a ${label.toLowerCase().replace("copy ", "")}.`, "error");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(value);
+        showToast(`${label.replace("Copy ", "")} copied.`);
+      } catch (error) {
+        showToast("The information could not be copied.", "error");
+      }
+    });
+    actions.appendChild(button);
+  };
+  copyAction("Copy Phone", client.phone);
+  copyAction("Copy Email", client.email);
+
+  const print = document.createElement("button");
+  print.type = "button";
+  print.textContent = "Print Client Summary";
+  print.addEventListener("click", () => {
+    document.body.classList.add("printing-client-profile");
+    window.print();
+    window.setTimeout(() => document.body.classList.remove("printing-client-profile"), 500);
+  });
+  actions.appendChild(print);
+  section.appendChild(actions);
+}
+
+function renderClientProfile(client) {
+  const content = document.getElementById("clientProfileContent");
+  if (!content) return;
+  const metadata = clientProfileMetadata(client);
+  const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const upcoming = nextClientAppointment(client.appointments);
+
+  document.getElementById("clientProfileAvatar").textContent = clientInitials(client.name);
+  document.getElementById("clientProfileName").textContent = client.name || "PinkSpa Client";
+  const vip = document.getElementById("clientProfileVip");
+  vip.className = `client-vip-badge client-vip-premium${clientIsVip(client) ? "" : " hidden"}`;
+
+  const whatsappHref = clientWhatsappLink(client);
+  const callHref = String(client.phone || "").replace(/[^\d+]/g, "");
+  setClientActionLink(document.getElementById("clientProfileWhatsapp"), whatsappHref, "This client does not have a WhatsApp phone number.");
+  setClientActionLink(document.getElementById("clientQuickWhatsapp"), whatsappHref, "This client does not have a WhatsApp phone number.");
+  setClientActionLink(document.getElementById("clientQuickCall"), callHref ? `tel:${callHref}` : "", "This client does not have a phone number.");
+
+  content.replaceChildren();
+  const information = createClientProfileSection("Client Information");
+  const infoGrid = document.createElement("div");
+  infoGrid.className = "client-information-grid";
+  appendClientInfo(infoGrid, "Phone", client.phone);
+  appendClientInfo(infoGrid, "Email", client.email);
+  appendClientInfo(infoGrid, "Birthday", metadata.birthday ? formatClientDate(metadata.birthday) : "Not recorded");
+  appendClientInfo(infoGrid, "Preferred Contact", metadata.preferred_contact || "Not recorded");
+  const notesInfo = document.createElement("div");
+  notesInfo.className = "client-info-item client-info-notes";
+  const notesLabel = document.createElement("span");
+  notesLabel.textContent = "Notes";
+  const notesValue = document.createElement("strong");
+  notesValue.textContent = metadata.notes || "No private notes saved";
+  notesInfo.append(notesLabel, notesValue);
+  infoGrid.appendChild(notesInfo);
+  information.appendChild(infoGrid);
+
+  const stats = createClientProfileSection("Business Stats");
+  const statsGrid = document.createElement("div");
+  statsGrid.className = "client-profile-stats";
+  [
+    ["Lifetime Visits", client.completed_visits || 0],
+    ["Completed", client.completed_visits || 0],
+    ["Cancelled", client.cancelled_appointments || 0],
+    ["No Shows", client.no_shows || 0],
+    ["Lifetime Revenue", currency.format(Number(client.total_spent) || 0)],
+    ["Average Ticket", currency.format(Number(client.average_appointment_value) || 0)],
+    ["Favorite Service", client.favorite_service || "-"],
+    ["Last Visit", formatClientDate(client.last_visit_date)],
+    ["Next Appointment", clientDateTimeLabel(upcoming)],
+    ["Client Since", formatClientDate(client.first_visit_date)]
+  ].forEach(([label, value]) => statsGrid.appendChild(createClientMetric(label, String(value))));
+  stats.appendChild(statsGrid);
+
+  const timeline = createClientProfileSection("Appointment Timeline");
+  renderClientProfileTimeline(timeline, client);
+
+  const notes = createClientProfileSection("Client Notes", "client-notes-section");
+  renderClientNotesSection(notes, client, metadata);
+
+  const photos = createClientProfileSection(`Inspiration Photos (${client.inspiration_photos?.length || 0})`);
+  const photoGrid = document.createElement("div");
+  photoGrid.className = "client-photo-grid";
+  (client.inspiration_photos || []).forEach(photo => {
+    const link = document.createElement("a");
+    link.href = `/api/appointments/${photo.appointment_id}/inspiration`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    const image = document.createElement("img");
+    image.src = link.href;
+    image.alt = `${photo.service_name} inspiration photo`;
+    image.loading = "lazy";
+    const caption = document.createElement("span");
+    caption.textContent = photo.service_name;
+    link.append(image, caption);
+    photoGrid.appendChild(link);
+  });
+  photos.appendChild((client.inspiration_photos || []).length
+    ? photoGrid
+    : createEmptyState("No inspiration photos", "Client reference images will appear here."));
+
+  const quickActions = createClientProfileSection("Quick Actions");
+  renderClientQuickActions(quickActions, client);
+  content.append(information, stats, timeline, notes, photos, quickActions);
+}
+
+function openClientProfile(client, trigger = null, animate = true) {
+  const overlay = document.getElementById("clientProfileOverlay");
+  const drawer = document.getElementById("clientProfileDrawer");
+  if (!overlay || !drawer) return;
+  activeClientProfile = client;
+  if (trigger) clientProfileLastFocus = trigger;
+  renderClientProfile(client);
+  overlay.hidden = false;
+  document.body.classList.add("client-profile-open");
+  if (animate) window.requestAnimationFrame(() => overlay.classList.add("is-open"));
+  else overlay.classList.add("is-open");
+  drawer.scrollTop = 0;
+  drawer.focus({ preventScroll: true });
+}
+
+function closeClientProfile() {
+  const overlay = document.getElementById("clientProfileOverlay");
+  if (!overlay || overlay.hidden) return;
+  overlay.classList.remove("is-open");
+  document.body.classList.remove("client-profile-open");
+  const finish = () => {
+    overlay.hidden = true;
+    activeClientProfile = null;
+    clientProfileLastFocus?.focus?.();
+  };
+  if (prefersReducedOwnerMotion()) finish();
+  else window.setTimeout(finish, 280);
+}
+
+function clientFilterMatches(client) {
+  const completed = Number(client.completed_visits || 0);
+  if (activeClientFilter === "new") return completed <= 1;
+  if (activeClientFilter === "returning") return completed >= 2 && completed < 10;
+  if (activeClientFilter === "vip") return completed >= 10;
+  return true;
+}
+
+function sortClients(clients) {
+  const sort = document.getElementById("clientSort")?.value || "recent";
+  return [...clients].sort((left, right) => {
+    if (sort === "name") return String(left.name || "").localeCompare(String(right.name || ""));
+    if (sort === "visits") return Number(right.completed_visits || 0) - Number(left.completed_visits || 0);
+    if (sort === "spent") return Number(right.total_spent || 0) - Number(left.total_spent || 0);
+    const leftDate = nextClientAppointment(left.appointments)?.appointment_date || left.last_visit_date || "";
+    const rightDate = nextClientAppointment(right.appointments)?.appointment_date || right.last_visit_date || "";
+    return rightDate.localeCompare(leftDate) || String(left.name || "").localeCompare(String(right.name || ""));
+  });
 }
 
 function applyClientSearch() {
   const searchInput = document.getElementById("clientSearch");
   const query = String(searchInput?.value || "").trim().toLowerCase();
   const digits = query.replace(/\D/g, "");
-  const filteredClients = allClients.filter(client => {
+  const filteredClients = sortClients(allClients.filter(client => {
     const text = [client.name, client.phone, client.email, client.favorite_service, client.vip_level]
       .join(" ")
       .toLowerCase();
     const phone = String(client.phone || "").replace(/\D/g, "");
-    return !query || text.includes(query) || (digits && phone.includes(digits));
-  });
+    const matchesSearch = !query || text.includes(query) || (digits && phone.includes(digits));
+    return matchesSearch && clientFilterMatches(client);
+  }));
 
   const list = document.getElementById("clientsList");
   const summary = document.getElementById("clientsSummary");
   if (!list || !summary) return;
 
-  summary.textContent = query
+  const filtered = query || activeClientFilter !== "all";
+  summary.textContent = filtered
     ? `${filteredClients.length} of ${allClients.length} clients`
     : `${allClients.length} client${allClients.length === 1 ? "" : "s"}`;
   list.replaceChildren();
@@ -1688,8 +1944,8 @@ function applyClientSearch() {
   if (!filteredClients.length) {
     const empty = document.createElement("p");
     empty.className = "clients-empty";
-    empty.textContent = query
-      ? "No clients match your search."
+    empty.textContent = filtered
+      ? "No clients match the current search and filter."
       : "No clients have booked yet.";
     list.appendChild(empty);
     return;
@@ -1728,6 +1984,61 @@ async function loadClients() {
 
 const clientSearch = document.getElementById("clientSearch");
 if (clientSearch) clientSearch.addEventListener("input", applyClientSearch);
+
+const clientSort = document.getElementById("clientSort");
+if (clientSort) clientSort.addEventListener("change", applyClientSearch);
+
+document.querySelectorAll("[data-client-filter]").forEach(button => {
+  button.addEventListener("click", () => {
+    activeClientFilter = button.dataset.clientFilter || "all";
+    document.querySelectorAll("[data-client-filter]").forEach(filterButton => {
+      const active = filterButton === button;
+      filterButton.classList.toggle("is-active", active);
+      filterButton.setAttribute("aria-pressed", String(active));
+    });
+    applyClientSearch();
+  });
+});
+
+const clientProfileOverlay = document.getElementById("clientProfileOverlay");
+const clientProfileDrawer = document.getElementById("clientProfileDrawer");
+document.getElementById("clientProfileClose")?.addEventListener("click", closeClientProfile);
+clientProfileOverlay?.addEventListener("click", event => {
+  if (event.target === clientProfileOverlay) closeClientProfile();
+});
+document.getElementById("clientProfileEdit")?.addEventListener("click", () => {
+  const form = document.querySelector("[data-client-notes-form]");
+  form?.scrollIntoView({ behavior: prefersReducedOwnerMotion() ? "auto" : "smooth", block: "center" });
+  form?.querySelector("input, select, textarea")?.focus({ preventScroll: true });
+});
+
+document.addEventListener("keydown", event => {
+  if (!clientProfileOverlay || clientProfileOverlay.hidden) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeClientProfile();
+    return;
+  }
+  if (event.key !== "Tab" || !clientProfileDrawer) return;
+  const focusable = Array.from(clientProfileDrawer.querySelectorAll(
+    'a[href]:not([aria-disabled="true"]), button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  ));
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (document.activeElement === clientProfileDrawer) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  } else if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
+window.addEventListener("afterprint", () => document.body.classList.remove("printing-client-profile"));
 
 function appointmentTimeMinutes(value) {
   const match = String(value || "").trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);

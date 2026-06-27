@@ -281,7 +281,9 @@
               <h2>Clients</h2>
               <p id="clientsSummary" class="clients-summary">Loading clients...</p>
             </div>
+          </div>
 
+          <div class="client-toolbar">
             <label class="client-search-label" for="clientSearch">
               Search Clients
               <input
@@ -291,6 +293,22 @@
                 autocomplete="off"
               />
             </label>
+            <label class="client-sort-label" for="clientSort">
+              Sort By
+              <select id="clientSort">
+                <option value="recent">Most Recent</option>
+                <option value="name">Name A-Z</option>
+                <option value="visits">Most Visits</option>
+                <option value="spent">Highest Spend</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="client-filters" role="group" aria-label="Filter clients">
+            <button type="button" class="client-filter is-active" data-client-filter="all" aria-pressed="true">All</button>
+            <button type="button" class="client-filter" data-client-filter="new" aria-pressed="false">New</button>
+            <button type="button" class="client-filter" data-client-filter="returning" aria-pressed="false">Returning</button>
+            <button type="button" class="client-filter" data-client-filter="vip" aria-pressed="false">VIP</button>
           </div>
 
           <p class="clients-note">
@@ -424,6 +442,45 @@
       </section>
     </main>
   </section>
+
+  <div id="clientProfileOverlay" class="client-profile-overlay" hidden>
+    <aside
+      id="clientProfileDrawer"
+      class="client-profile-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clientProfileName"
+      tabindex="-1"
+    >
+      <div class="client-drawer-header">
+        <div class="client-drawer-identity">
+          <span id="clientProfileAvatar" class="client-avatar" aria-hidden="true">PC</span>
+          <div>
+            <p class="eyebrow dark">PinkSpa Client Profile</p>
+            <div class="client-drawer-title-row">
+              <h2 id="clientProfileName">PinkSpa Client</h2>
+              <span id="clientProfileVip" class="client-vip-badge hidden">VIP</span>
+            </div>
+          </div>
+        </div>
+        <button id="clientProfileClose" class="client-profile-close" type="button" aria-label="Close client profile">×</button>
+      </div>
+
+      <div class="client-drawer-top-actions">
+        <button id="clientProfileEdit" type="button">Edit Profile</button>
+        <a id="clientProfileBook" href="/#book" target="_blank" rel="noopener noreferrer">Book Appointment</a>
+        <a id="clientProfileWhatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      </div>
+
+      <div id="clientProfileContent" class="client-profile-content"></div>
+
+      <div class="client-drawer-sticky-actions" aria-label="Client quick actions">
+        <a id="clientQuickBook" href="/#book" target="_blank" rel="noopener noreferrer">Book</a>
+        <a id="clientQuickWhatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a id="clientQuickCall" href="#">Call</a>
+      </div>
+    </aside>
+  </div>
 
   <script src="/owner.js"></script>
 </body>
