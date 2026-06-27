@@ -131,6 +131,22 @@
         </div>
       </section>
 
+      <section class="recent-activity-card" aria-labelledby="recentActivityTitle">
+        <div class="recent-activity-heading">
+          <div>
+            <p class="eyebrow dark">Live Business Pulse</p>
+            <h2 id="recentActivityTitle">Recent Activity</h2>
+          </div>
+          <span id="activityLastSynced" class="activity-last-synced">Last synced: --</span>
+        </div>
+        <div id="recentActivityList" class="recent-activity-list" aria-live="polite" aria-busy="true">
+          <div class="owner-loading">
+            <span class="owner-spinner" aria-hidden="true"></span>
+            <span>Loading recent activity...</span>
+          </div>
+        </div>
+      </section>
+
       <div class="stats">
   <div><span>Requests</span><strong id="statAppointments">0</strong></div>
   <div><span>Pending Review</span><strong id="statPending">0</strong></div>

@@ -2070,6 +2070,112 @@ button.client-direct-action{font-family:inherit}
   }
 }
 
+.owner-body .recent-activity-card {
+  margin: 0 0 28px;
+  padding: clamp(20px, 2.8vw, 30px);
+  border: 1px solid rgba(255, 218, 231, .9);
+  border-radius: 32px;
+  background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(255,247,250,.86));
+  box-shadow: 0 22px 58px rgba(151, 22, 77, .09);
+  backdrop-filter: blur(20px);
+  animation: dailyBriefRise .72s .08s cubic-bezier(.22,1,.36,1) both;
+}
+
+.owner-body .recent-activity-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.owner-body .recent-activity-heading h2 {
+  margin: 5px 0 0;
+  color: #25161d;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(27px, 3vw, 38px);
+  font-weight: 500;
+  letter-spacing: -.045em;
+}
+
+.owner-body .activity-last-synced {
+  flex: 0 0 auto;
+  color: #9a6e80;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.owner-body .recent-activity-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.owner-body .recent-activity-item {
+  --activity-accent: #6f8fca;
+  --activity-soft: #edf3ff;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #f8dce7;
+  border-radius: 20px;
+  background: rgba(255,255,255,.78);
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  animation: activityFeedIn .56s var(--activity-delay, 0ms) cubic-bezier(.22,1,.36,1) both;
+}
+
+.owner-body .recent-activity-item.activity-success { --activity-accent: #38895a; --activity-soft: #eaf8ef; }
+.owner-body .recent-activity-item.activity-warning { --activity-accent: #b47b16; --activity-soft: #fff6df; }
+.owner-body .recent-activity-item.activity-important { --activity-accent: #bc3154; --activity-soft: #ffe9ef; }
+.owner-body .recent-activity-item.is-new { border-color: color-mix(in srgb, var(--activity-accent) 36%, white); }
+
+.owner-body .recent-activity-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--activity-soft);
+  color: var(--activity-accent);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.owner-body .recent-activity-copy { display: grid; min-width: 0; gap: 5px; }
+.owner-body .recent-activity-copy strong {
+  overflow: hidden;
+  color: #4a2937;
+  font-size: 13px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.owner-body .recent-activity-copy time { color: #9a6e80; font-size: 11px; font-weight: 800; }
+
+.owner-body .owner-toast-event .owner-toast-icon {
+  background: linear-gradient(135deg, #ffe5ef, #fff7fa);
+  color: var(--deep);
+  font-size: 17px;
+}
+
+@media (hover:hover) {
+  .owner-body .recent-activity-item:hover {
+    transform: translateY(-2px);
+    border-color: #f4b7cd;
+    box-shadow: 0 15px 32px rgba(151,22,77,.09);
+  }
+}
+
+@keyframes activityFeedIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .owner-body .btn.primary,
 .owner-body .calendar-today-button {
   border: 1px solid rgba(255,255,255,.32);
@@ -2601,12 +2707,21 @@ button.client-direct-action{font-family:inherit}
   }
 }
 
+@media(max-width:700px) {
+  .owner-body .recent-activity-card { padding: 18px; border-radius: 25px; }
+  .owner-body .recent-activity-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .owner-body .recent-activity-list { grid-template-columns: 1fr; }
+  .owner-body .recent-activity-copy strong { white-space: normal; }
+}
+
 @media(prefers-reduced-motion:reduce) {
-  .owner-body :is(.stats div,.daily-brief-metric,.revenue-card,.appointment-card,.service-row,.owner-service-card,.blocked-date-card,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.owner-review-card,.tab,.logout) {
+  .owner-body :is(.stats div,.daily-brief-metric,.recent-activity-item,.revenue-card,.appointment-card,.service-row,.owner-service-card,.blocked-date-card,.financial-panel,.financial-ranked-item,.recent-completed-item,.calendar-day,.calendar-appointment,.client-card,.owner-review-card,.tab,.logout) {
     transition: none;
   }
 
   .owner-body .daily-brief-card,
+  .owner-body .recent-activity-card,
+  .owner-body .recent-activity-item,
   .owner-body .appointment-timeline-card,
   .owner-body .financial-panel,
   .owner-body .owner-review-card,

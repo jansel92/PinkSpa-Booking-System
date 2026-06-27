@@ -17,6 +17,11 @@ let notificationUnreadCount = 0;
 let notificationRefreshTimer = null;
 let notificationPanelCloseTimer = null;
 let dashboardBusinessName = "PinkSpa";
+let knownActivityNotificationIds = null;
+let activityLastSyncedAt = null;
+let activityEventSequence = 0;
+const sessionActivityEvents = [];
+const newActivityKeys = new Set();
 const reduceOwnerMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const animatedCounterValues = new WeakMap();
 
@@ -251,7 +256,7 @@ function setButtonBusy(button, busy, busyText = "Working...") {
   button.removeAttribute("aria-busy");
 }
 
-function showToast(message, type = "success") {
+function showToast(message, type = "success", options = {}) {
   const region = document.getElementById("ownerToastRegion");
   if (!region) return;
 
@@ -260,7 +265,7 @@ function showToast(message, type = "success") {
   }
 
   const toast = document.createElement("div");
-  toast.className = `owner-toast owner-toast-${type}`;
+  toast.className = `owner-toast owner-toast-${type}${options.event ? " owner-toast-event" : ""}`;
   toast.setAttribute("role", type === "error" ? "alert" : "status");
   const duration = type === "error" ? 6500 : 4200;
   toast.style.setProperty("--toast-duration", `${duration}ms`);
@@ -268,12 +273,12 @@ function showToast(message, type = "success") {
   const icon = document.createElement("span");
   icon.className = "owner-toast-icon";
   icon.setAttribute("aria-hidden", "true");
-  icon.textContent = type === "error" ? "!" : "OK";
+  icon.textContent = options.icon || (type === "error" ? "!" : "OK");
 
   const content = document.createElement("div");
   content.className = "owner-toast-content";
   const title = document.createElement("strong");
-  title.textContent = type === "error" ? "Action unsuccessful" : "Success";
+  title.textContent = options.title || (type === "error" ? "Action unsuccessful" : "Success");
   const text = document.createElement("span");
   text.textContent = message;
   content.append(title, text);
@@ -362,6 +367,131 @@ function relativeTime(value) {
   const [unit, unitSeconds] = units.find(([, amount]) => absSeconds >= amount) || ["minute", 60];
 
   return formatter.format(Math.round(-seconds / unitSeconds), unit);
+}
+
+const activityTypes = new Set([
+  "appointment-new",
+  "appointment-confirmed",
+  "appointment-completed",
+  "appointment-cancelled",
+  "review-new"
+]);
+
+function activityIcon(type, fallback = "i") {
+  const icons = {
+    "appointment-new": "+",
+    "appointment-confirmed": "✓",
+    "appointment-completed": "★",
+    "appointment-cancelled": "×",
+    "review-new": "♡",
+    reminder: "WA"
+  };
+  return icons[type] || fallback;
+}
+
+function activityTone(type) {
+  if (["appointment-confirmed", "appointment-completed"].includes(type)) return "success";
+  if (type === "appointment-cancelled") return "important";
+  if (type === "review-new") return "warning";
+  return "info";
+}
+
+function notificationActivity(notification) {
+  return {
+    key: `notification-${notification.id}`,
+    type: notification.type,
+    icon: activityIcon(notification.type, notification.icon),
+    message: notification.description || notification.title,
+    createdAt: notification.created_at,
+    tone: activityTone(notification.type)
+  };
+}
+
+function activityTimestamp(event) {
+  return parseNotificationDate(event.createdAt)?.getTime() || 0;
+}
+
+function renderRecentActivity() {
+  const list = document.getElementById("recentActivityList");
+  const synced = document.getElementById("activityLastSynced");
+  if (!list || !synced) return;
+
+  const events = [
+    ...sessionActivityEvents,
+    ...allNotifications.filter(notification => activityTypes.has(notification.type)).map(notificationActivity)
+  ]
+    .sort((left, right) => activityTimestamp(right) - activityTimestamp(left))
+    .slice(0, 6);
+
+  list.removeAttribute("aria-busy");
+  list.replaceChildren();
+  synced.textContent = activityLastSyncedAt
+    ? `Last synced: ${relativeTime(activityLastSyncedAt.toISOString())}`
+    : "Last synced: --";
+
+  if (!events.length) {
+    list.appendChild(createEmptyState("No recent activity yet", "New bookings, updates, reviews, and reminders will appear here."));
+    return;
+  }
+
+  events.forEach((event, index) => {
+    const item = document.createElement("article");
+    item.className = `recent-activity-item activity-${event.tone || "info"}`;
+    if (newActivityKeys.has(event.key)) item.classList.add("is-new");
+    item.style.setProperty("--activity-delay", `${index * 45}ms`);
+
+    const icon = document.createElement("span");
+    icon.className = "recent-activity-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = event.icon || "i";
+
+    const copy = document.createElement("div");
+    copy.className = "recent-activity-copy";
+    const message = document.createElement("strong");
+    message.textContent = event.message;
+    const time = document.createElement("time");
+    time.dateTime = event.createdAt || "";
+    time.textContent = relativeTime(event.createdAt) || "Recently";
+    copy.append(message, time);
+    item.append(icon, copy);
+    list.appendChild(item);
+  });
+
+  newActivityKeys.clear();
+}
+
+function recordReminderActivity(appointment, label) {
+  const createdAt = new Date().toISOString();
+  const event = {
+    key: `reminder-${++activityEventSequence}`,
+    type: "reminder",
+    icon: activityIcon("reminder"),
+    message: `${label} opened for ${appointment.client_name || "a client"}'s ${appointment.service_name || "appointment"}.`,
+    createdAt,
+    tone: "success"
+  };
+  sessionActivityEvents.unshift(event);
+  if (sessionActivityEvents.length > 8) sessionActivityEvents.length = 8;
+  newActivityKeys.add(event.key);
+  renderRecentActivity();
+}
+
+function showNewActivityToasts(notifications) {
+  const toastDetails = {
+    "appointment-new": { title: "New booking received", icon: "+" },
+    "review-new": { title: "Review received", icon: "♡" },
+    "appointment-cancelled": { title: "Appointment cancelled", icon: "×" }
+  };
+
+  notifications.forEach(notification => {
+    const detail = toastDetails[notification.type];
+    if (!detail) return;
+    showToast(notification.description || notification.title, "success", {
+      event: true,
+      title: detail.title,
+      icon: detail.icon
+    });
+  });
 }
 
 function renderNotifications(notifications = allNotifications) {
@@ -500,9 +630,21 @@ async function loadNotifications() {
   setLoadingState(list, "Loading notifications...");
   try {
     const data = await api("/api/notifications");
-    allNotifications = Array.isArray(data.notifications) ? data.notifications : [];
+    const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+    const currentIds = new Set(notifications.map(notification => String(notification.id)));
+    if (knownActivityNotificationIds) {
+      const newNotifications = notifications.filter(notification => {
+        return !knownActivityNotificationIds.has(String(notification.id));
+      });
+      newNotifications.forEach(notification => newActivityKeys.add(`notification-${notification.id}`));
+      showNewActivityToasts(newNotifications);
+    }
+    knownActivityNotificationIds = currentIds;
+    allNotifications = notifications;
     notificationUnreadCount = Number(data.unread_count || 0);
+    activityLastSyncedAt = new Date();
     renderNotifications();
+    renderRecentActivity();
     updateDashboardGreeting();
     finishLoading(list);
   } catch (error) {
@@ -867,6 +1009,9 @@ function createWhatsAppButton(label, type, appointment) {
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   link.setAttribute("aria-label", `Send WhatsApp ${label} message to ${appointment.client_name || "client"}`);
+  if (["reminder", "reminderTomorrow", "reminderSameDay"].includes(type)) {
+    link.addEventListener("click", () => recordReminderActivity(appointment, label));
+  }
   return link;
 }
 
