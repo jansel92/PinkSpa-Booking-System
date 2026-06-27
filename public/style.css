@@ -7571,6 +7571,115 @@ button.client-direct-action{font-family:inherit}
   }
 }
 
+/* Owner login screen: isolated from the authenticated dashboard */
+.owner-body .login-screen {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding:
+    max(24px,env(safe-area-inset-top))
+    max(18px,env(safe-area-inset-right))
+    max(24px,env(safe-area-inset-bottom))
+    max(18px,env(safe-area-inset-left));
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 16% 14%,rgba(255,198,220,.55),transparent 30%),
+    radial-gradient(circle at 86% 18%,rgba(255,226,184,.38),transparent 28%),
+    linear-gradient(145deg,#fffafb 0%,#fff0f6 100%);
+}
+
+.owner-body .login-screen .login-card {
+  width: min(430px,100%);
+  max-width: 430px;
+  padding: clamp(26px,4vw,38px);
+  overflow: hidden;
+  border: 1px solid rgba(255,211,225,.9);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 88% 6%,rgba(255,229,190,.24),transparent 28%),
+    linear-gradient(145deg,rgba(255,255,255,.98),rgba(255,247,250,.94));
+  box-shadow:
+    0 28px 76px rgba(98,30,60,.15),
+    0 0 0 1px rgba(255,255,255,.72) inset;
+  backdrop-filter: blur(20px);
+}
+
+.owner-body .login-screen .login-logo {
+  display: block;
+  width: min(156px,42vw);
+  height: auto;
+  max-width: 156px;
+  max-height: 156px;
+  aspect-ratio: 1;
+  margin: 0 auto 18px;
+  object-fit: contain;
+  border-radius: 50%;
+  box-shadow: 0 16px 38px rgba(183,25,86,.13);
+}
+
+.owner-body .login-screen .login-card h1 {
+  margin: 4px 0 8px;
+  color: #2d1922;
+  font-family: Georgia,"Times New Roman",serif;
+  font-size: clamp(34px,7vw,42px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -.045em;
+  text-align: center;
+}
+
+.owner-body .login-screen .login-card > p {
+  margin: 0 0 20px;
+  color: #806170;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.owner-body .login-screen .login-card label {
+  gap: 7px;
+  margin-bottom: 14px;
+  color: #563344;
+  font-size: 13px;
+}
+
+.owner-body .login-screen .login-card input {
+  min-height: 52px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.94);
+}
+
+.owner-body .login-screen .login-card .btn {
+  min-height: 52px;
+  margin-top: 2px;
+}
+
+.owner-body .login-screen #loginMessage:empty {
+  min-height: 0;
+  margin: 0;
+}
+
+@media (max-width:520px) {
+  .owner-body .login-screen {
+    padding:
+      max(16px,env(safe-area-inset-top))
+      max(14px,env(safe-area-inset-right))
+      max(16px,env(safe-area-inset-bottom))
+      max(14px,env(safe-area-inset-left));
+  }
+
+  .owner-body .login-screen .login-card {
+    padding: 24px 18px;
+    border-radius: 28px;
+  }
+
+  .owner-body .login-screen .login-logo {
+    width: min(132px,38vw);
+    max-width: 132px;
+    max-height: 132px;
+    margin-bottom: 14px;
+  }
+}
+
 /* PinkSpa 1.0 launch audit corrections */
 html {
   text-rendering: optimizeLegibility;
