@@ -7571,6 +7571,201 @@ button.client-direct-action{font-family:inherit}
   }
 }
 
+/* PinkSpa 1.0 launch audit corrections */
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.home-page,
+.review-page,
+.owner-body {
+  overflow-x: clip;
+}
+
+.home-page :is(#services,#gallery,#reviews,#status,#book,#faq),
+.review-page .review-card,
+.owner-body .tab-content {
+  scroll-margin-top: 108px;
+}
+
+.home-page :is(a,button,input,select,textarea,summary):focus-visible,
+.review-page :is(a,button,input,select,textarea,label):focus-visible,
+.owner-body :is(a,button,input,select,textarea,summary):focus-visible {
+  outline: 3px solid rgba(183,25,86,.36);
+  outline-offset: 3px;
+}
+
+.home-page :is(#bookingMessage,#statusResult),
+.review-page .review-message {
+  min-height: 24px;
+  transition:
+    color var(--pinkspa-motion) ease,
+    background-color var(--pinkspa-motion) ease,
+    border-color var(--pinkspa-motion) ease;
+}
+
+.home-page :is(#bookingMessage,#statusResult):not(:empty),
+.review-page .review-message:not(:empty) {
+  padding: 11px 13px;
+  border: 1px solid rgba(183,25,86,.13);
+  border-radius: 14px;
+  background: rgba(255,244,248,.74);
+  line-height: 1.5;
+}
+
+.review-page .review-message.is-success {
+  border-color: rgba(34,132,81,.2);
+  background: #effbf3;
+  color: #126c37;
+}
+
+.review-page .review-message.is-error {
+  border-color: rgba(177,58,58,.2);
+  background: #fff1f3;
+  color: #922744;
+}
+
+@media (hover:hover) {
+  .home-page :is(.service-card,.gallery-grid img,.home-stat-card,.recent-booking-card,.review-card,.form-card,.info-box span,.faq-item,.recommendation-card):hover,
+  .review-page .review-card:hover,
+  .owner-body :is(.panel,.stats > div,.daily-brief-metric,.recent-activity-item,.revenue-card,.financial-panel,.insight-kpi-card,.insight-panel,.appointment-card,.calendar-day,.calendar-appointment,.client-card,.owner-service-card,.owner-review-card,.blocked-date-card):hover {
+    transform: none;
+  }
+
+  .home-page :is(.btn,.service-book-btn,.instagram-btn,.service-filter,.service-page-button,.review-nav-button,.recommendation-add):hover,
+  .review-page .review-submit:hover,
+  .owner-body :is(.btn,.calendar-today-button,.status-row button,.service-row button,.notification-bell,.notification-mark-all,.notification-read-button):hover {
+    transform: none;
+  }
+
+  .owner-body :is(.tab,.logout):hover {
+    transform: none;
+    translate: 3px 0;
+  }
+}
+
+.home-page .service-card-img,
+.home-page .gallery-grid img {
+  transition-duration: var(--pinkspa-motion);
+  transition-timing-function: var(--pinkspa-ease);
+}
+
+.home-page .review-dot {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+}
+
+.home-page .review-dot::before {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(183,25,86,.28);
+  content: "";
+  transition: width var(--pinkspa-motion) var(--pinkspa-ease), background-color var(--pinkspa-motion) ease;
+}
+
+.home-page .review-dot.is-active { width: 44px; background: transparent; }
+.home-page .review-dot.is-active::before {
+  width: 26px;
+  background: linear-gradient(135deg,var(--pink),var(--deep));
+}
+
+.home-page .footer-column a {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+}
+
+.owner-body :is(.notifications-list,.client-profile-drawer) {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.owner-body :is(.insight-column-chart,.revenue-trend),
+.home-page :is(.service-category-filters,.reviews-grid,.nav nav) {
+  overscroll-behavior: contain;
+}
+
+.owner-body :is(.daily-brief-metric span,.insight-kpi-card > span,.insight-chart-value,.insight-chart-column strong,.insight-donut span,.insight-recommendation p,.client-profile-event time) {
+  font-size: max(11px, .6875rem);
+}
+
+.owner-body :is(.revenue-service-name,.client-metric strong,.insight-ranked-item strong,.recent-activity-copy strong) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width:700px) {
+  .home-page {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .home-page .nav {
+    top: max(8px,env(safe-area-inset-top)) !important;
+    left: max(10px,env(safe-area-inset-left)) !important;
+    right: max(10px,env(safe-area-inset-right)) !important;
+  }
+
+  .home-page .hero {
+    min-height: max(680px,100svh);
+  }
+
+  .home-page .nav nav a,
+  .home-page :is(.service-filter,.service-page-button,.review-nav-button,.recommendation-add,.whatsapp-concierge a,.whatsapp-concierge-close),
+  .review-page :is(button,.review-star-options label),
+  .owner-body :is(button,.btn,.notification-mark-all,.notification-read-button) {
+    min-height: 44px;
+  }
+
+  .home-page .footer-column a {
+    min-height: 44px;
+  }
+
+  .owner-body .dash-main {
+    padding-right: max(14px,env(safe-area-inset-right));
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+    padding-left: max(14px,env(safe-area-inset-left));
+  }
+
+  .owner-body .owner-toast-region {
+    right: max(16px,env(safe-area-inset-right));
+    bottom: max(16px,env(safe-area-inset-bottom));
+    left: max(16px,env(safe-area-inset-left));
+  }
+
+  .owner-body .notification-panel {
+    top: max(88px,calc(64px + env(safe-area-inset-top)));
+    max-height: calc(100dvh - 112px - env(safe-area-inset-bottom));
+  }
+
+  .owner-body .insight-panel-heading > span,
+  .owner-body .financial-panel-heading > span {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+@media (max-width:380px) {
+  .home-page .hero {
+    min-height: max(640px,100svh);
+  }
+
+  .owner-body :is(.daily-brief-grid,.stats,.client-information-grid,.client-profile-stats) {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .home-page .review-dot::before,
+  .home-page :is(#bookingMessage,#statusResult),
+  .review-page .review-message {
+    transition: none !important;
+  }
+}
+
 /* PinkSpa 1.0 interaction polish */
 :root {
   --pinkspa-motion-fast: 220ms;
