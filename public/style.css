@@ -4516,10 +4516,18 @@ button.client-direct-action{font-family:inherit}
 .home-page .hero-logo {
   width: clamp(150px, 16.8vw, 216px);
   height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
   margin: 0 0 18px;
-  border: 1px solid rgba(255, 255, 255, .42);
-  border-radius: 50%;
-  box-shadow: 0 26px 65px rgba(16, 5, 10, .27);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition: none;
+}
+
+.home-page .hero-logo:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .home-page .eyebrow {
@@ -4586,14 +4594,6 @@ button.client-direct-action{font-family:inherit}
   animation:cinematicFadeUp .78s cubic-bezier(.22,1,.36,1) both;
   will-change:opacity,transform;
 }
-.home-entrance-prep .home-page .hero-logo{
-  opacity:0;
-  transform:translateY(18px) scale(.94);
-}
-.home-entrance-ready .home-page .hero-logo{
-  animation:heroLogoEntrance .82s cubic-bezier(.22,1,.36,1) .12s both;
-  will-change:opacity,transform;
-}
 .home-entrance-ready .home-page .hero .eyebrow{animation-delay:.24s}
 .home-entrance-ready .home-page .hero h1{animation-delay:.34s}
 .home-entrance-ready .home-page .hero p:not(.eyebrow){animation-delay:.52s}
@@ -4606,7 +4606,6 @@ button.client-direct-action{font-family:inherit}
   from{transform:translate(0,0) scale(1)}
   to{transform:translate(var(--hero-ambient-x),var(--hero-ambient-y)) scale(var(--hero-ambient-scale))}
 }
-@keyframes heroLogoEntrance{to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes cinematicFadeUp{to{opacity:1;transform:translateY(0)}}
 
 .home-page .btn,
