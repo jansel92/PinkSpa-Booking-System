@@ -8171,3 +8171,113 @@ html {
     animation: none !important;
   }
 }
+
+/* Our Work: Soft Luxury Editorial Beauty. Keep lightbox order and image data intact. */
+.home-page #gallery {
+  padding: 96px max(40px, calc((100% - 1240px) / 2));
+  background: linear-gradient(180deg, var(--home-blush), var(--home-surface) 24%, var(--home-surface) 85%, var(--home-blush));
+}
+
+.home-page #gallery .heading { margin-bottom: 40px; }
+
+.home-page #gallery .gallery-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: row;
+  grid-auto-rows: auto;
+  gap: 20px;
+  margin-top: 0;
+}
+
+.home-page #gallery .gallery-grid img {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  grid-column: auto;
+  grid-row: auto;
+  object-fit: cover;
+  object-position: center;
+  border: 1px solid var(--home-border);
+  border-radius: 12px;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  transition: opacity .55s cubic-bezier(.22, 1, .36, 1), transform .55s cubic-bezier(.22, 1, .36, 1);
+}
+
+.home-page #gallery .gallery-grid img:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 16px;
+  /* The square pearl manicure keeps its full composition in the lead frame. */
+  object-fit: contain;
+  background: var(--home-blush);
+}
+
+/* Square supporting frames balance the lead without an elongated opening. */
+.home-page #gallery .gallery-grid img:nth-child(n + 2):nth-child(-n + 5) {
+  aspect-ratio: 1;
+}
+
+.reveal-enabled .home-page #gallery .scroll-reveal {
+  opacity: 0;
+  filter: none;
+  transform: translateY(10px);
+  transition: opacity .55s cubic-bezier(.22, 1, .36, 1), transform .55s cubic-bezier(.22, 1, .36, 1);
+  transition-delay: 0ms;
+  will-change: auto;
+}
+
+.reveal-enabled .home-page #gallery .scroll-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 1050px) {
+  .home-page #gallery { padding: 72px 32px; }
+}
+
+@media (max-width: 700px) {
+  .home-page #gallery {
+    padding: 48px 20px calc(176px + env(safe-area-inset-bottom, 0px));
+  }
+  .home-page #gallery .heading { margin-bottom: 20px; }
+  .home-page #gallery .heading h2 {
+    font-size: clamp(28px, 7.7vw, 38px);
+    line-height: 1.16;
+    letter-spacing: -.025em;
+    text-wrap: balance;
+  }
+  .home-page #gallery .heading p:not(.eyebrow) {
+    margin: 12px auto 0;
+    max-width: 34ch;
+    line-height: 1.6;
+  }
+  .home-page #gallery .gallery-grid img {
+    scroll-margin-top: 100px;
+    scroll-margin-bottom: calc(190px + env(safe-area-inset-bottom, 0px));
+  }
+  .home-page #gallery .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .home-page #gallery .gallery-grid img:first-child {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page #gallery .gallery-grid img,
+  .reveal-enabled .home-page #gallery .scroll-reveal {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+}
