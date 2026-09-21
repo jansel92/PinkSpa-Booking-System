@@ -6733,17 +6733,39 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .nav nav {
-    gap: 8px !important;
-    padding: 0 2px 2px 5px;
-    scrollbar-width: none;
+    gap: 4px !important;
+    min-width: 0;
+    padding: 0 8px 2px 2px;
+    scroll-padding-inline: 8px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(183, 25, 86, .35) transparent;
   }
 
   .home-page .nav nav::-webkit-scrollbar {
-    display: none;
+    height: 3px;
+  }
+
+  .home-page .nav nav a:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .home-page .nav nav::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(183, 25, 86, .35);
+  }
+
+  .home-page .nav nav::-webkit-scrollbar-track {
+    background: transparent;
   }
 
   .home-page .nav nav a {
-    padding: 8px 7px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 4px;
+    justify-content: center;
+    align-items: center;
+    scroll-snap-align: center;
     border: 1px solid rgba(255, 255, 255, .28);
     border-radius: 999px;
     background: rgba(255, 255, 255, .16);
@@ -7462,10 +7484,6 @@ button.client-direct-action{font-family:inherit}
 @media (max-width: 380px) {
   .home-page .brand {
     display: none;
-  }
-
-  .home-page .nav nav {
-    padding-left: 0;
   }
 
   .home-page .hero {

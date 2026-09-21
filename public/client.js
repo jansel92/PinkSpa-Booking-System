@@ -77,6 +77,22 @@ function setupGlassNavigation() {
   const nav = document.querySelector(".home-page .nav");
   if (!nav) return;
 
+  const links = nav.querySelector("nav");
+  links?.addEventListener("focusin", (event) => {
+    const link = event.target.closest("a");
+    if (!link || !link.matches(":focus-visible") || !window.matchMedia("(max-width: 700px)").matches) return;
+    window.requestAnimationFrame(() => {
+      const item = link.getBoundingClientRect();
+      const viewport = links.getBoundingClientRect();
+      if (item.left >= viewport.left && item.right <= viewport.right) return;
+      // Native focus scrolling can leave a partially visible pill clipped.
+      links.scrollTo({
+        left: links.scrollLeft + item.left - viewport.left - (viewport.width - item.width) / 2,
+        behavior: "instant"
+      });
+    });
+  });
+
   let ticking = false;
   const updateNav = () => {
     nav.classList.toggle("is-scrolled", window.scrollY > 18);
