@@ -4530,6 +4530,73 @@ button.client-direct-action{font-family:inherit}
   box-shadow: none;
 }
 
+.home-page .hero-logo-lighting {
+  --logo-effect-gap:18px;
+  --logo-reflection-opacity:.22;
+  --logo-glint-opacity:.65;
+  display:inline-block;
+  position:relative;
+  line-height:0;
+}
+
+.home-page .hero-logo-reflection,
+.home-page .hero-logo-glints {
+  position:absolute;
+  inset:0 0 var(--logo-effect-gap);
+  pointer-events:none;
+}
+
+.home-page .hero-logo-reflection {
+  overflow:hidden;
+  -webkit-mask:url("/images/pinkspa-3d-master.png") center / contain no-repeat;
+  mask:url("/images/pinkspa-3d-master.png") center / contain no-repeat;
+}
+
+.home-page .hero-logo-reflection::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(115deg, transparent 36%, rgba(255,219,199,.28) 45%, rgba(255,250,239,.8) 50%, rgba(255,219,199,.28) 55%, transparent 64%);
+  opacity:0;
+  animation:heroLogoReflection 18s ease-in-out infinite;
+}
+
+.home-page .hero-logo-glints::before,
+.home-page .hero-logo-glints::after {
+  content:"";
+  position:absolute;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,245,.95) 0%, rgba(255,228,207,.6) 25%, transparent 72%);
+  opacity:0;
+  animation:heroLogoGlint 18s ease-in-out infinite;
+}
+
+.home-page .hero-logo-glints::before {
+  left:49%;
+  top:17%;
+  animation-delay:4s;
+}
+
+.home-page .hero-logo-glints::after {
+  left:87%;
+  top:39%;
+  animation-delay:11s;
+}
+
+@keyframes heroLogoReflection {
+  0%,10%{transform:translateX(-100%);opacity:0}
+  16%{opacity:var(--logo-reflection-opacity)}
+  38%{opacity:var(--logo-reflection-opacity)}
+  44%,100%{transform:translateX(100%);opacity:0}
+}
+
+@keyframes heroLogoGlint {
+  0%,8%,100%{opacity:0}
+  4%{opacity:var(--logo-glint-opacity)}
+}
+
 .home-page .eyebrow {
   margin-bottom: 18px;
   letter-spacing: .28em;
@@ -6835,6 +6902,21 @@ button.client-direct-action{font-family:inherit}
     margin-bottom: 14px;
   }
 
+  .home-page .hero-logo-lighting {
+    --logo-effect-gap:14px;
+    --logo-reflection-opacity:.14;
+    --logo-glint-opacity:.4;
+  }
+
+  .home-page .hero-logo-glints::before {
+    width:3px;
+    height:3px;
+  }
+
+  .home-page .hero-logo-glints::after {
+    display:none;
+  }
+
   .home-entrance-ready .home-page .hero::before {
     --hero-ambient-scale:1.035;
     --hero-ambient-x:.45%;
@@ -7666,6 +7748,17 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .hero-content::before {
     content:none;
+    animation:none;
+  }
+
+  .home-page .hero-logo-reflection,
+  .home-page .hero-logo-glints {
+    display:none;
+  }
+
+  .home-page .hero-logo-reflection::before,
+  .home-page .hero-logo-glints::before,
+  .home-page .hero-logo-glints::after {
     animation:none;
   }
 }
