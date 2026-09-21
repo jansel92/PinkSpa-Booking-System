@@ -6837,14 +6837,14 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-entrance-ready .home-page .hero::before {
-    --hero-ambient-scale:1.025;
-    --hero-ambient-x:.3%;
-    --hero-ambient-y:.15%;
+    --hero-ambient-scale:1.035;
+    --hero-ambient-x:.45%;
+    --hero-ambient-y:.25%;
   }
 
   .home-page .hero-content::before {
     --hero-light-low:.18;
-    --hero-light-high:.4;
+    --hero-light-high:.55;
     top:-35%;
     left:-10%;
     width:120%;
