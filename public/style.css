@@ -7423,25 +7423,30 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .whatsapp-concierge {
-    right: 12px;
-    bottom: max(82px, calc(76px + env(safe-area-inset-bottom)));
-    grid-template-columns: minmax(0, 1fr) auto;
-    width: min(286px, calc(100vw - 24px));
-    padding: 12px 12px 12px 14px;
-    border-radius: 22px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(max(14px, env(safe-area-inset-bottom)) + 68px);
+    grid-template-columns: auto;
+    gap: 0;
+    width: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    box-shadow: none;
+    animation: none;
   }
 
-  .home-page .whatsapp-concierge-copy strong {
-    font-size: 16px;
-  }
-
-  .home-page .whatsapp-concierge-copy span {
-    font-size: 12px;
+  .home-page .whatsapp-concierge-copy,
+  .home-page .whatsapp-concierge-close {
+    display: none;
   }
 
   .home-page .whatsapp-concierge a {
-    min-height: 38px;
-    padding: 9px 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 10px 14px;
     font-size: 12px;
   }
 
