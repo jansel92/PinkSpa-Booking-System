@@ -4503,7 +4503,7 @@ button.client-direct-action{font-family:inherit}
   height:70%;
   z-index:-1;
   pointer-events:none;
-  background:radial-gradient(ellipse at 50% 50%, rgba(255,210,186,.16) 0%, rgba(246,176,198,.08) 35%, rgba(246,176,198,0) 72%);
+  background:radial-gradient(ellipse at 50% 50%, rgba(255,210,186,.28) 0%, rgba(246,176,198,.14) 35%, rgba(246,176,198,0) 72%);
   opacity:var(--hero-light-low);
   animation:heroStudioLight 28s ease-in-out infinite alternate;
 }
@@ -6844,7 +6844,7 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .hero-content::before {
     --hero-light-low:.18;
-    --hero-light-high:.32;
+    --hero-light-high:.4;
     top:-35%;
     left:-10%;
     width:120%;
