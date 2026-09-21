@@ -4491,6 +4491,28 @@ button.client-direct-action{font-family:inherit}
   max-width: 780px;
 }
 
+/* Independent studio light: behind content, clear of the ivory bottom fade. */
+.home-page .hero-content::before {
+  --hero-light-low:.35;
+  --hero-light-high:.7;
+  content:"";
+  position:absolute;
+  top:-18%;
+  left:30%;
+  width:145%;
+  height:70%;
+  z-index:-1;
+  pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%, rgba(255,210,186,.16) 0%, rgba(246,176,198,.08) 35%, rgba(246,176,198,0) 72%);
+  opacity:var(--hero-light-low);
+  animation:heroStudioLight 28s ease-in-out infinite alternate;
+}
+
+@keyframes heroStudioLight {
+  from{transform:translate(-5%,-2%);opacity:var(--hero-light-low)}
+  to{transform:translate(5%,2%);opacity:var(--hero-light-high)}
+}
+
 .home-page .hero-logo {
   width: clamp(150px, 16.8vw, 216px);
   height: auto;
@@ -6820,6 +6842,15 @@ button.client-direct-action{font-family:inherit}
     --hero-ambient-y:.15%;
   }
 
+  .home-page .hero-content::before {
+    --hero-light-low:.18;
+    --hero-light-high:.32;
+    top:-35%;
+    left:-10%;
+    width:120%;
+    height:80%;
+  }
+
   .home-page .hero h1 {
     font-size: clamp(45px, 13vw, 62px);
     line-height: .96;
@@ -7631,6 +7662,11 @@ button.client-direct-action{font-family:inherit}
 
   .home-entrance-prep .home-page .hero::before,
   .home-entrance-ready .home-page .hero::before {
+    animation:none;
+  }
+
+  .home-page .hero-content::before {
+    content:none;
     animation:none;
   }
 }
