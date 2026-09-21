@@ -4542,12 +4542,12 @@ button.client-direct-action{font-family:inherit}
   transform:scale(1.04);
 }
 .home-entrance-ready .home-page .hero::before{
-  --hero-ambient-scale:1.025;
-  --hero-ambient-x:.35%;
-  --hero-ambient-y:.15%;
+  --hero-ambient-scale:1.04;
+  --hero-ambient-x:.6%;
+  --hero-ambient-y:.3%;
   animation:
     heroBackgroundEntrance .9s cubic-bezier(.22,1,.36,1) .06s both,
-    heroBackgroundAmbient 32s ease-in-out .96s infinite alternate;
+    heroBackgroundAmbient 22s ease-in-out .96s infinite alternate;
   will-change:opacity,transform;
 }
 .home-entrance-prep .home-page .hero .eyebrow,
@@ -6815,9 +6815,9 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-entrance-ready .home-page .hero::before {
-    --hero-ambient-scale:1.012;
-    --hero-ambient-x:.15%;
-    --hero-ambient-y:.08%;
+    --hero-ambient-scale:1.025;
+    --hero-ambient-x:.3%;
+    --hero-ambient-y:.15%;
   }
 
   .home-page .hero h1 {
