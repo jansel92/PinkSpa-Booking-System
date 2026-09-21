@@ -4626,11 +4626,28 @@ button.client-direct-action{font-family:inherit}
 .home-page .booking-copy h2,
 .home-page .cta h2 {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(40px, 5vw, 68px);
+  font-size: var(--public-heading-size, clamp(40px, 5vw, 68px));
   font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -.045em;
+  line-height: var(--public-heading-leading, 1.04);
+  letter-spacing: var(--public-heading-tracking, -.045em);
   text-wrap: balance;
+}
+
+/* Scoped heading rhythm: the approved Hero and Gallery keep their own scale. */
+.home-page :is(#services, #recentlyBooked, #stats, #reviews, #status, #faq) .heading h2,
+.home-page .booking-copy h2,
+.home-page .cta h2 {
+  --public-heading-size: clamp(30px, calc(20px + 3.333333vw), 68px);
+  --public-heading-leading: 1.12;
+  --public-heading-tracking: -.025em;
+}
+
+.home-page :is(#recentlyBooked, #stats) {
+  padding-block: clamp(60px, 7.2vw, 104px);
+}
+
+.home-page :is(#recentlyBooked, #stats) .heading {
+  margin-bottom: clamp(28px, 3.3vw, 48px);
 }
 
 .home-page .heading p:not(.eyebrow),
@@ -6397,6 +6414,7 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .cta {
   max-width: 1180px;
+  width: calc(100% - 40px);
   margin: clamp(70px, 8vw, 110px) auto;
   padding: clamp(38px, 5vw, 64px);
   border: 1px solid rgba(255, 255, 255, .24);
@@ -6519,10 +6537,11 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .faq-answer p {
   margin: 0;
+  max-width: 72ch;
   padding: 0 22px 22px;
   color: #765767;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 400;
   line-height: 1.75;
 }
 
@@ -6866,8 +6885,9 @@ button.client-direct-action{font-family:inherit}
   .home-page .service-card-body p {
     margin: 0 0 7px;
     padding: 3px 7px;
-    font-size: 10.5px;
-    line-height: 1.15;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
   }
 
   .home-page .service-book-btn {
@@ -6954,7 +6974,7 @@ button.client-direct-action{font-family:inherit}
   .home-page .heading h2,
   .home-page .booking-copy h2,
   .home-page .cta h2 {
-    font-size: clamp(38px, 11vw, 52px);
+    font-size: var(--public-heading-size, clamp(38px, 11vw, 52px));
   }
 
   .home-page .service-grid {
@@ -7297,7 +7317,7 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .faq-answer p {
     padding: 0 16px 17px;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.65;
   }
 
@@ -7306,7 +7326,7 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .cta {
-    margin: 58px 20px;
+    margin: 58px auto;
     border-radius: 30px;
   }
 
