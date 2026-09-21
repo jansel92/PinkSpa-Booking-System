@@ -4547,7 +4547,7 @@ button.client-direct-action{font-family:inherit}
   --hero-ambient-y:.3%;
   animation:
     heroBackgroundEntrance .9s cubic-bezier(.22,1,.36,1) .06s both,
-    heroBackgroundAmbient 22s ease-in-out .96s infinite alternate;
+    heroBackgroundAmbient 16s ease-in-out .96s infinite alternate;
   will-change:opacity,transform;
 }
 .home-entrance-prep .home-page .hero .eyebrow,
