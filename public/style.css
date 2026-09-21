@@ -4542,7 +4542,12 @@ button.client-direct-action{font-family:inherit}
   transform:scale(1.04);
 }
 .home-entrance-ready .home-page .hero::before{
-  animation:heroBackgroundEntrance .9s cubic-bezier(.22,1,.36,1) .06s both;
+  --hero-ambient-scale:1.025;
+  --hero-ambient-x:.35%;
+  --hero-ambient-y:.15%;
+  animation:
+    heroBackgroundEntrance .9s cubic-bezier(.22,1,.36,1) .06s both,
+    heroBackgroundAmbient 32s ease-in-out .96s infinite alternate;
   will-change:opacity,transform;
 }
 .home-entrance-prep .home-page .hero .eyebrow,
@@ -4574,6 +4579,11 @@ button.client-direct-action{font-family:inherit}
 
 @keyframes homePageFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes heroBackgroundEntrance{to{opacity:1;transform:scale(1)}}
+/* Drift stays within the extra image coverage created by the gentle zoom. */
+@keyframes heroBackgroundAmbient{
+  from{transform:translate(0,0) scale(1)}
+  to{transform:translate(var(--hero-ambient-x),var(--hero-ambient-y)) scale(var(--hero-ambient-scale))}
+}
 @keyframes heroLogoEntrance{to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes cinematicFadeUp{to{opacity:1;transform:translateY(0)}}
 
@@ -6804,6 +6814,12 @@ button.client-direct-action{font-family:inherit}
     margin-bottom: 14px;
   }
 
+  .home-entrance-ready .home-page .hero::before {
+    --hero-ambient-scale:1.012;
+    --hero-ambient-x:.15%;
+    --hero-ambient-y:.08%;
+  }
+
   .home-page .hero h1 {
     font-size: clamp(45px, 13vw, 62px);
     line-height: .96;
@@ -7611,6 +7627,11 @@ button.client-direct-action{font-family:inherit}
   .home-page .nav-logo,
   .home-page .nav nav a {
     transition:none;
+  }
+
+  .home-entrance-prep .home-page .hero::before,
+  .home-entrance-ready .home-page .hero::before {
+    animation:none;
   }
 }
 
