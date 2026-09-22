@@ -4548,6 +4548,7 @@ button.client-direct-action{font-family:inherit}
 
 .home-page .hero-logo-reflection {
   overflow:hidden;
+  background:linear-gradient(115deg, rgba(255,219,199,.015), rgba(255,239,219,.045) 50%, rgba(255,219,199,.015));
   -webkit-mask:url("/images/pinkspa-3d-master.png") center / contain no-repeat;
   mask:url("/images/pinkspa-3d-master.png") center / contain no-repeat;
 }
@@ -4558,11 +4559,12 @@ button.client-direct-action{font-family:inherit}
   inset:0;
   background:linear-gradient(115deg, transparent 36%, rgba(255,219,199,.28) 45%, rgba(255,250,239,.8) 50%, rgba(255,219,199,.28) 55%, transparent 64%);
   opacity:0;
-  animation:heroLogoReflection 18s ease-in-out infinite;
+  animation:heroLogoReflection 6.5s ease-in-out infinite;
 }
 
 .home-page .hero-logo-glints::before,
-.home-page .hero-logo-glints::after {
+.home-page .hero-logo-glints::after,
+.home-page .hero-logo-reflection::after {
   content:"";
   position:absolute;
   width:4px;
@@ -4570,31 +4572,37 @@ button.client-direct-action{font-family:inherit}
   border-radius:50%;
   background:radial-gradient(circle, rgba(255,255,245,.95) 0%, rgba(255,228,207,.6) 25%, transparent 72%);
   opacity:0;
-  animation:heroLogoGlint 18s ease-in-out infinite;
+  animation:heroLogoGlint 9s ease-in-out infinite;
 }
 
 .home-page .hero-logo-glints::before {
   left:49%;
   top:17%;
-  animation-delay:4s;
+  animation-delay:1s;
 }
 
 .home-page .hero-logo-glints::after {
   left:87%;
   top:39%;
-  animation-delay:11s;
+  animation-delay:4s;
+}
+
+.home-page .hero-logo-reflection::after {
+  left:49%;
+  top:61%;
+  animation-delay:7s;
 }
 
 @keyframes heroLogoReflection {
   0%,10%{transform:translateX(-100%);opacity:0}
-  16%{opacity:var(--logo-reflection-opacity)}
-  38%{opacity:var(--logo-reflection-opacity)}
-  44%,100%{transform:translateX(100%);opacity:0}
+  20%{opacity:var(--logo-reflection-opacity)}
+  55%{opacity:var(--logo-reflection-opacity)}
+  65%,100%{transform:translateX(100%);opacity:0}
 }
 
 @keyframes heroLogoGlint {
-  0%,8%,100%{opacity:0}
-  4%{opacity:var(--logo-glint-opacity)}
+  0%,12%,100%{opacity:0}
+  6%{opacity:var(--logo-glint-opacity)}
 }
 
 .home-page .eyebrow {
@@ -6904,17 +6912,15 @@ button.client-direct-action{font-family:inherit}
 
   .home-page .hero-logo-lighting {
     --logo-effect-gap:14px;
-    --logo-reflection-opacity:.14;
-    --logo-glint-opacity:.4;
+    --logo-reflection-opacity:.3;
+    --logo-glint-opacity:.48;
   }
 
-  .home-page .hero-logo-glints::before {
-    width:3px;
-    height:3px;
-  }
-
-  .home-page .hero-logo-glints::after {
-    display:none;
+  .home-page .hero-logo-glints::before,
+  .home-page .hero-logo-glints::after,
+  .home-page .hero-logo-reflection::after {
+    width:3.6px;
+    height:3.6px;
   }
 
   .home-entrance-ready .home-page .hero::before {
@@ -7757,6 +7763,7 @@ button.client-direct-action{font-family:inherit}
   }
 
   .home-page .hero-logo-reflection::before,
+  .home-page .hero-logo-reflection::after,
   .home-page .hero-logo-glints::before,
   .home-page .hero-logo-glints::after {
     animation:none;
