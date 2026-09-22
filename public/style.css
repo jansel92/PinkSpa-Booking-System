@@ -1817,9 +1817,28 @@ button.client-direct-action{font-family:inherit}
 
 .owner-body .sidebar-logo {
   width: 104px;
+  aspect-ratio: 1;
+  object-fit: contain;
   margin: 0 auto !important;
   border-radius: 50%;
   filter: drop-shadow(0 12px 26px rgba(183, 25, 86, .13));
+}
+
+.owner-body .sidebar .brand picture {
+  display:block;
+}
+
+@media (min-width:951px) {
+  .owner-body .sidebar .brand {
+    background:transparent;
+    border-color:transparent;
+    box-shadow:none;
+  }
+
+  .owner-body .sidebar-logo {
+    border-radius:0;
+    filter:none;
+  }
 }
 
 .owner-body .tab,
@@ -7811,8 +7830,8 @@ button.client-direct-action{font-family:inherit}
   aspect-ratio: 1;
   margin: 0 auto 18px;
   object-fit: contain;
-  border-radius: 50%;
-  box-shadow: 0 16px 38px rgba(183,25,86,.13);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .owner-body .login-screen .login-card h1 {
