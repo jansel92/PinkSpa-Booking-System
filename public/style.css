@@ -1820,8 +1820,8 @@ button.client-direct-action{font-family:inherit}
   aspect-ratio: 1;
   object-fit: contain;
   margin: 0 auto !important;
-  border-radius: 50%;
-  filter: drop-shadow(0 12px 26px rgba(183, 25, 86, .13));
+  border-radius: 0;
+  filter: none;
 }
 
 .owner-body .sidebar .brand picture {
@@ -2462,6 +2462,9 @@ button.client-direct-action{font-family:inherit}
   .owner-body .sidebar .brand {
     padding: 7px;
     border-radius: 20px;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
   }
 
   .owner-body .sidebar-logo {
@@ -3486,9 +3489,9 @@ button.client-direct-action{font-family:inherit}
 .review-logo {
   width: 54px;
   height: 54px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 12px 28px rgba(183, 25, 86, .14);
+  border-radius: 0;
+  object-fit: contain;
+  box-shadow: none;
 }
 
 .review-heading {
@@ -4427,15 +4430,15 @@ button.client-direct-action{font-family:inherit}
   display: block;
   width: 52px;
   height: 52px;
-  border-radius: 50%;
-  object-fit: cover;
+  border-radius: 0;
+  object-fit: contain;
   transition: width .32s cubic-bezier(.22,1,.36,1), height .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease;
 }
 
 .home-page .nav.is-scrolled .nav-logo {
   width: 46px;
   height: 46px;
-  box-shadow: 0 8px 22px rgba(58, 20, 36, .1);
+  box-shadow: none;
 }
 
 .home-page .nav nav {
@@ -5491,11 +5494,9 @@ button.client-direct-action{font-family:inherit}
   position: relative;
   width: 92px;
   height: 92px;
-  object-fit: cover;
-  border-radius: 50%;
-  box-shadow:
-    0 18px 44px rgba(98, 30, 60, .14),
-    0 0 0 8px rgba(255, 226, 236, .66);
+  object-fit: contain;
+  border-radius: 0;
+  box-shadow: none;
   animation: pinkspaLoadingGlow 1.8s ease-in-out infinite;
 }
 
@@ -5529,16 +5530,11 @@ button.client-direct-action{font-family:inherit}
 @keyframes pinkspaLoadingGlow {
   0%, 100% {
     transform: scale(1);
-    box-shadow:
-      0 18px 44px rgba(98, 30, 60, .14),
-      0 0 0 8px rgba(255, 226, 236, .66);
+    box-shadow: none;
   }
   50% {
     transform: scale(1.035);
-    box-shadow:
-      0 20px 50px rgba(98, 30, 60, .18),
-      0 0 0 10px rgba(255, 226, 236, .78),
-      0 0 36px rgba(255, 184, 212, .28);
+    box-shadow: none;
   }
 }
 
@@ -5765,11 +5761,9 @@ button.client-direct-action{font-family:inherit}
 .home-page .confirmation-mark img {
   width: 104px;
   height: 104px;
-  object-fit: cover;
-  border-radius: 50%;
-  box-shadow:
-    0 18px 44px rgba(98, 30, 60, .16),
-    0 0 0 8px rgba(255, 226, 236, .66);
+  object-fit: contain;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .home-page .confirmation-mark span {
@@ -6533,8 +6527,8 @@ button.client-direct-action{font-family:inherit}
 .home-page .form-logo {
   width: 54px;
   height: 54px;
-  border-radius: 50%;
-  object-fit: cover;
+  border-radius: 0;
+  object-fit: contain;
 }
 
 .home-page .cta {
@@ -6705,9 +6699,9 @@ button.client-direct-action{font-family:inherit}
 .home-page .footer-logo {
   width: 82px;
   height: 82px;
-  object-fit: cover;
-  border-radius: 50%;
-  box-shadow: 0 18px 42px rgba(98, 30, 60, .14);
+  object-fit: contain;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .home-page .footer-brand strong {

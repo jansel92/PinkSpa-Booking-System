@@ -893,7 +893,7 @@ function ensureBookingConfirmationModal() {
     <div class="booking-confirmation-card">
       <button id="bookingConfirmationClose" class="booking-confirmation-close" type="button" aria-label="Close confirmation">×</button>
       <div class="confirmation-mark">
-        <img src="/images/PinkSpa.png" alt="" width="1254" height="1254" loading="lazy" decoding="async" />
+        <img src="/images/pinkspa-mini-mark.png" alt="" width="512" height="512" loading="lazy" decoding="async" />
         <span>✓</span>
         <i></i>
         <i></i>
