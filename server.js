@@ -1057,20 +1057,68 @@ app.get("/api/booked-times", (req, res) => {
   });
 });
 
+// Normalize only for the public status lookup; booking and owner data stay unchanged.
+function normalizeStatusPhone(value) {
+  if (typeof value !== "string" || value.length > 40) return null;
+  const phone = value.trim();
+  if (!/^\+?[\d\s().-]+$/.test(phone)) return null;
+  const digits = phone.replace(/\D/g, "");
+
+  // Local US numbers and their +1 form identify the same complete number.
+  if (!phone.startsWith("+") && /^\d{10}$/.test(digits)) return `1${digits}`;
+  if (/^1\d{10}$/.test(digits)) return digits;
+
+  // International numbers must retain their country code; never match suffixes.
+  if (/^[2-9]\d{7,14}$/.test(digits) && (phone.startsWith("+") || digits.length > 10)) {
+    return digits;
+  }
+  return null;
+}
+
+db.function("public_status_phone", { deterministic: true }, normalizeStatusPhone);
+
+const statusLookupAttempts = new Map();
+const STATUS_LOOKUP_WINDOW_MS = 60 * 1000;
+let statusLookupCleanupAt = 0;
+
+function allowStatusLookup(clientAddress, now = Date.now()) {
+  if (now >= statusLookupCleanupAt) {
+    for (const [address, attempt] of statusLookupAttempts) {
+      if (attempt.resetAt <= now) statusLookupAttempts.delete(address);
+    }
+    statusLookupCleanupAt = now + STATUS_LOOKUP_WINDOW_MS;
+  }
+  let attempt = statusLookupAttempts.get(clientAddress);
+  if (!attempt || attempt.resetAt <= now) {
+    // Bound memory use without evicting active limits.
+    if (!attempt && statusLookupAttempts.size >= 10000) return false;
+    attempt = { count: 0, resetAt: now + STATUS_LOOKUP_WINDOW_MS };
+    statusLookupAttempts.set(clientAddress, attempt);
+  }
+  attempt.count += 1;
+  return attempt.count <= 30;
+}
+
 app.get("/api/appointment-status", (req, res) => {
-  const phone = String(req.query.phone || "").trim();
+  res.set("Cache-Control", "no-store");
+  // Use Express's existing trusted address, not a caller-supplied forwarded header.
+  if (!allowStatusLookup(req.ip || req.socket.remoteAddress || "unknown")) {
+    res.set("Retry-After", "60");
+    return res.status(429).json({
+      error: "Unable to check appointment status right now. Please try again later."
+    });
+  }
 
-  if (!phone) return res.status(400).json({ error: "Phone number is required." });
-
-  const cleanPhone = phone.replace(/\D/g, "");
+  const phone = normalizeStatusPhone(req.query.phone);
+  if (!phone) return res.json({ appointments: [] });
 
   const appointments = db.prepare(`
-    SELECT id, client_name, client_phone, service_name, appointment_date, appointment_time, duration_minutes, status
+    SELECT client_name, service_name, appointment_date, appointment_time, duration_minutes, status
     FROM appointments
-    WHERE REPLACE(REPLACE(REPLACE(REPLACE(client_phone, '-', ''), '(', ''), ')', ''), ' ', '') LIKE ?
+    WHERE public_status_phone(client_phone) = ?
     ORDER BY appointment_date DESC, appointment_time DESC, id DESC
     LIMIT 5
-  `).all(`%${cleanPhone}%`);
+  `).all(phone);
 
   res.json({ appointments });
 });
