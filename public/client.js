@@ -262,22 +262,22 @@ function createServiceCard(service) {
   card.className = "service-card";
 
   card.innerHTML = `
-    <div class="service-card-img" style="background-image:url('${categoryImage(service)}')"></div>
+    <div class="service-card-img"></div>
     <div class="service-card-body">
-      <span class="service-category">${service.category}</span>
-      <h3>${service.name}</h3>
-      <strong>${service.price}</strong>
-      <p>${service.duration} minutes</p>
-      <button
-        type="button"
-        class="service-book-btn"
-        data-service-id="${service.id}"
-        data-service-name="${service.name}"
-      >
-        Book This Service
-      </button>
+      <span class="service-category"></span>
+      <h3></h3>
+      <strong></strong>
+      <p></p>
+      <button type="button" class="service-book-btn">Book This Service</button>
     </div>
   `;
+  card.querySelector(".service-card-img").style.backgroundImage = `url(${JSON.stringify(categoryImage(service))})`;
+  card.querySelector(".service-category").textContent = service.category;
+  card.querySelector("h3").textContent = service.name;
+  card.querySelector("strong").textContent = service.price;
+  card.querySelector("p").textContent = `${service.duration} minutes`;
+  card.querySelector("button").dataset.serviceId = service.id;
+  card.querySelector("button").dataset.serviceName = service.name;
 
   const bookButton = card.querySelector(".service-book-btn");
 
@@ -493,12 +493,18 @@ function updateBookingProgress() {
   });
 
   if (miniSummary) {
-    miniSummary.innerHTML = `
-      <span><b>Services</b> ${serviceNames || "Select one or more services"}</span>
-      <span><b>Duration</b> ${totalMinutes ? `${totalMinutes} minutes` : "Not selected yet"}</span>
-      <span><b>Date</b> ${dateInput?.value || "Choose a date"}</span>
-      <span><b>Time</b> ${timeSelect?.value || "Choose a time"}</span>
-    `;
+    miniSummary.replaceChildren(...[
+      ["Services", serviceNames || "Select one or more services"],
+      ["Duration", totalMinutes ? `${totalMinutes} minutes` : "Not selected yet"],
+      ["Date", dateInput?.value || "Choose a date"],
+      ["Time", timeSelect?.value || "Choose a time"]
+    ].map(([label, value]) => {
+      const item = document.createElement("span");
+      const title = document.createElement("b");
+      title.textContent = label;
+      item.append(title, ` ${value}`);
+      return item;
+    }));
   }
 }
 
@@ -550,10 +556,11 @@ function renderServiceRecommendations(selectedServices = getSelectedServices()) 
 
     const details = document.createElement("div");
     details.className = "recommendation-details";
-    details.innerHTML = `
-      <strong>${service.name}</strong>
-      <span>${service.duration || "Custom"} min${service.price ? ` • ${service.price}` : ""}</span>
-    `;
+    const name = document.createElement("strong");
+    name.textContent = service.name;
+    const metadata = document.createElement("span");
+    metadata.textContent = `${service.duration || "Custom"} min${service.price ? ` • ${service.price}` : ""}`;
+    details.append(name, metadata);
 
     const button = document.createElement("button");
     button.type = "button";
@@ -1129,19 +1136,14 @@ async function loadServices() {
     serviceOption.htmlFor = checkboxId;
 
     serviceOption.innerHTML = `
-      <input
-        id="${checkboxId}"
-        type="checkbox"
-        class="service-choice"
-        value="${service.id}"
-      />
-      <span>
-        <strong>${service.name}</strong><br>
-        <small>${service.category} • ${service.price} • ${service.duration} min</small>
-      </span>
+      <input type="checkbox" class="service-choice" />
+      <span><strong></strong><br><small></small></span>
     `;
-
     const checkbox = serviceOption.querySelector("input");
+    checkbox.id = checkboxId;
+    checkbox.value = service.id;
+    serviceOption.querySelector("strong").textContent = service.name;
+    serviceOption.querySelector("small").textContent = `${service.category} • ${service.price} • ${service.duration} min`;
 
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) {
@@ -1645,13 +1647,15 @@ async function loadApprovedReviews() {
 
     if (!reviews.length) return;
 
-    reviewsGrid.innerHTML = reviews.map(review => `
-      <div class="review-card">
-        <div class="stars">${"★".repeat(review.rating)}</div>
-        <p>"${review.review_text}"</p>
-        <strong>- ${review.client_name}</strong>
-      </div>
-    `).join("");
+    reviewsGrid.replaceChildren(...reviews.map(review => {
+      const card = document.createElement("div");
+      card.className = "review-card";
+      card.innerHTML = '<div class="stars"></div><p></p><strong></strong>';
+      card.querySelector(".stars").textContent = "★".repeat(review.rating);
+      card.querySelector("p").textContent = `"${review.review_text}"`;
+      card.querySelector("strong").textContent = `- ${review.client_name}`;
+      return card;
+    }));
 
     observeRevealElements(reviewsGrid.querySelectorAll(".review-card"));
   } catch (error) {

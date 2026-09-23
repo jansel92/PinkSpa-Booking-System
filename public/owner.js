@@ -1144,8 +1144,9 @@ function createFinancialEmpty(message) {
   empty.className = "financial-empty";
   empty.innerHTML = `
     <span aria-hidden="true">✦</span>
-    <p>${message}</p>
+    <p></p>
   `;
+  empty.querySelector("p").textContent = message;
   return empty;
 }
 
@@ -2554,55 +2555,62 @@ async function loadAppointments() {
 
     card.innerHTML = `
       <div class="appointment-timeline-rail" aria-hidden="true"></div>
-      <div class="appointment-time-badge">
-        <span>${appointmentDate}</span>
-        <strong>${appointmentTime}</strong>
-        <em>${duration} min</em>
-      </div>
+      <div class="appointment-time-badge"><span></span><strong></strong><em></em></div>
       <div class="appointment-main">
         <div class="appointment-card-header">
-          <div>
-            <p class="appointment-eyebrow">${appointmentDateLabel}</p>
-            <h3>${appt.service_name || "PinkSpa Service"}</h3>
-          </div>
-          <div class="appointment-header-badges">
-            ${reminderAvailable ? `<span class="appointment-reminder-badge">Reminder ready</span>` : ""}
-            <span class="appointment-status-badge appointment-status-${status}">${calendarStatusName(status)}</span>
-          </div>
+          <div><p class="appointment-eyebrow"></p><h3></h3></div>
+          <div class="appointment-header-badges"></div>
         </div>
-        <div class="appointment-detail-grid">
-          <span><b>Client</b>${appt.client_name || "PinkSpa Client"}</span>
-          <span><b>Phone</b>${appt.client_phone || "No phone added"}</span>
-          <span><b>Date</b>${appointmentDate}</span>
-          <span><b>Time</b>${appointmentTime}</span>
-          <span><b>Duration</b>${duration} minutes</span>
-          <span><b>Status</b>${statusLabel(status)}</span>
-        </div>
-        <div class="appointment-notes">
-          <b>Notes</b>
-          <p>${appt.notes || "No notes added."}</p>
-        </div>
-      ${appt.inspiration_image ? `
-        <div class="appointment-inspiration">
-          <div>
-            <b>Inspiration Photo</b>
-            <span>Client reference image</span>
-          </div>
-          <a
-            href="/api/appointments/${appt.id}/inspiration"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="/api/appointments/${appt.id}/inspiration"
-              alt="Client inspiration photo"
-              loading="lazy"
-            />
-          </a>
-       </div>
-      ` : ""}
+        <div class="appointment-detail-grid"></div>
+        <div class="appointment-notes"><b>Notes</b><p></p></div>
       </div>
     `;
+    card.querySelector(".appointment-time-badge span").textContent = appointmentDate;
+    card.querySelector(".appointment-time-badge strong").textContent = appointmentTime;
+    card.querySelector(".appointment-time-badge em").textContent = `${duration} min`;
+    card.querySelector(".appointment-eyebrow").textContent = appointmentDateLabel;
+    card.querySelector("h3").textContent = appt.service_name || "PinkSpa Service";
+    const badges = card.querySelector(".appointment-header-badges");
+    if (reminderAvailable) {
+      const reminder = document.createElement("span");
+      reminder.className = "appointment-reminder-badge";
+      reminder.textContent = "Reminder ready";
+      badges.appendChild(reminder);
+    }
+    const badge = document.createElement("span");
+    badge.className = `appointment-status-badge appointment-status-${status}`;
+    badge.textContent = calendarStatusName(status);
+    badges.appendChild(badge);
+    const details = card.querySelector(".appointment-detail-grid");
+    [
+      ["Client", appt.client_name || "PinkSpa Client"],
+      ["Phone", appt.client_phone || "No phone added"],
+      ["Date", appointmentDate],
+      ["Time", appointmentTime],
+      ["Duration", `${duration} minutes`],
+      ["Status", statusLabel(status)]
+    ].forEach(([label, value]) => {
+      const item = document.createElement("span");
+      const title = document.createElement("b");
+      title.textContent = label;
+      item.append(title, String(value));
+      details.appendChild(item);
+    });
+    card.querySelector(".appointment-notes p").textContent = appt.notes || "No notes added.";
+    if (appt.inspiration_image) {
+      const inspiration = document.createElement("div");
+      inspiration.className = "appointment-inspiration";
+      inspiration.innerHTML = `
+        <div><b>Inspiration Photo</b><span>Client reference image</span></div>
+        <a target="_blank" rel="noopener noreferrer">
+          <img alt="Client inspiration photo" loading="lazy" />
+        </a>
+      `;
+      const url = `/api/appointments/${encodeURIComponent(appt.id)}/inspiration`;
+      inspiration.querySelector("a").href = url;
+      inspiration.querySelector("img").src = url;
+      card.querySelector(".appointment-main").appendChild(inspiration);
+    }
 
     const actionGroup = document.createElement("div");
     actionGroup.className = "appointment-action-group";
@@ -2712,25 +2720,28 @@ async function loadServices() {
 
     row.innerHTML = `
       <div class="owner-service-media">
-        <img
-          src="${serviceImage(service)}"
-          alt="${service.name}"
-        />
+        <img />
         <div class="owner-service-info">
-          <span class="owner-service-category">${service.category || "Other"}</span>
-          <strong>${service.name}</strong>
-          <div class="owner-service-meta">
-            <span>${service.price || "Price not set"}</span>
-            <span>${service.duration || 60} min</span>
-          </div>
+          <span class="owner-service-category"></span>
+          <strong></strong>
+          <div class="owner-service-meta"><span></span><span></span></div>
         </div>
       </div>
-
       <div class="owner-service-actions">
-        <button class="service-edit-button" onclick='editService(${JSON.stringify(service)})'>Edit</button>
-        <button class="service-delete-button" onclick="deleteService(${service.id}, this)">Remove</button>
+        <button class="service-edit-button">Edit</button>
+        <button class="service-delete-button">Remove</button>
       </div>
     `;
+    row.querySelector("img").src = serviceImage(service);
+    row.querySelector("img").alt = service.name;
+    row.querySelector(".owner-service-category").textContent = service.category || "Other";
+    row.querySelector("strong").textContent = service.name;
+    const metadata = row.querySelectorAll(".owner-service-meta span");
+    metadata[0].textContent = service.price || "Price not set";
+    metadata[1].textContent = `${service.duration || 60} min`;
+    row.querySelector(".service-edit-button").addEventListener("click", () => editService(service));
+    const remove = row.querySelector(".service-delete-button");
+    remove.addEventListener("click", () => deleteService(service.id, remove));
 
     list.appendChild(row);
   });
@@ -2953,20 +2964,16 @@ async function loadBlockedDays() {
     row.innerHTML = `
       <div class="blocked-date-main">
         <div class="blocked-date-icon" aria-hidden="true">×</div>
-        <div>
-          <strong>${formatClientDate(day.block_date)}</strong>
-          <span>${day.block_date}</span>
-        </div>
+        <div><strong></strong><span></span></div>
       </div>
-
-      <div class="blocked-date-reason">
-        ${day.reason || "Unavailable"}
-      </div>
-
-      <button class="blocked-date-remove" onclick="deleteBlockedDay(${day.id}, this)">
-        Remove
-      </button>
+      <div class="blocked-date-reason"></div>
+      <button class="blocked-date-remove">Remove</button>
     `;
+    row.querySelector("strong").textContent = formatClientDate(day.block_date);
+    row.querySelector(".blocked-date-main span").textContent = day.block_date;
+    row.querySelector(".blocked-date-reason").textContent = day.reason || "Unavailable";
+    const remove = row.querySelector(".blocked-date-remove");
+    remove.addEventListener("click", () => deleteBlockedDay(day.id, remove));
 
     list.appendChild(row);
   });
@@ -3040,30 +3047,42 @@ async function loadReviews() {
     return;
   }
 
-  container.innerHTML = reviews.map(review => `
-    <article class="appointment-card owner-review-card ${review.approved ? "owner-review-approved" : "owner-review-pending"}">
+  container.replaceChildren(...reviews.map(review => {
+    const card = document.createElement("article");
+    card.className = `appointment-card owner-review-card ${review.approved ? "owner-review-approved" : "owner-review-pending"}`;
+    card.innerHTML = `
       <div class="owner-review-header">
-        <div>
-          <p class="owner-review-eyebrow">Client Feedback</p>
-          <h3>${review.client_name || "PinkSpa Client"}</h3>
-        </div>
-        <span class="owner-review-status ${review.approved ? "is-approved" : "is-pending"}">
-          ${review.approved ? "Approved" : "Pending Approval"}
-        </span>
+        <div><p class="owner-review-eyebrow">Client Feedback</p><h3></h3></div>
+        <span class="owner-review-status"></span>
       </div>
-      <div class="owner-review-meta">
-        <span class="owner-review-stars" aria-label="${review.rating} out of 5 stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span>
-        <span>${review.created_at ? formatClientDate(String(review.created_at).slice(0, 10)) : "Date unavailable"}</span>
-      </div>
-      <p class="owner-review-text">${review.review_text || "No review text provided."}</p>
-
+      <div class="owner-review-meta"><span class="owner-review-stars"></span><span></span></div>
+      <p class="owner-review-text"></p>
       <div class="status-row">
-        <button class="review-action-approve" onclick="approveReview(${review.id}, this)">Approve</button>
-        <button class="review-action-hide" onclick="unapproveReview(${review.id}, this)">Hide</button>
-        <button class="review-action-delete" onclick="deleteReview(${review.id}, this)">Delete</button>
+        <button class="review-action-approve">Approve</button>
+        <button class="review-action-hide">Hide</button>
+        <button class="review-action-delete">Delete</button>
       </div>
-    </article>
-  `).join("");
+    `;
+    card.querySelector("h3").textContent = review.client_name || "PinkSpa Client";
+    const status = card.querySelector(".owner-review-status");
+    status.classList.add(review.approved ? "is-approved" : "is-pending");
+    status.textContent = review.approved ? "Approved" : "Pending Approval";
+    const stars = card.querySelector(".owner-review-stars");
+    stars.setAttribute("aria-label", `${review.rating} out of 5 stars`);
+    stars.textContent = `${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`;
+    card.querySelector(".owner-review-meta span:last-child").textContent = review.created_at
+      ? formatClientDate(String(review.created_at).slice(0, 10)) : "Date unavailable";
+    card.querySelector(".owner-review-text").textContent = review.review_text || "No review text provided.";
+    [
+      [".review-action-approve", approveReview],
+      [".review-action-hide", unapproveReview],
+      [".review-action-delete", deleteReview]
+    ].forEach(([selector, action]) => {
+      const button = card.querySelector(selector);
+      button.addEventListener("click", () => action(review.id, button));
+    });
+    return card;
+  }));
 }
 
 async function approveReview(id, button) {
