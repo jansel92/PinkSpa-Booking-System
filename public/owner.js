@@ -890,13 +890,44 @@ function activateDashboardTab(button, moveFocus = false) {
   if (moveFocus) button.focus();
 }
 
+function scrollToDashboardPanel(button) {
+  window.requestAnimationFrame(() => {
+    const panel = document.getElementById(button.dataset.tab + "Tab");
+    if (!panel || panel.classList.contains("hidden")) return;
+
+    if (window.matchMedia("(max-width: 950px)").matches) {
+      const sidebar = document.querySelector(".sidebar");
+      const sidebarStyle = sidebar ? getComputedStyle(sidebar) : null;
+      const stickyOffset = sidebar
+        ? sidebar.getBoundingClientRect().height +
+          (parseFloat(sidebarStyle.top) || 0) + (parseFloat(sidebarStyle.paddingBottom) || 0)
+        : 0;
+      const offset = Math.max(parseFloat(getComputedStyle(panel).scrollMarginTop) || 0, stickyOffset);
+      window.scrollTo({
+        top: window.scrollY + panel.getBoundingClientRect().top - offset,
+        behavior: prefersReducedOwnerMotion() ? "auto" : "smooth"
+      });
+      return;
+    }
+
+    // Reuse the panel's existing scroll margin and the document scroll container.
+    panel.scrollIntoView({
+      behavior: prefersReducedOwnerMotion() ? "auto" : "smooth",
+      block: "start"
+    });
+  });
+}
+
 dashboardTabs.forEach((btn, index) => {
   btn.id = `${btn.dataset.tab}TabButton`;
   btn.setAttribute("role", "tab");
   btn.setAttribute("aria-controls", btn.dataset.tab + "Tab");
   btn.setAttribute("aria-selected", String(btn.classList.contains("active")));
   btn.tabIndex = btn.classList.contains("active") ? 0 : -1;
-  btn.addEventListener("click", () => activateDashboardTab(btn));
+  btn.addEventListener("click", () => {
+    activateDashboardTab(btn);
+    scrollToDashboardPanel(btn);
+  });
   btn.addEventListener("keydown", event => {
     let nextIndex = null;
     if (event.key === "ArrowDown" || event.key === "ArrowRight") nextIndex = (index + 1) % dashboardTabs.length;
