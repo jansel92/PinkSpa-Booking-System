@@ -1558,7 +1558,35 @@ app.delete("/api/blocked-days/:id", requireOwner, (req, res) => {
   res.json({ success: true });
 });
 
+const ownerLoginAttempts = new Map();
+const OWNER_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+let ownerLoginCleanupAt = 0;
+
+function allowOwnerLogin(clientAddress, now = Date.now()) {
+  // Same bounded, lazy-cleanup pattern as status lookup, with independent limits.
+  if (now >= ownerLoginCleanupAt) {
+    for (const [address, attempt] of ownerLoginAttempts) {
+      if (attempt.resetAt <= now) ownerLoginAttempts.delete(address);
+    }
+    ownerLoginCleanupAt = now + OWNER_LOGIN_WINDOW_MS;
+  }
+  let attempt = ownerLoginAttempts.get(clientAddress);
+  if (!attempt || attempt.resetAt <= now) {
+    if (!attempt && ownerLoginAttempts.size >= 10000) return false;
+    attempt = { count: 0, resetAt: now + OWNER_LOGIN_WINDOW_MS };
+    ownerLoginAttempts.set(clientAddress, attempt);
+  }
+  if (attempt.count >= 10) return false;
+  attempt.count += 1;
+  return true;
+}
+
 app.post("/api/login", (req, res) => {
+  // Honor Express's address trust boundary. Session proxy:true only trusts the
+  // HTTPS scheme; it does not make forwarded client-IP headers trustworthy.
+  if (!allowOwnerLogin(req.ip || req.socket?.remoteAddress || "unknown")) {
+    return res.status(429).json({ error: "Unable to sign in right now. Please try again later." });
+  }
   const { email, password } = req.body || {};
   if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return res.status(401).json({ error: "Invalid login." });

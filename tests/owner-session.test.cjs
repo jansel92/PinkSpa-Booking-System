@@ -19,7 +19,7 @@ const authCode = [
   section("const PORT =", "const NOTIFY_EMAIL ="),
   section("const OWNER_SESSION_COOKIE =", "// Service images"),
   section("function hasValidOwnerSession(", "function normalizeTime("),
-  section('app.post("/api/login",', 'app.get("/review",')
+  section('const ownerLoginAttempts =', 'app.get("/review",')
 ].join("\n");
 const lifetime = 12 * 60 * 60 * 1000;
 function fixtureEnvironment() {
@@ -79,8 +79,8 @@ function harness(env = {}, failures = {}) {
       } }
     });
   }
-  function request(route, body, id = crypto.randomBytes(24).toString("hex")) {
-    const req = { body };
+  function request(route, body, id = crypto.randomBytes(24).toString("hex"), network = {}) {
+    const req = { body, socket: { remoteAddress: "192.0.2.1" }, ...network };
     attach(req, id);
     return new Promise(resolve => {
       const result = { status: 200, cleared: [], req };
@@ -235,4 +235,52 @@ test("regeneration/save/logout errors never report false success", async () => {
   assert.equal(r.status, 500);
   assert.ok(!r.body.success);
   assert.equal(r.cleared.length, 1);
+});
+
+test("login limit counts malformed and invalid attempts and resets at 15 minutes", async () => {
+  const h = harness();
+  for (let i = 0; i < 10; i++) {
+    const body = i % 2 ? { email: "fixture@example.test", password: "wrong" } : {};
+    const r = await h.request("POST /api/login", body);
+    assert.equal(r.status, 401);
+    assert.deepEqual(r.body, { error: "Invalid login." });
+  }
+  const compared = h.calls.comparisons;
+  assert.equal((await h.login()).status, 429);
+  assert.equal(h.calls.comparisons, compared, "Blocked requests do not reach bcrypt");
+  h.clock.now += 15 * 60 * 1000 - 1;
+  assert.equal((await h.login()).status, 429);
+  h.clock.now++;
+  const login = await h.login();
+  assert.equal(login.status, 200);
+  assert.equal(h.calls.regenerated, 1);
+  assert.equal((await h.request("protected", undefined, login.req.sessionID)).status, 200);
+  assert.equal((await h.request("POST /api/logout", undefined, login.req.sessionID)).status, 200);
+  assert.equal((await h.request("protected", undefined, login.req.sessionID)).status, 401);
+});
+
+test("forwarded headers and changing usernames cannot bypass the socket-address limit", async () => {
+  const h = harness({ ...fixtureEnvironment(), RENDER: "true" });
+  for (let i = 0; i < 12; i++) {
+    const r = await h.request("POST /api/login", { email: `unknown${i}@example.test`, password: "wrong" }, undefined,
+      { headers: { "x-forwarded-for": `198.51.100.${i}`, "x-real-ip": `198.51.100.${i}` } });
+    assert.equal(r.status, i < 10 ? 401 : 429);
+  }
+  assert.equal((await h.request("POST /api/login", {}, undefined,
+    { socket: { remoteAddress: "192.0.2.2" } })).status, 401);
+});
+
+test("successful logins consume allowance without resetting prior attempts", async () => {
+  const h = harness();
+  for (let i = 0; i < 9; i++) await h.request("POST /api/login", {});
+  assert.equal((await h.login()).status, 200);
+  assert.equal((await h.login()).status, 429);
+});
+
+test("login limiter bounds memory without evicting active limits", () => {
+  const h = harness();
+  for (let i = 0; i < 10000; i++) assert.equal(h.context.allowOwnerLogin(`fixture-${i}`), true);
+  assert.equal(h.context.allowOwnerLogin("overflow"), false);
+  h.clock.now += 15 * 60 * 1000;
+  assert.equal(h.context.allowOwnerLogin("overflow"), true);
 });
