@@ -4430,6 +4430,8 @@ button.client-direct-action{font-family:inherit}
   display: block;
   width: 52px;
   height: 52px;
+  transform: scale(1.6);
+  transform-origin: center;
   border-radius: 0;
   object-fit: contain;
   transition: width .32s cubic-bezier(.22,1,.36,1), height .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease;
