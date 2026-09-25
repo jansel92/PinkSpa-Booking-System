@@ -12,9 +12,27 @@ const multer = require("multer");
 const nodemailer = require("nodemailer");
 
 const PORT = process.env.PORT || 3000;
-const OWNER_EMAIL = process.env.OWNER_EMAIL || "admin@pinkspa.com";
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "PinkSpa123!";
-const SESSION_SECRET = process.env.SESSION_SECRET || "pinkspa-dev-secret-change-me";
+const IS_PRODUCTION = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
+const DEVELOPMENT_AUTH = {
+  OWNER_EMAIL: "admin@pinkspa.com",
+  OWNER_PASSWORD: "PinkSpa123!",
+  SESSION_SECRET: "pinkspa-dev-secret-change-me"
+};
+
+if (IS_PRODUCTION) {
+  const invalidConfiguration = Object.keys(DEVELOPMENT_AUTH).filter(name => {
+    const value = process.env[name];
+    return !value || !value.trim() ||
+      (name !== "OWNER_EMAIL" && value.trim() === DEVELOPMENT_AUTH[name]);
+  });
+  if (invalidConfiguration.length) {
+    throw new Error(`Production authentication configuration is missing or uses development defaults: ${invalidConfiguration.join(", ")}`);
+  }
+}
+
+const OWNER_EMAIL = process.env.OWNER_EMAIL || DEVELOPMENT_AUTH.OWNER_EMAIL;
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || DEVELOPMENT_AUTH.OWNER_PASSWORD;
+const SESSION_SECRET = process.env.SESSION_SECRET || DEVELOPMENT_AUTH.SESSION_SECRET;
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || "pinkspaadmin@gmail.com";
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
@@ -147,11 +165,25 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+const OWNER_SESSION_COOKIE = "connect.sid";
+const OWNER_SESSION_LIFETIME_MS = 12 * 60 * 60 * 1000;
+const OWNER_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: "lax",
+  secure: IS_PRODUCTION,
+  path: "/"
+};
+
 app.use(session({
+  name: OWNER_SESSION_COOKIE,
   secret: SESSION_SECRET,
+  // Render terminates HTTPS upstream. Trust its scheme header only for cookies,
+  // without changing Express's client-IP handling for public endpoints.
+  proxy: IS_PRODUCTION,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: "lax" }
+  rolling: false,
+  cookie: { ...OWNER_COOKIE_OPTIONS, maxAge: OWNER_SESSION_LIFETIME_MS }
 }));
 // Service images keep their existing /uploads/... URLs while their files live
 // on DATA_DIR in production. Inspiration images are intentionally not static.
@@ -281,9 +313,28 @@ function setupDatabase() {
 
 setupDatabase();
 
+function hasValidOwnerSession(req) {
+  return Boolean(req.session?.owner &&
+    Number.isFinite(req.session.ownerExpiresAt) && req.session.ownerExpiresAt > Date.now());
+}
+
+function destroyOwnerSession(req, res, done) {
+  if (!req.session) {
+    res.clearCookie(OWNER_SESSION_COOKIE, OWNER_COOKIE_OPTIONS);
+    return done();
+  }
+  req.session.destroy(error => {
+    // Do not pass maxAge when clearing: it would conflict with cookie expiry.
+    res.clearCookie(OWNER_SESSION_COOKIE, OWNER_COOKIE_OPTIONS);
+    done(error);
+  });
+}
+
 function requireOwner(req, res, next) {
-  if (req.session && req.session.owner) return next();
-  res.status(401).json({ error: "Unauthorized" });
+  if (hasValidOwnerSession(req)) return next();
+  const reject = () => res.status(401).json({ error: "Unauthorized" });
+  if (req.session?.owner) return destroyOwnerSession(req, res, reject);
+  return reject();
 }
 
 function normalizeTime(t) {
@@ -1508,23 +1559,45 @@ app.delete("/api/blocked-days/:id", requireOwner, (req, res) => {
 });
 
 app.post("/api/login", (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
+  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
+    return res.status(401).json({ error: "Invalid login." });
+  }
   const owner = db.prepare("SELECT * FROM owner WHERE email = ?").get(email);
 
   if (!owner || !bcrypt.compareSync(password, owner.password_hash)) {
     return res.status(401).json({ error: "Invalid login." });
   }
 
-  req.session.owner = { id: owner.id, email: owner.email };
-  res.json({ success: true });
+  req.session.regenerate(error => {
+    if (error) return res.status(500).json({ error: "Unable to sign in. Please try again." });
+    req.session.owner = { id: owner.id, email: owner.email };
+    // Absolute workday lifetime: background dashboard polling cannot extend it.
+    req.session.ownerExpiresAt = Date.now() + OWNER_SESSION_LIFETIME_MS;
+    req.session.save(error => {
+      if (error) {
+        return destroyOwnerSession(req, res, () => {
+          res.status(500).json({ error: "Unable to sign in. Please try again." });
+        });
+      }
+      res.json({ success: true });
+    });
+  });
 });
 
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
+  destroyOwnerSession(req, res, error => {
+    if (error) return res.status(500).json({ error: "Unable to sign out. Please try again." });
+    res.json({ success: true });
+  });
 });
 
 app.get("/api/me", (req, res) => {
-  res.json({ owner: req.session.owner || null });
+  if (hasValidOwnerSession(req)) return res.json({ owner: req.session.owner });
+  if (req.session?.owner) {
+    return destroyOwnerSession(req, res, () => res.json({ owner: null }));
+  }
+  res.json({ owner: null });
 });
 
 app.get("/review", (req, res) => {
