@@ -10,6 +10,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
+const { createOwnerOriginValidator } = require("./owner-origin");
 
 const PORT = process.env.PORT || 3000;
 const IS_PRODUCTION = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
@@ -39,6 +40,9 @@ const EMAIL_PASS = process.env.EMAIL_PASS;
 const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "PinkSpa Booking";
 const APP_BASE_URL = String(process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/+$/, "");
+const validateOwnerOrigin = createOwnerOriginValidator({
+  production: IS_PRODUCTION, baseUrl: process.env.APP_BASE_URL, port: PORT
+});
 
 const app = express();
 
@@ -331,7 +335,10 @@ function destroyOwnerSession(req, res, done) {
 }
 
 function requireOwner(req, res, next) {
-  if (hasValidOwnerSession(req)) return next();
+  if (hasValidOwnerSession(req)) {
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method) && !validateOwnerOrigin(req, res)) return;
+    return next();
+  }
   const reject = () => res.status(401).json({ error: "Unauthorized" });
   if (req.session?.owner) return destroyOwnerSession(req, res, reject);
   return reject();
@@ -1587,6 +1594,7 @@ app.post("/api/login", (req, res) => {
   if (!allowOwnerLogin(req.ip || req.socket?.remoteAddress || "unknown")) {
     return res.status(429).json({ error: "Unable to sign in right now. Please try again later." });
   }
+  if (!validateOwnerOrigin(req, res)) return;
   const { email, password } = req.body || {};
   if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return res.status(401).json({ error: "Invalid login." });
@@ -1614,6 +1622,7 @@ app.post("/api/login", (req, res) => {
 });
 
 app.post("/api/logout", (req, res) => {
+  if (!validateOwnerOrigin(req, res)) return;
   destroyOwnerSession(req, res, error => {
     if (error) return res.status(500).json({ error: "Unable to sign out. Please try again." });
     res.json({ success: true });

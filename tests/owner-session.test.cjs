@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const crypto = require("node:crypto");
+const { createOwnerOriginValidator } = require("../owner-origin");
 
 // Execute the actual auth code without starting the app, opening SQLite, or
 // installing packages. Session/store and bcrypt adapters are test doubles;
@@ -24,6 +25,7 @@ const authCode = [
 const lifetime = 12 * 60 * 60 * 1000;
 function fixtureEnvironment() {
   return {
+    APP_BASE_URL: "https://rachelpinkspa.com",
     OWNER_EMAIL: "fixture@example.test",
     OWNER_PASSWORD: crypto.randomBytes(24).toString("hex"),
     SESSION_SECRET: crypto.randomBytes(32).toString("hex")
@@ -40,6 +42,10 @@ function harness(env = {}, failures = {}) {
   class Clock extends Date { static now() { return clock.now; } }
   const context = vm.createContext({
     process: { env }, Date: Clock,
+    validateOwnerOrigin: createOwnerOriginValidator({
+      production: env.NODE_ENV === "production" || env.RENDER === "true",
+      baseUrl: env.APP_BASE_URL, port: 3000
+    }),
     app: {
       use() {},
       get(route, handler) { routes.set(`GET ${route}`, handler); },
@@ -80,7 +86,14 @@ function harness(env = {}, failures = {}) {
     });
   }
   function request(route, body, id = crypto.randomBytes(24).toString("hex"), network = {}) {
-    const req = { body, socket: { remoteAddress: "192.0.2.1" }, ...network };
+    const req = {
+      body, method: route.split(" ")[0], socket: { remoteAddress: "192.0.2.1" }, ...network,
+      headers: {
+        origin: env.NODE_ENV === "production" || env.RENDER === "true"
+          ? "https://rachelpinkspa.com" : "http://localhost:3000",
+        ...network.headers
+      }
+    };
     attach(req, id);
     return new Promise(resolve => {
       const result = { status: 200, cleared: [], req };
@@ -274,6 +287,16 @@ test("successful logins consume allowance without resetting prior attempts", asy
   const h = harness();
   for (let i = 0; i < 9; i++) await h.request("POST /api/login", {});
   assert.equal((await h.login()).status, 200);
+  assert.equal((await h.login()).status, 429);
+});
+
+test("origin-rejected login attempts still consume allowance before credential checking", async () => {
+  const h = harness();
+  for (let i = 0; i < 10; i++) {
+    assert.equal((await h.request("POST /api/login", {}, undefined,
+      { headers: { origin: "https://foreign.example" } })).status, 403);
+  }
+  assert.equal(h.calls.comparisons, 0);
   assert.equal((await h.login()).status, 429);
 });
 
