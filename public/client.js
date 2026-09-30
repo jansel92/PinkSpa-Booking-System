@@ -22,6 +22,9 @@ const allTimes = [
 let allServices = [];
 let revealObserver = null;
 let availabilityRequestId = 0;
+const AVAILABILITY_TIMEOUT_MS = 15000;
+const AVAILABILITY_FAILURE_MESSAGE = "We couldn’t load available times. Please check your connection and refresh the page, or contact PinkSpa on WhatsApp.";
+let availabilityState = { status: "idle", date: "", duration: 0, times: [] };
 let primaryServiceId = null;
 let activeServiceCategory = "all";
 let servicePageIndex = 0;
@@ -577,7 +580,7 @@ function renderServiceRecommendations(selectedServices = getSelectedServices()) 
   container.replaceChildren(heading, list);
 }
 
-function updateBookingSummary() {
+function updateBookingSummary({ refreshAvailability = true } = {}) {
   const selected = getSelectedServices();
   const hiddenServiceInput = document.getElementById("serviceSelect");
   const summary = document.getElementById("bookingSummary");
@@ -590,7 +593,7 @@ function updateBookingSummary() {
     summary.textContent = "Select one or more services.";
     renderServiceRecommendations(selected);
     updateBookingProgress();
-    updateAvailableTimes();
+    if (refreshAvailability) updateAvailableTimes();
     return;
   }
 
@@ -621,10 +624,10 @@ function updateBookingSummary() {
   renderServiceRecommendations(selected);
   updateBookingProgress();
 
-  updateAvailableTimes();
+  if (refreshAvailability) updateAvailableTimes();
 }
 
-function renderTimeOptions(availableTimes) {
+function renderTimeOptions(availableTimes, emptyLabel = "No times available") {
   const timeSelect = document.querySelector('select[name="appointment_time"]');
   if (!timeSelect) return;
 
@@ -633,7 +636,7 @@ function renderTimeOptions(availableTimes) {
   if (!availableTimes.length) {
     const option = document.createElement("option");
     option.value = "";
-    option.textContent = "No times available";
+    option.textContent = emptyLabel;
     timeSelect.appendChild(option);
     timeSelect.disabled = true;
     updateBookingProgress();
@@ -658,17 +661,30 @@ function isWeekend(dateValue) {
   return day === 0 || day === 6;
 }
 
+function hasVerifiedAvailability() {
+  const date = document.querySelector('input[name="appointment_date"]')?.value;
+  const time = document.querySelector('select[name="appointment_time"]')?.value;
+  return availabilityState.status === "verified"
+    && availabilityState.date === date
+    && availabilityState.duration === getSelectedDuration()
+    && availabilityState.times.includes(time);
+}
+
 async function updateAvailableTimes() {
   const dateInput = document.querySelector('input[name="appointment_date"]');
   const message = document.getElementById("bookingMessage");
   const requestId = ++availabilityRequestId;
+  const date = dateInput?.value || "";
+  const selectedDuration = getSelectedDuration();
+  availabilityState = { status: "idle", date, duration: selectedDuration, times: [] };
 
-  if (!dateInput || !dateInput.value) {
-    renderTimeOptions(allTimes);
+  if (!date) {
+    renderTimeOptions([], "Choose a date to see available times.");
     return;
   }
 
-  if (isWeekend(dateInput.value)) {
+  if (isWeekend(date)) {
+    availabilityState.status = "unavailable";
     renderTimeOptions([]);
     if (message) {
       message.textContent = "PinkSpa is closed on Saturdays and Sundays. Please choose Monday through Friday.";
@@ -677,26 +693,32 @@ async function updateAvailableTimes() {
   }
 
   if (message) message.textContent = "";
+  availabilityState.status = "loading";
+  renderTimeOptions([], "Checking availability…");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AVAILABILITY_TIMEOUT_MS);
 
   try {
-    const params = new URLSearchParams({ date: dateInput.value });
-    const selectedDuration = getSelectedDuration();
+    const params = new URLSearchParams({ date });
 
     if (selectedDuration) {
       params.set("duration_minutes", String(selectedDuration));
     }
 
-    const response = await fetch(`/api/booked-times?${params.toString()}`);
+    const response = await fetch(`/api/booked-times?${params.toString()}`, { signal: controller.signal });
+    if (!response.ok) throw new Error("Availability request failed.");
     const data = await response.json();
 
     if (requestId !== availabilityRequestId) return;
-
-    if (!response.ok) {
-      renderTimeOptions(allTimes);
-      return;
+    if (controller.signal.aborted) throw new Error("Availability request timed out.");
+    if (!data || typeof data !== "object" || Array.isArray(data)
+      || typeof data.blocked !== "boolean"
+      || (data.reason !== undefined && typeof data.reason !== "string")) {
+      throw new Error("Invalid availability response.");
     }
 
     if (data.blocked) {
+      availabilityState.status = "unavailable";
       renderTimeOptions([]);
       if (message) {
         message.textContent = data.reason
@@ -706,10 +728,14 @@ async function updateAvailableTimes() {
       return;
     }
 
-    const availableTimes = Array.isArray(data.availableTimes)
-      ? data.availableTimes
-      : allTimes.filter(time => !(data.bookedTimes || []).includes(time));
+    const availableTimes = data.availableTimes;
+    if (!Array.isArray(availableTimes)
+      || !availableTimes.every(time => typeof time === "string" && allTimes.includes(time))
+      || new Set(availableTimes).size !== availableTimes.length) {
+      throw new Error("Invalid available times.");
+    }
 
+    availabilityState = { status: "verified", date, duration: selectedDuration, times: [...availableTimes] };
     renderTimeOptions(availableTimes);
 
     if (!availableTimes.length && message) {
@@ -717,8 +743,12 @@ async function updateAvailableTimes() {
     }
   } catch (error) {
     if (requestId === availabilityRequestId) {
-      renderTimeOptions(allTimes);
+      availabilityState = { status: "error", date, duration: selectedDuration, times: [] };
+      renderTimeOptions([], "Availability unavailable");
+      if (message) message.textContent = AVAILABILITY_FAILURE_MESSAGE;
     }
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -736,7 +766,8 @@ function setupBookingDateRules() {
     updateBookingProgress();
     updateAvailableTimes();
   });
-  renderTimeOptions(allTimes);
+  document.getElementById("bookingMessage")?.setAttribute("role", "status");
+  updateAvailableTimes();
 }
 
 function selectServiceForBooking(serviceId, serviceName) {
@@ -1191,8 +1222,20 @@ if (bookingForm) {
       return;
     }
 
+    if (!hasVerifiedAvailability()) {
+      if ((availabilityState.status === "unavailable"
+        || (availabilityState.status === "verified" && !availabilityState.times.length))
+        && message.textContent) return;
+      message.textContent = availabilityState.status === "error"
+        ? AVAILABILITY_FAILURE_MESSAGE
+        : availabilityState.status === "loading"
+          ? "Please wait while we check available times."
+          : "Please choose an available time after availability has been checked for your selected date and services.";
+      return;
+    }
+
     primaryServiceId = String(primaryService.id);
-    updateBookingSummary();
+    updateBookingSummary({ refreshAvailability: false });
 
     const form = new FormData(e.target);
     const payload = Object.fromEntries(form.entries());
@@ -1271,8 +1314,13 @@ ${payload.notes || "No notes added."}
 
       if (!response.ok) {
         const errorMessage = data.error || "We couldn't send your appointment request. Please review your information and try again.";
+        const refreshRequestId = availabilityRequestId + 1;
         await updateAvailableTimes();
-        message.textContent = errorMessage;
+        if (availabilityRequestId === refreshRequestId) {
+          message.textContent = availabilityState.status === "error"
+            ? `${errorMessage} ${AVAILABILITY_FAILURE_MESSAGE}`
+            : errorMessage;
+        }
         return;
       }
 
@@ -1285,7 +1333,6 @@ ${payload.notes || "No notes added."}
 
       primaryServiceId = null;
       updateBookingSummary();
-      renderTimeOptions(allTimes);
 
       message.textContent = "Your appointment request was sent to PinkSpa. You can check your appointment status using your phone number.";
       bookingConfirmation?.open(confirmationDetails);
